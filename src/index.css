@@ -90,8 +90,28 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+    -webkit-text-size-adjust: 100%;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Montserrat', sans-serif;
+  }
+  /* iOS: use dynamic viewport height */
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+  /* Smooth scrolling in overflowing containers (older iOS) */
+  .overflow-y-auto,
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Hero white overlay: visible ≤890px, hidden above */
+.hero-overlay-mobile {
+  display: block;
+}
+@media (min-width: 891px) {
+  .hero-overlay-mobile {
+    display: none;
   }
 }

@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navLinks = [
     { label: "Inicio", href: "#" },
@@ -12,8 +21,14 @@ const Header = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-border">
-      <div className="container mx-auto flex items-center justify-between py-4 px-4 lg:px-8">
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
+        scrolled
+          ? "bg-card/95 backdrop-blur border-b border-border"
+          : "bg-transparent border-b border-transparent"
+      }`}
+    >
+      <div className="container mx-auto flex items-center justify-between py-4 px-4 lg:px-8 pt-[max(1rem,env(safe-area-inset-top))]">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2">
           <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="text-cobalt">
@@ -39,7 +54,9 @@ const Header = () => {
         </nav>
 
         <a
-          href="#contact"
+          href="https://cal.com/alek-nava-i4gvq6/visita-propiedad-programada?overlayCalendar=true"
+          target="_blank"
+          rel="noopener noreferrer"
           className="hidden md:inline-flex items-center px-5 py-2.5 border-2 border-cobalt text-cobalt text-sm font-semibold rounded hover:bg-cobalt hover:text-primary-foreground transition-colors"
         >
           Agendar Cita
@@ -47,7 +64,7 @@ const Header = () => {
 
         {/* Mobile toggle */}
         <button
-          className="md:hidden text-foreground"
+          className="md:hidden text-foreground p-2 -mr-2"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
         >
@@ -69,7 +86,9 @@ const Header = () => {
             </a>
           ))}
           <a
-            href="#contact"
+            href="https://cal.com/alek-nava-i4gvq6/visita-propiedad-programada?overlayCalendar=true"
+            target="_blank"
+            rel="noopener noreferrer"
             className="mt-2 block text-center px-5 py-2.5 border-2 border-cobalt text-cobalt text-sm font-semibold rounded"
           >
             Agendar Cita
