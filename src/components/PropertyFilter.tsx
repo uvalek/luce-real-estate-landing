@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, Home, DollarSign, Search, KeyRound } from "lucide-react";
 import { stats } from "@/data/mockData";
+import AnimatedStat from "@/components/AnimatedStat";
 
 const municipiosPuebla = [
   "Heroica Puebla de Zaragoza",
@@ -183,12 +184,7 @@ const PropertyFilter = () => {
         {/* Stats */}
         <div className="flex flex-wrap justify-center gap-8 md:gap-16 mt-8">
           {stats.map((s) => (
-            <div key={s.label} className="text-center">
-              <p className="font-heading text-2xl md:text-3xl font-bold text-cobalt">
-                {s.value}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
-            </div>
+            <AnimatedStat key={s.label} value={s.value} label={s.label} />
           ))}
         </div>
       </div>
