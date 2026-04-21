@@ -38,6 +38,20 @@ export interface Property {
   featured: boolean;
 }
 
+/** Matches the "contactos" table in Supabase */
+export interface Contacto {
+  id: number;
+  nombre: string;
+  correo: string | null;
+  etapa_seguimiento: string;
+  telefono: string | null;
+  tipo_credito: string | null;
+  zona_interes: string | null;
+  presupuesto_max: number;
+  fecha_visita: string | null;
+  created_at: string;
+}
+
 export interface Lead {
   name: string;
   email: string;

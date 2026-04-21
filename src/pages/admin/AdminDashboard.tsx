@@ -19,29 +19,34 @@ import {
   Bath,
   Maximize,
   X,
+  Users,
+  ChevronLeft,
+  Menu,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatPrice } from "@/lib/formatPrice";
 import { useAuth } from "@/hooks/useAuth";
 import PropertyForm from "@/components/admin/PropertyForm";
+import ContactsView from "@/components/admin/ContactsView";
 import type { Propiedad } from "@/types";
+
+type AdminView = "propiedades" | "contactos";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
 
+  const [activeView, setActiveView] = useState<AdminView>("propiedades");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [properties, setProperties] = useState<Propiedad[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Form state
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Propiedad | null>(null);
-
-  // Delete confirmation
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/admin/login");
@@ -114,6 +119,11 @@ const AdminDashboard = () => {
     navigate("/admin/login");
   };
 
+  const switchView = (view: AdminView) => {
+    setActiveView(view);
+    setSidebarOpen(false);
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -133,301 +143,301 @@ const AdminDashboard = () => {
   const rentaVentaCount = properties.filter((p) => p.tipo_oferta?.toUpperCase() === "RENTA Y VENTA").length;
 
   return (
-    <div className="min-h-screen bg-[hsl(220,20%,95%)]">
-      {/* Top bar */}
-      <header className="bg-cobalt sticky top-0 z-50">
-        <div className="container mx-auto px-4 lg:px-8 flex items-center justify-between py-3">
-          <div className="flex items-center gap-3">
-            <svg width="26" height="26" viewBox="0 0 36 36" fill="none" className="text-white">
-              <rect x="4" y="8" width="12" height="20" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
-              <rect x="20" y="4" width="12" height="24" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
-              <line x1="10" y1="14" x2="10" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
-              <line x1="26" y1="10" x2="26" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <span className="font-heading text-sm font-bold tracking-widest text-white/90 uppercase">
-              LUCE Admin
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <a
-              href="/"
-              target="_blank"
-              className="text-xs text-white/60 hover:text-white transition-colors flex items-center gap-1.5"
+    <div className="min-h-screen bg-[hsl(220,20%,95%)] flex">
+      {/* ─── Sidebar ─── */}
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-50 lg:z-auto h-screen w-60 bg-cobalt flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
+          <svg width="24" height="24" viewBox="0 0 36 36" fill="none" className="text-white flex-shrink-0">
+            <rect x="4" y="8" width="12" height="20" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
+            <rect x="20" y="4" width="12" height="24" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
+            <line x1="10" y1="14" x2="10" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
+            <line x1="26" y1="10" x2="26" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span className="font-heading text-xs font-bold tracking-widest text-white/80 uppercase">LUCE Admin</span>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto p-1 text-white/50 hover:text-white">
+            <ChevronLeft size={18} />
+          </button>
+        </div>
+
+        {/* Nav sections */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+          {/* Propiedades */}
+          <div>
+            <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em] px-2 mb-2">
+              Propiedades
+            </p>
+            <button
+              onClick={() => switchView("propiedades")}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                activeView === "propiedades"
+                  ? "bg-white/15 text-white"
+                  : "text-white/50 hover:text-white/80 hover:bg-white/5"
+              }`}
             >
-              <Home size={13} /> Ver sitio
-            </a>
-            <span className="text-xs text-white/40 hidden sm:block">
-              {user.email}
-            </span>
+              <Building2 size={15} />
+              Gestión de Propiedades
+            </button>
+          </div>
+
+          {/* CRM */}
+          <div>
+            <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em] px-2 mb-2">
+              CRM
+            </p>
+            <button
+              onClick={() => switchView("contactos")}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                activeView === "contactos"
+                  ? "bg-white/15 text-white"
+                  : "text-white/50 hover:text-white/80 hover:bg-white/5"
+              }`}
+            >
+              <Users size={15} />
+              Contactos
+            </button>
+          </div>
+        </nav>
+
+        {/* Bottom */}
+        <div className="border-t border-white/10 px-4 py-4 space-y-2">
+          <a
+            href="/"
+            target="_blank"
+            className="flex items-center gap-2 text-[11px] text-white/40 hover:text-white/70 transition-colors"
+          >
+            <Home size={13} /> Ver sitio web
+          </a>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-white/25 truncate max-w-[120px]">{user.email}</span>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 text-xs font-medium text-white/60 hover:text-red-300 transition-colors"
+              className="flex items-center gap-1 text-[10px] font-medium text-white/40 hover:text-red-300 transition-colors"
             >
-              <LogOut size={13} /> Salir
+              <LogOut size={11} /> Salir
             </button>
           </div>
         </div>
-      </header>
+      </aside>
 
-      <main className="container mx-auto px-4 lg:px-8 py-6 lg:py-8 max-w-7xl">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4 mb-8">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 rounded-lg bg-cobalt/10 flex items-center justify-center">
-                <Building2 size={16} className="text-cobalt" />
-              </div>
-            </div>
-            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{totalProps}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Total</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <CheckCircle2 size={16} className="text-emerald-600" />
-              </div>
-            </div>
-            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{disponibles}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Disponibles</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                <XCircle size={16} className="text-orange-500" />
-              </div>
-            </div>
-            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{noDisponibles}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Inactivas</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
-                <TrendingUp size={16} className="text-gold" />
-              </div>
-            </div>
-            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{ventaCount}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Venta</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <KeyRound size={16} className="text-purple-600" />
-              </div>
-            </div>
-            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{rentaCount}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Renta</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                <ArrowLeftRight size={16} className="text-cyan-600" />
-              </div>
-            </div>
-            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{rentaVentaCount}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Renta y Venta</p>
-          </div>
-        </div>
+      {/* ─── Main Content ─── */}
+      <div className="flex-1 min-w-0">
+        {/* Top bar mobile */}
+        <header className="lg:hidden sticky top-0 z-30 bg-cobalt flex items-center justify-between px-4 py-3">
+          <button onClick={() => setSidebarOpen(true)} className="p-1.5 text-white/70 hover:text-white">
+            <Menu size={20} />
+          </button>
+          <span className="font-heading text-xs font-bold tracking-widest text-white/80 uppercase">LUCE Admin</span>
+          <div className="w-8" />
+        </header>
 
-        {/* Header + Actions */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h2 className="font-heading text-lg font-bold text-foreground">
-            Propiedades
-          </h2>
-          {!showForm && (
-            <button
-              onClick={() => {
-                setEditing(null);
-                setShowForm(true);
-              }}
-              className="flex items-center gap-2 bg-cobalt text-white font-semibold text-xs px-5 py-2.5 rounded-lg hover:bg-cobalt-light transition-colors shadow-sm"
-            >
-              <Plus size={15} /> Nueva Propiedad
-            </button>
-          )}
-        </div>
+        <main className="px-4 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
 
-        {/* Form */}
-        {showForm && (
-          <div className="bg-white rounded-xl shadow-sm p-5 md:p-7 mb-8 border border-black/[0.04] relative">
-            <button
-              onClick={() => { setShowForm(false); setEditing(null); }}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
-            >
-              <X size={18} />
-            </button>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 rounded-lg bg-cobalt/10 flex items-center justify-center">
-                {editing ? <Pencil size={16} className="text-cobalt" /> : <Plus size={16} className="text-cobalt" />}
+          {/* ──────── PROPIEDADES VIEW ──────── */}
+          {activeView === "propiedades" && (
+            <>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4 mb-8">
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-cobalt/10 flex items-center justify-center">
+                      <Building2 size={16} className="text-cobalt" />
+                    </div>
+                  </div>
+                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{totalProps}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Total</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                      <CheckCircle2 size={16} className="text-emerald-600" />
+                    </div>
+                  </div>
+                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{disponibles}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Disponibles</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                      <XCircle size={16} className="text-orange-500" />
+                    </div>
+                  </div>
+                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{noDisponibles}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Inactivas</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
+                      <TrendingUp size={16} className="text-gold" />
+                    </div>
+                  </div>
+                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{ventaCount}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Venta</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                      <KeyRound size={16} className="text-purple-600" />
+                    </div>
+                  </div>
+                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{rentaCount}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Renta</p>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                      <ArrowLeftRight size={16} className="text-cyan-600" />
+                    </div>
+                  </div>
+                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{rentaVentaCount}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Renta y Venta</p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-heading text-base font-bold text-foreground">
-                  {editing ? "Editar Propiedad" : "Nueva Propiedad"}
-                </h2>
-                {editing && (
-                  <p className="text-xs text-muted-foreground capitalize">{editing.nombre}</p>
+
+              {/* Header + Actions */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <h2 className="font-heading text-lg font-bold text-foreground">Propiedades</h2>
+                {!showForm && (
+                  <button
+                    onClick={() => { setEditing(null); setShowForm(true); }}
+                    className="flex items-center gap-2 bg-cobalt text-white font-semibold text-xs px-5 py-2.5 rounded-lg hover:bg-cobalt-light transition-colors shadow-sm"
+                  >
+                    <Plus size={15} /> Nueva Propiedad
+                  </button>
                 )}
               </div>
-            </div>
-            <PropertyForm
-              initial={editing}
-              onSubmit={editing ? handleUpdate : handleCreate}
-              onCancel={() => {
-                setShowForm(false);
-                setEditing(null);
-              }}
-              loading={saving}
-            />
-          </div>
-        )}
 
-        {/* Property Cards Grid */}
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 size={32} className="animate-spin text-cobalt" />
-          </div>
-        ) : properties.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-black/[0.04] py-16 text-center">
-            <Building2 size={40} className="mx-auto text-muted-foreground/40 mb-3" />
-            <p className="text-sm font-medium text-muted-foreground">No hay propiedades aún</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">Crea tu primera propiedad para empezar</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {properties.map((prop) => {
-              const portada = prop.galeria?.find((f) => f.categoria === "portada")?.url
-                || prop.galeria?.[0]?.url
-                || null;
-              const isDeleting = deletingId === prop.id;
-
-              return (
-                <div
-                  key={prop.id}
-                  className="bg-white rounded-xl shadow-sm border border-black/[0.04] overflow-hidden group hover:shadow-md transition-shadow"
-                >
-                  {/* Image */}
-                  <div className="relative h-40 bg-muted overflow-hidden">
-                    {portada ? (
-                      <img
-                        src={portada}
-                        alt={prop.nombre}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
-                        <Building2 size={36} />
-                      </div>
-                    )}
-                    {/* Badges */}
-                    <div className="absolute top-2.5 left-2.5 flex gap-1.5">
-                      <span className="bg-cobalt/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded capitalize">
-                        {prop.tipo}
-                      </span>
-                      {prop.tipo_oferta && (
-                        <span className="bg-gold/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                          {prop.tipo_oferta}
-                        </span>
-                      )}
+              {/* Form */}
+              {showForm && (
+                <div className="bg-white rounded-xl shadow-sm p-5 md:p-7 mb-8 border border-black/[0.04] relative">
+                  <button
+                    onClick={() => { setShowForm(false); setEditing(null); }}
+                    className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                  >
+                    <X size={18} />
+                  </button>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 rounded-lg bg-cobalt/10 flex items-center justify-center">
+                      {editing ? <Pencil size={16} className="text-cobalt" /> : <Plus size={16} className="text-cobalt" />}
                     </div>
-                    {/* Disponibilidad */}
-                    <button
-                      onClick={() => handleToggleDisponible(prop)}
-                      className="absolute top-2.5 right-2.5 backdrop-blur-sm rounded-full p-1.5 transition-colors"
-                      style={{
-                        background: prop.disponible ? "rgba(16,185,129,0.85)" : "rgba(0,0,0,0.5)",
-                      }}
-                      title={prop.disponible ? "Disponible — click para ocultar" : "No disponible — click para mostrar"}
-                    >
-                      {prop.disponible ? (
-                        <Eye size={13} className="text-white" />
-                      ) : (
-                        <EyeOff size={13} className="text-white/80" />
-                      )}
-                    </button>
-                    {/* Gallery count */}
-                    {prop.galeria && prop.galeria.length > 1 && (
-                      <span className="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                        {prop.galeria.length} fotos
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4">
-                    <h3 className="font-heading text-sm font-bold text-foreground capitalize line-clamp-1 mb-1">
-                      {prop.nombre}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mb-3">{prop.zona}</p>
-
-                    {/* Specs */}
-                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-3">
-                      {prop.recamaras > 0 && (
-                        <span className="flex items-center gap-1">
-                          <BedDouble size={12} /> {prop.recamaras}
-                        </span>
-                      )}
-                      {prop.banos > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Bath size={12} /> {prop.banos}
-                        </span>
-                      )}
-                      {prop.metros_cuadrados > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Maximize size={12} /> {prop.metros_cuadrados}m²
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Price + Actions */}
-                    <div className="flex items-center justify-between pt-3 border-t border-border/60">
-                      <span className="font-heading text-sm font-bold text-cobalt">
-                        {formatPrice(prop.precio)}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => {
-                            setEditing(prop);
-                            setShowForm(true);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          className="p-2 rounded-lg hover:bg-cobalt/10 transition-colors"
-                          title="Editar"
-                        >
-                          <Pencil size={14} className="text-cobalt" />
-                        </button>
-
-                        {isDeleting ? (
-                          <div className="flex items-center gap-1 ml-1">
-                            <button
-                              onClick={() => handleDelete(prop.id)}
-                              className="text-[10px] font-bold text-white bg-destructive rounded px-2 py-1 hover:bg-destructive/80 transition-colors"
-                            >
-                              Eliminar
-                            </button>
-                            <button
-                              onClick={() => setDeletingId(null)}
-                              className="text-[10px] font-medium text-muted-foreground hover:text-foreground px-1.5 py-1"
-                            >
-                              No
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setDeletingId(prop.id)}
-                            className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={14} className="text-destructive/70" />
-                          </button>
-                        )}
-                      </div>
+                    <div>
+                      <h2 className="font-heading text-base font-bold text-foreground">
+                        {editing ? "Editar Propiedad" : "Nueva Propiedad"}
+                      </h2>
+                      {editing && <p className="text-xs text-muted-foreground capitalize">{editing.nombre}</p>}
                     </div>
                   </div>
+                  <PropertyForm
+                    initial={editing}
+                    onSubmit={editing ? handleUpdate : handleCreate}
+                    onCancel={() => { setShowForm(false); setEditing(null); }}
+                    loading={saving}
+                  />
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </main>
+              )}
+
+              {/* Property Cards Grid */}
+              {loading ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 size={32} className="animate-spin text-cobalt" />
+                </div>
+              ) : properties.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-sm border border-black/[0.04] py-16 text-center">
+                  <Building2 size={40} className="mx-auto text-muted-foreground/40 mb-3" />
+                  <p className="text-sm font-medium text-muted-foreground">No hay propiedades aún</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Crea tu primera propiedad para empezar</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {properties.map((prop) => {
+                    const portada = prop.galeria?.find((f) => f.categoria === "portada")?.url || prop.galeria?.[0]?.url || null;
+                    const isDeleting = deletingId === prop.id;
+
+                    return (
+                      <div key={prop.id} className="bg-white rounded-xl shadow-sm border border-black/[0.04] overflow-hidden group hover:shadow-md transition-shadow">
+                        <div className="relative h-40 bg-muted overflow-hidden">
+                          {portada ? (
+                            <img src={portada} alt={prop.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
+                              <Building2 size={36} />
+                            </div>
+                          )}
+                          <div className="absolute top-2.5 left-2.5 flex gap-1.5">
+                            <span className="bg-cobalt/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded capitalize">{prop.tipo}</span>
+                            {prop.tipo_oferta && (
+                              <span className="bg-gold/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded">{prop.tipo_oferta}</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleToggleDisponible(prop)}
+                            className="absolute top-2.5 right-2.5 backdrop-blur-sm rounded-full p-1.5 transition-colors"
+                            style={{ background: prop.disponible ? "rgba(16,185,129,0.85)" : "rgba(0,0,0,0.5)" }}
+                            title={prop.disponible ? "Disponible — click para ocultar" : "No disponible — click para mostrar"}
+                          >
+                            {prop.disponible ? <Eye size={13} className="text-white" /> : <EyeOff size={13} className="text-white/80" />}
+                          </button>
+                          {prop.galeria && prop.galeria.length > 1 && (
+                            <span className="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                              {prop.galeria.length} fotos
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-heading text-sm font-bold text-foreground capitalize line-clamp-1 mb-1">{prop.nombre}</h3>
+                          <p className="text-xs text-muted-foreground mb-3">{prop.zona}</p>
+                          <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-3">
+                            {prop.recamaras > 0 && <span className="flex items-center gap-1"><BedDouble size={12} /> {prop.recamaras}</span>}
+                            {prop.banos > 0 && <span className="flex items-center gap-1"><Bath size={12} /> {prop.banos}</span>}
+                            {prop.metros_cuadrados > 0 && <span className="flex items-center gap-1"><Maximize size={12} /> {prop.metros_cuadrados}m²</span>}
+                          </div>
+                          <div className="flex items-center justify-between pt-3 border-t border-border/60">
+                            <span className="font-heading text-sm font-bold text-cobalt">{formatPrice(prop.precio)}</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => { setEditing(prop); setShowForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                                className="p-2 rounded-lg hover:bg-cobalt/10 transition-colors" title="Editar"
+                              >
+                                <Pencil size={14} className="text-cobalt" />
+                              </button>
+                              {isDeleting ? (
+                                <div className="flex items-center gap-1 ml-1">
+                                  <button onClick={() => handleDelete(prop.id)} className="text-[10px] font-bold text-white bg-destructive rounded px-2 py-1 hover:bg-destructive/80 transition-colors">Eliminar</button>
+                                  <button onClick={() => setDeletingId(null)} className="text-[10px] font-medium text-muted-foreground hover:text-foreground px-1.5 py-1">No</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => setDeletingId(prop.id)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors" title="Eliminar">
+                                  <Trash2 size={14} className="text-destructive/70" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ──────── CONTACTOS VIEW ──────── */}
+          {activeView === "contactos" && <ContactsView />}
+
+        </main>
+      </div>
     </div>
   );
 };
