@@ -9,6 +9,14 @@ import {
   Home,
   Eye,
   EyeOff,
+  Building2,
+  TrendingUp,
+  CheckCircle2,
+  XCircle,
+  BedDouble,
+  Bath,
+  Maximize,
+  X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatPrice } from "@/lib/formatPrice";
@@ -114,71 +122,134 @@ const AdminDashboard = () => {
 
   if (!user) return null;
 
+  // Stats
+  const totalProps = properties.length;
+  const disponibles = properties.filter((p) => p.disponible).length;
+  const noDisponibles = totalProps - disponibles;
+  const ventaCount = properties.filter((p) => p.tipo_oferta?.toUpperCase().includes("VENTA")).length;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(220,20%,95%)]">
       {/* Top bar */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
+      <header className="bg-cobalt sticky top-0 z-50">
         <div className="container mx-auto px-4 lg:px-8 flex items-center justify-between py-3">
           <div className="flex items-center gap-3">
-            <svg width="28" height="28" viewBox="0 0 36 36" fill="none" className="text-cobalt">
+            <svg width="26" height="26" viewBox="0 0 36 36" fill="none" className="text-white">
               <rect x="4" y="8" width="12" height="20" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
               <rect x="20" y="4" width="12" height="24" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
               <line x1="10" y1="14" x2="10" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
               <line x1="26" y1="10" x2="26" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            <span className="font-heading text-base font-bold tracking-wider text-cobalt">
+            <span className="font-heading text-sm font-bold tracking-widest text-white/90 uppercase">
               LUCE Admin
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <a
               href="/"
               target="_blank"
-              className="text-xs text-muted-foreground hover:text-cobalt transition-colors flex items-center gap-1"
+              className="text-xs text-white/60 hover:text-white transition-colors flex items-center gap-1.5"
             >
-              <Home size={14} /> Ver sitio
+              <Home size={13} /> Ver sitio
             </a>
-            <span className="text-xs text-muted-foreground hidden sm:block">
+            <span className="text-xs text-white/40 hidden sm:block">
               {user.email}
             </span>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-white/60 hover:text-red-300 transition-colors"
             >
-              <LogOut size={14} /> Salir
+              <LogOut size={13} /> Salir
             </button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 lg:px-8 py-8">
-        {/* Header + Actions */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="font-heading text-2xl font-bold text-foreground">Propiedades</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {properties.length} propiedad{properties.length !== 1 ? "es" : ""} en total
-            </p>
+      <main className="container mx-auto px-4 lg:px-8 py-6 lg:py-8 max-w-7xl">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8">
+          <div className="bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-black/[0.04]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-9 h-9 rounded-lg bg-cobalt/10 flex items-center justify-center">
+                <Building2 size={18} className="text-cobalt" />
+              </div>
+              <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">Total</span>
+            </div>
+            <p className="font-heading text-2xl lg:text-3xl font-bold text-foreground tabular-nums">{totalProps}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Propiedades</p>
           </div>
+          <div className="bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-black/[0.04]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <CheckCircle2 size={18} className="text-emerald-600" />
+              </div>
+              <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">Activas</span>
+            </div>
+            <p className="font-heading text-2xl lg:text-3xl font-bold text-foreground tabular-nums">{disponibles}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Disponibles</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-black/[0.04]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <XCircle size={18} className="text-orange-500" />
+              </div>
+              <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">Inactivas</span>
+            </div>
+            <p className="font-heading text-2xl lg:text-3xl font-bold text-foreground tabular-nums">{noDisponibles}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">No disponibles</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-black/[0.04]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-9 h-9 rounded-lg bg-gold/10 flex items-center justify-center">
+                <TrendingUp size={18} className="text-gold" />
+              </div>
+              <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">Venta</span>
+            </div>
+            <p className="font-heading text-2xl lg:text-3xl font-bold text-foreground tabular-nums">{ventaCount}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">En venta</p>
+          </div>
+        </div>
+
+        {/* Header + Actions */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <h2 className="font-heading text-lg font-bold text-foreground">
+            Propiedades
+          </h2>
           {!showForm && (
             <button
               onClick={() => {
                 setEditing(null);
                 setShowForm(true);
               }}
-              className="flex items-center gap-2 bg-cobalt text-primary-foreground font-semibold text-sm px-5 py-2.5 rounded hover:bg-cobalt-light transition-colors"
+              className="flex items-center gap-2 bg-cobalt text-white font-semibold text-xs px-5 py-2.5 rounded-lg hover:bg-cobalt-light transition-colors shadow-sm"
             >
-              <Plus size={16} /> Nueva Propiedad
+              <Plus size={15} /> Nueva Propiedad
             </button>
           )}
         </div>
 
         {/* Form */}
         {showForm && (
-          <div className="bg-card rounded-lg shadow-lg p-6 md:p-8 mb-8 border border-border">
-            <h2 className="font-heading text-lg font-semibold text-foreground mb-5">
-              {editing ? `Editando: ${editing.nombre}` : "Nueva Propiedad"}
-            </h2>
+          <div className="bg-white rounded-xl shadow-sm p-5 md:p-7 mb-8 border border-black/[0.04] relative">
+            <button
+              onClick={() => { setShowForm(false); setEditing(null); }}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+            >
+              <X size={18} />
+            </button>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-cobalt/10 flex items-center justify-center">
+                {editing ? <Pencil size={16} className="text-cobalt" /> : <Plus size={16} className="text-cobalt" />}
+              </div>
+              <div>
+                <h2 className="font-heading text-base font-bold text-foreground">
+                  {editing ? "Editar Propiedad" : "Nueva Propiedad"}
+                </h2>
+                {editing && (
+                  <p className="text-xs text-muted-foreground capitalize">{editing.nombre}</p>
+                )}
+              </div>
+            </div>
             <PropertyForm
               initial={editing}
               onSubmit={editing ? handleUpdate : handleCreate}
@@ -191,94 +262,132 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Table */}
+        {/* Property Cards Grid */}
         {loading ? (
           <div className="flex justify-center py-20">
             <Loader2 size={32} className="animate-spin text-cobalt" />
           </div>
+        ) : properties.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-black/[0.04] py-16 text-center">
+            <Building2 size={40} className="mx-auto text-muted-foreground/40 mb-3" />
+            <p className="text-sm font-medium text-muted-foreground">No hay propiedades aún</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Crea tu primera propiedad para empezar</p>
+          </div>
         ) : (
-          <div className="bg-card rounded-lg shadow border border-border overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left font-semibold text-foreground px-4 py-3">Propiedad</th>
-                  <th className="text-left font-semibold text-foreground px-4 py-3 hidden md:table-cell">Tipo</th>
-                  <th className="text-left font-semibold text-foreground px-4 py-3 hidden lg:table-cell">Zona</th>
-                  <th className="text-left font-semibold text-foreground px-4 py-3">Precio</th>
-                  <th className="text-left font-semibold text-foreground px-4 py-3 hidden sm:table-cell">Oferta</th>
-                  <th className="text-center font-semibold text-foreground px-4 py-3">Estado</th>
-                  <th className="text-right font-semibold text-foreground px-4 py-3">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {properties.map((prop) => (
-                  <tr key={prop.id} className="border-b border-border last:border-0 hover:bg-muted/30">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        {prop.galeria?.find((f) => f.categoria === "portada")?.url && (
-                          <img
-                            src={prop.galeria.find((f) => f.categoria === "portada")!.url}
-                            alt={prop.nombre}
-                            className="w-10 h-10 rounded object-cover hidden sm:block"
-                          />
-                        )}
-                        <span className="font-medium text-foreground capitalize line-clamp-1">
-                          {prop.nombre}
-                        </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {properties.map((prop) => {
+              const portada = prop.galeria?.find((f) => f.categoria === "portada")?.url
+                || prop.galeria?.[0]?.url
+                || null;
+              const isDeleting = deletingId === prop.id;
+
+              return (
+                <div
+                  key={prop.id}
+                  className="bg-white rounded-xl shadow-sm border border-black/[0.04] overflow-hidden group hover:shadow-md transition-shadow"
+                >
+                  {/* Image */}
+                  <div className="relative h-40 bg-muted overflow-hidden">
+                    {portada ? (
+                      <img
+                        src={portada}
+                        alt={prop.nombre}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
+                        <Building2 size={36} />
                       </div>
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="capitalize text-muted-foreground">{prop.tipo}</span>
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground">
-                      {prop.zona}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-foreground">
-                      {formatPrice(prop.precio)}
-                    </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      <span className="text-xs font-semibold text-gold">
-                        {prop.tipo_oferta || "—"}
+                    )}
+                    {/* Badges */}
+                    <div className="absolute top-2.5 left-2.5 flex gap-1.5">
+                      <span className="bg-cobalt/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded capitalize">
+                        {prop.tipo}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => handleToggleDisponible(prop)}
-                        title={prop.disponible ? "Marcar como no disponible" : "Marcar como disponible"}
-                        className="inline-flex"
-                      >
-                        {prop.disponible ? (
-                          <Eye size={16} className="text-green-600" />
-                        ) : (
-                          <EyeOff size={16} className="text-muted-foreground" />
-                        )}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
+                      {prop.tipo_oferta && (
+                        <span className="bg-gold/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                          {prop.tipo_oferta}
+                        </span>
+                      )}
+                    </div>
+                    {/* Disponibilidad */}
+                    <button
+                      onClick={() => handleToggleDisponible(prop)}
+                      className="absolute top-2.5 right-2.5 backdrop-blur-sm rounded-full p-1.5 transition-colors"
+                      style={{
+                        background: prop.disponible ? "rgba(16,185,129,0.85)" : "rgba(0,0,0,0.5)",
+                      }}
+                      title={prop.disponible ? "Disponible — click para ocultar" : "No disponible — click para mostrar"}
+                    >
+                      {prop.disponible ? (
+                        <Eye size={13} className="text-white" />
+                      ) : (
+                        <EyeOff size={13} className="text-white/80" />
+                      )}
+                    </button>
+                    {/* Gallery count */}
+                    {prop.galeria && prop.galeria.length > 1 && (
+                      <span className="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                        {prop.galeria.length} fotos
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-heading text-sm font-bold text-foreground capitalize line-clamp-1 mb-1">
+                      {prop.nombre}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-3">{prop.zona}</p>
+
+                    {/* Specs */}
+                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-3">
+                      {prop.recamaras > 0 && (
+                        <span className="flex items-center gap-1">
+                          <BedDouble size={12} /> {prop.recamaras}
+                        </span>
+                      )}
+                      {prop.banos > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Bath size={12} /> {prop.banos}
+                        </span>
+                      )}
+                      {prop.metros_cuadrados > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Maximize size={12} /> {prop.metros_cuadrados}m²
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Price + Actions */}
+                    <div className="flex items-center justify-between pt-3 border-t border-border/60">
+                      <span className="font-heading text-sm font-bold text-cobalt">
+                        {formatPrice(prop.precio)}
+                      </span>
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => {
                             setEditing(prop);
                             setShowForm(true);
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
-                          className="p-2.5 rounded hover:bg-muted transition-colors"
+                          className="p-2 rounded-lg hover:bg-cobalt/10 transition-colors"
                           title="Editar"
                         >
-                          <Pencil size={16} className="text-cobalt" />
+                          <Pencil size={14} className="text-cobalt" />
                         </button>
 
-                        {deletingId === prop.id ? (
-                          <div className="flex items-center gap-1">
+                        {isDeleting ? (
+                          <div className="flex items-center gap-1 ml-1">
                             <button
                               onClick={() => handleDelete(prop.id)}
-                              className="text-xs font-semibold text-destructive hover:underline px-2 py-1.5"
+                              className="text-[10px] font-bold text-white bg-destructive rounded px-2 py-1 hover:bg-destructive/80 transition-colors"
                             >
-                              Confirmar
+                              Eliminar
                             </button>
                             <button
                               onClick={() => setDeletingId(null)}
-                              className="text-xs text-muted-foreground hover:underline px-2 py-1.5"
+                              className="text-[10px] font-medium text-muted-foreground hover:text-foreground px-1.5 py-1"
                             >
                               No
                             </button>
@@ -286,18 +395,18 @@ const AdminDashboard = () => {
                         ) : (
                           <button
                             onClick={() => setDeletingId(prop.id)}
-                            className="p-2.5 rounded hover:bg-destructive/10 transition-colors"
+                            className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
                             title="Eliminar"
                           >
-                            <Trash2 size={16} className="text-destructive" />
+                            <Trash2 size={14} className="text-destructive/70" />
                           </button>
                         )}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </main>
