@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Plus,
   Loader2,
-  Pencil,
   Trash2,
   X,
   Save,
@@ -24,6 +23,8 @@ const ETAPAS = [
   { value: "cerrado", label: "Cerrado", color: "bg-emerald-100 text-emerald-700" },
   { value: "perdido", label: "Perdido", color: "bg-red-100 text-red-700" },
 ];
+
+const CREDITO_OPTIONS = ["", "bancario", "infonavit", "fovissste", "contado"];
 
 type ContactoForm = Omit<Contacto, "id" | "created_at">;
 
@@ -54,24 +55,25 @@ interface ColumnDef {
   label: string;
   defaultWidth: number;
   minWidth: number;
+  resizable?: boolean;
 }
 
 const COLUMNS: ColumnDef[] = [
-  { key: "select",     label: "",            defaultWidth: 40,  minWidth: 40 },
-  { key: "nombre",     label: "Nombre",      defaultWidth: 180, minWidth: 100 },
-  { key: "correo",     label: "Correo",      defaultWidth: 200, minWidth: 120 },
-  { key: "etapa",      label: "Etapa",       defaultWidth: 150, minWidth: 100 },
-  { key: "telefono",   label: "Teléfono",    defaultWidth: 140, minWidth: 100 },
-  { key: "credito",    label: "Crédito",     defaultWidth: 110, minWidth: 80 },
-  { key: "zona",       label: "Zona",        defaultWidth: 160, minWidth: 100 },
-  { key: "propiedad",  label: "Propiedad",   defaultWidth: 220, minWidth: 140 },
-  { key: "presupuesto",label: "Presupuesto", defaultWidth: 140, minWidth: 100 },
-  { key: "visita",     label: "Visita",      defaultWidth: 130, minWidth: 90 },
-  { key: "creacion",   label: "Creación",    defaultWidth: 130, minWidth: 90 },
-  { key: "acciones",   label: "Acciones",    defaultWidth: 100, minWidth: 90 },
+  { key: "select",     label: "",            defaultWidth: 40,  minWidth: 40,  resizable: false },
+  { key: "nombre",     label: "Nombre",      defaultWidth: 180, minWidth: 100, resizable: true },
+  { key: "correo",     label: "Correo",      defaultWidth: 220, minWidth: 120, resizable: true },
+  { key: "etapa",      label: "Etapa",       defaultWidth: 180, minWidth: 120, resizable: true },
+  { key: "telefono",   label: "Teléfono",    defaultWidth: 150, minWidth: 100, resizable: true },
+  { key: "credito",    label: "Crédito",     defaultWidth: 120, minWidth: 80,  resizable: true },
+  { key: "zona",       label: "Zona",        defaultWidth: 160, minWidth: 100, resizable: true },
+  { key: "propiedad",  label: "Propiedad",   defaultWidth: 240, minWidth: 140, resizable: true },
+  { key: "presupuesto",label: "Presupuesto", defaultWidth: 150, minWidth: 100, resizable: true },
+  { key: "visita",     label: "Fecha visita",defaultWidth: 180, minWidth: 130, resizable: true },
+  { key: "creacion",   label: "Creación",    defaultWidth: 150, minWidth: 110, resizable: true },
+  { key: "acciones",   label: "Acciones",    defaultWidth: 80,  minWidth: 70,  resizable: false },
 ];
 
-const WIDTHS_STORAGE_KEY = "crm:contactos:column-widths:v1";
+const WIDTHS_STORAGE_KEY = "crm:contactos:column-widths:v2";
 
 const loadSavedWidths = (): Record<string, number> => {
   try {
@@ -87,6 +89,17 @@ interface ContactsViewProps {
   onOpenProperty?: (prop: Propiedad) => void;
 }
 
+type EditableField =
+  | "nombre"
+  | "correo"
+  | "telefono"
+  | "etapa_seguimiento"
+  | "tipo_credito"
+  | "zona_interes"
+  | "propiedad_interesada"
+  | "presupuesto_max"
+  | "fecha_visita";
+
 const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   const [contacts, setContacts] = useState<Contacto[]>([]);
   const [propiedades, setPropiedades] = useState<Propiedad[]>([]);
@@ -94,30 +107,33 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Contacto | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
 
   const [form, setForm] = useState<ContactoForm>(emptyForm);
   const [presupuestoDisplay, setPresupuestoDisplay] = useState("");
 
-  // ─── Selection state ─────────────────────────────────────────────
+  // ─── Inline cell editing ─────────────────────────────────────────
+  const [editingCell, setEditingCell] = useState<{ id: number; field: EditableField } | null>(null);
+  const [cellDraft, setCellDraft] = useState<string>("");
+
+  // ─── Selection / delete confirmation ─────────────────────────────
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
+  const [confirmDeleteIds, setConfirmDeleteIds] = useState<number[] | null>(null);
   const [confirmInput, setConfirmInput] = useState("");
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  // ─── Column widths state ─────────────────────────────────────────
+  // ─── Column widths ───────────────────────────────────────────────
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const saved = loadSavedWidths();
     const initial: Record<string, number> = {};
     COLUMNS.forEach((col) => {
       initial[col.key] = saved[col.key] ?? col.defaultWidth;
     });
+    // Force the select column to always be its default (non-resizable)
+    initial.select = COLUMNS[0].defaultWidth;
     return initial;
   });
 
-  // Persist widths
   useEffect(() => {
     try {
       localStorage.setItem(WIDTHS_STORAGE_KEY, JSON.stringify(columnWidths));
@@ -132,7 +148,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     e.preventDefault();
     e.stopPropagation();
     const col = COLUMNS.find((c) => c.key === key);
-    if (!col) return;
+    if (!col || col.resizable === false) return;
     resizingRef.current = {
       key,
       startX: e.clientX,
@@ -145,8 +161,8 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
       const ref = resizingRef.current;
       if (!ref) return;
       const delta = ev.clientX - ref.startX;
-      const col = COLUMNS.find((c) => c.key === ref.key);
-      const minW = col?.minWidth ?? 50;
+      const c = COLUMNS.find((cc) => cc.key === ref.key);
+      const minW = c?.minWidth ?? 50;
       const newWidth = Math.max(minW, ref.startWidth + delta);
       setColumnWidths((prev) => ({ ...prev, [ref.key]: newWidth }));
     };
@@ -190,26 +206,8 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   }, [fetchContacts, fetchPropiedades]);
 
   const openNew = () => {
-    setEditing(null);
     setForm(emptyForm);
     setPresupuestoDisplay("");
-    setShowForm(true);
-  };
-
-  const openEdit = (c: Contacto) => {
-    setEditing(c);
-    setForm({
-      nombre: c.nombre,
-      correo: c.correo,
-      etapa_seguimiento: c.etapa_seguimiento,
-      telefono: c.telefono,
-      tipo_credito: c.tipo_credito,
-      zona_interes: c.zona_interes,
-      presupuesto_max: c.presupuesto_max,
-      fecha_visita: c.fecha_visita,
-      propiedad_interesada: c.propiedad_interesada,
-    });
-    setPresupuestoDisplay(formatBudget(c.presupuesto_max));
     setShowForm(true);
   };
 
@@ -217,46 +215,91 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     e.preventDefault();
     setSaving(true);
 
-    if (editing) {
-      const { error } = await supabase
-        .from("contactos")
-        .update(form)
-        .eq("id", editing.id);
-      if (error) alert("Error: " + error.message);
-    } else {
-      const { error } = await supabase.from("contactos").insert(form);
-      if (error) alert("Error: " + error.message);
-    }
+    const { error } = await supabase.from("contactos").insert(form);
+    if (error) alert("Error: " + error.message);
 
     setSaving(false);
     setShowForm(false);
-    setEditing(null);
     await fetchContacts();
   };
 
-  const handleDelete = async (id: number) => {
-    await supabase.from("contactos").delete().eq("id", id);
-    setDeletingId(null);
+  // ─── Inline cell edit helpers ────────────────────────────────────
+  const startEdit = (id: number, field: EditableField, initialValue: string) => {
+    setEditingCell({ id, field });
+    setCellDraft(initialValue);
+  };
+
+  const cancelEdit = () => {
+    setEditingCell(null);
+    setCellDraft("");
+  };
+
+  const saveCell = async () => {
+    if (!editingCell) return;
+    const { id, field } = editingCell;
+    const current = contacts.find((c) => c.id === id);
+    if (!current) {
+      cancelEdit();
+      return;
+    }
+
+    let newValue: unknown = cellDraft;
+    if (field === "presupuesto_max") {
+      newValue = parseBudget(cellDraft);
+    } else if (field === "propiedad_interesada") {
+      newValue = cellDraft ? Number(cellDraft) : null;
+    } else if (field === "fecha_visita") {
+      newValue = cellDraft ? new Date(cellDraft).toISOString() : null;
+    } else if (field === "nombre") {
+      const trimmed = cellDraft.trim();
+      if (!trimmed) {
+        cancelEdit();
+        return;
+      }
+      newValue = trimmed;
+    } else {
+      // text fields: treat empty as null
+      newValue = cellDraft === "" ? null : cellDraft;
+    }
+
+    // Skip if unchanged
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((current as any)[field] === newValue) {
+      cancelEdit();
+      return;
+    }
+
+    // Optimistic UI
+    setContacts((prev) =>
+      prev.map((c) => (c.id === id ? ({ ...c, [field]: newValue } as Contacto) : c)),
+    );
+    cancelEdit();
+
+    const { error } = await supabase
+      .from("contactos")
+      .update({ [field]: newValue })
+      .eq("id", id);
+    if (error) {
+      alert("Error al guardar: " + error.message);
+      await fetchContacts(); // revert
+    }
+  };
+
+  // ─── Delete ──────────────────────────────────────────────────────
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteIds || confirmDeleteIds.length === 0) return;
+    setBulkDeleting(true);
+    const { error } = await supabase.from("contactos").delete().in("id", confirmDeleteIds);
+    if (error) alert("Error al eliminar: " + error.message);
+    setBulkDeleting(false);
+    setConfirmDeleteIds(null);
+    setConfirmInput("");
+    // Clear selection of deleted
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.delete(id);
+      confirmDeleteIds.forEach((id) => next.delete(id));
       return next;
     });
-    await fetchContacts();
-  };
-
-  const handleBulkDelete = async () => {
-    const ids = Array.from(selectedIds);
-    if (ids.length === 0) return;
-    setBulkDeleting(true);
-    const { error } = await supabase.from("contactos").delete().in("id", ids);
-    if (error) {
-      alert("Error al eliminar: " + error.message);
-    }
-    setBulkDeleting(false);
-    setShowBulkConfirm(false);
-    setConfirmInput("");
-    setSelectedIds(new Set());
     await fetchContacts();
   };
 
@@ -318,9 +361,61 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     "w-full border border-border/80 rounded-lg px-3 py-2.5 text-base sm:text-sm bg-white text-foreground outline-none focus:ring-2 focus:ring-cobalt/20 focus:border-cobalt/40 placeholder:text-muted-foreground/50 transition-all";
 
   const thClass = "relative text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 select-none";
-  const tdClass = "px-4 py-3 align-middle overflow-hidden whitespace-nowrap text-ellipsis";
+  const tdBase = "align-middle border-b border-border/30 overflow-hidden";
+
+  // Inline input classes (compact, fills cell)
+  const cellInputClass =
+    "w-full h-full min-h-[38px] px-3 py-1.5 text-xs bg-white border-2 border-cobalt rounded outline-none ring-2 ring-cobalt/20 text-foreground";
 
   const totalTableWidth = COLUMNS.reduce((sum, c) => sum + (columnWidths[c.key] ?? c.defaultWidth), 0);
+
+  // ─── Format helpers ──────────────────────────────────────────────
+  const formatDateTime = (iso: string | null) => {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleString("es-MX", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Mexico_City",
+    });
+  };
+
+  const toDateTimeLocalInput = (iso: string | null): string => {
+    if (!iso) return "";
+    // Convert ISO (UTC) to local datetime-local input format (yyyy-MM-ddTHH:mm)
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  // Key handlers for inline inputs
+  const handleCellKey = (e: React.KeyboardEvent, isTextarea = false) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      cancelEdit();
+    } else if (e.key === "Enter" && !isTextarea) {
+      e.preventDefault();
+      saveCell();
+    }
+  };
+
+  // Bulk delete initiation
+  const startBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    setConfirmDeleteIds(Array.from(selectedIds));
+    setConfirmInput("");
+  };
+  const startRowDelete = (id: number) => {
+    setConfirmDeleteIds([id]);
+    setConfirmInput("");
+  };
+
+  const pendingDeleteCount = confirmDeleteIds?.length ?? 0;
+  const pendingContacts = confirmDeleteIds
+    ? contacts.filter((c) => confirmDeleteIds.includes(c.id))
+    : [];
 
   return (
     <div>
@@ -338,7 +433,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
         ))}
       </div>
 
-      {/* Header */}
+      {/* Header + search */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
         <div className="relative flex-1 max-w-xs">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
@@ -359,7 +454,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
         )}
       </div>
 
-      {/* Selection Bar */}
+      {/* Selection bar */}
       {selectedCount > 0 && (
         <div className="flex items-center justify-between gap-3 mb-4 bg-cobalt/5 border border-cobalt/20 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
           <div className="flex items-center gap-2">
@@ -376,7 +471,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
               Deseleccionar
             </button>
             <button
-              onClick={() => { setConfirmInput(""); setShowBulkConfirm(true); }}
+              onClick={startBulkDelete}
               className="flex items-center gap-1.5 bg-destructive text-white text-[11px] font-bold px-3 py-1.5 rounded hover:bg-destructive/90 transition-colors"
             >
               <Trash2 size={12} /> Eliminar {selectedCount}
@@ -385,22 +480,20 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
         </div>
       )}
 
-      {/* Inline Form */}
+      {/* Create form (inline) */}
       {showForm && (
         <div className="bg-white rounded-xl shadow-sm p-5 md:p-6 mb-6 border border-black/[0.04] relative">
           <button
-            onClick={() => { setShowForm(false); setEditing(null); }}
+            onClick={() => setShowForm(false)}
             className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
           >
             <X size={16} />
           </button>
           <div className="flex items-center gap-2 mb-5">
             <div className="w-7 h-7 rounded-lg bg-cobalt/10 flex items-center justify-center">
-              {editing ? <Pencil size={14} className="text-cobalt" /> : <Plus size={14} className="text-cobalt" />}
+              <Plus size={14} className="text-cobalt" />
             </div>
-            <h3 className="text-sm font-bold text-foreground">
-              {editing ? "Editar Contacto" : "Nuevo Contacto"}
-            </h3>
+            <h3 className="text-sm font-bold text-foreground">Nuevo Contacto</h3>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -478,7 +571,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                 <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Fecha de visita</label>
                 <input
                   type="datetime-local"
-                  value={form.fecha_visita ? form.fecha_visita.slice(0, 16) : ""}
+                  value={form.fecha_visita ? toDateTimeLocalInput(form.fecha_visita) : ""}
                   onChange={(e) => set("fecha_visita", e.target.value ? new Date(e.target.value).toISOString() : null)}
                   className={inputClass}
                 />
@@ -491,11 +584,11 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                 className="flex items-center gap-2 bg-cobalt text-white font-semibold text-xs px-6 py-2.5 rounded-lg hover:bg-cobalt-light transition-colors disabled:opacity-70"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                {editing ? "Guardar" : "Crear"}
+                Crear
               </button>
               <button
                 type="button"
-                onClick={() => { setShowForm(false); setEditing(null); }}
+                onClick={() => setShowForm(false)}
                 className="text-xs font-semibold text-muted-foreground hover:text-foreground px-4 py-2.5 rounded-lg hover:bg-muted transition-colors"
               >
                 Cancelar
@@ -529,9 +622,9 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
             </colgroup>
             <thead>
               <tr className="bg-muted/30">
-                {COLUMNS.map((col, idx) => {
-                  const isLast = idx === COLUMNS.length - 1;
+                {COLUMNS.map((col) => {
                   const isSelect = col.key === "select";
+                  const isResizable = col.resizable !== false;
                   return (
                     <th
                       key={col.key}
@@ -553,7 +646,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                           <span className="truncate">{col.label}</span>
                         )}
                       </div>
-                      {!isLast && (
+                      {isResizable && (
                         <div
                           onMouseDown={(e) => handleResizeStart(e, col.key)}
                           className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize group z-10"
@@ -570,18 +663,48 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
             <tbody>
               {filteredContacts.map((c) => {
                 const etapa = ETAPAS.find((e) => e.value === c.etapa_seguimiento);
-                const isDeleting = deletingId === c.id;
                 const isSelected = selectedIds.has(c.id);
                 const prop = c.propiedad_interesada ? allPropiedades.find((p) => p.id === c.propiedad_interesada) : null;
+                const rowBg = isSelected ? "bg-cobalt/[0.04]" : "hover:bg-muted/20";
+
+                const isEditing = (field: EditableField) =>
+                  editingCell?.id === c.id && editingCell?.field === field;
+
+                // Editable text cell helper
+                const textCell = (field: EditableField, value: string | null, placeholder: string) => {
+                  if (isEditing(field)) {
+                    return (
+                      <input
+                        autoFocus
+                        type="text"
+                        value={cellDraft}
+                        onChange={(e) => setCellDraft(e.target.value)}
+                        onBlur={saveCell}
+                        onKeyDown={(e) => handleCellKey(e)}
+                        className={cellInputClass}
+                        placeholder={placeholder}
+                      />
+                    );
+                  }
+                  return (
+                    <div
+                      onClick={() => startEdit(c.id, field, value ?? "")}
+                      className="cursor-text hover:bg-cobalt/5 -mx-1 px-1 py-1 rounded min-h-[28px] flex items-center transition-colors truncate"
+                      title={value || "Click para editar"}
+                    >
+                      {value ? (
+                        <span className="truncate">{value}</span>
+                      ) : (
+                        <span className="text-muted-foreground/40 italic">{placeholder}</span>
+                      )}
+                    </div>
+                  );
+                };
 
                 return (
-                  <tr
-                    key={c.id}
-                    className={`border-b border-border/30 last:border-0 transition-colors ${
-                      isSelected ? "bg-cobalt/[0.04]" : "hover:bg-muted/20"
-                    }`}
-                  >
-                    <td className={`${tdClass} px-3 border-b border-border/30`}>
+                  <tr key={c.id} className={`transition-colors ${rowBg}`}>
+                    {/* Checkbox */}
+                    <td className={`${tdBase} px-3 py-3`}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -590,95 +713,245 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                         aria-label={`Seleccionar ${c.nombre}`}
                       />
                     </td>
-                    <td className={`${tdClass} border-b border-border/30`}>
-                      <span className="font-medium text-foreground">{c.nombre}</span>
-                    </td>
-                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs`}>
-                      {c.correo || "—"}
-                    </td>
-                    <td className={`${tdClass} border-b border-border/30`}>
-                      <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${etapa?.color || "bg-gray-100 text-gray-600"}`}>
-                        {etapa?.label || c.etapa_seguimiento}
-                      </span>
-                    </td>
-                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs tabular-nums`}>
-                      {c.telefono || "—"}
-                    </td>
-                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs capitalize`}>
-                      {c.tipo_credito || "—"}
-                    </td>
-                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs`}>
-                      {c.zona_interes || "—"}
-                    </td>
-                    <td className={`${tdClass} border-b border-border/30 text-xs`}>
-                      {!c.propiedad_interesada ? (
-                        <span className="text-muted-foreground">—</span>
-                      ) : prop && onOpenProperty ? (
-                        <button
-                          type="button"
-                          onClick={() => onOpenProperty(prop)}
-                          className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded hover:bg-cobalt/15 hover:underline transition-colors cursor-pointer max-w-full"
-                          title={`Abrir "${prop.nombre}" en Propiedades`}
-                        >
-                          <Building2 size={10} className="flex-shrink-0" />
-                          <span className="truncate">{prop.nombre}</span>
-                        </button>
+
+                    {/* Nombre */}
+                    <td className={`${tdBase} px-4 py-2`}>
+                      {isEditing("nombre") ? (
+                        <input
+                          autoFocus
+                          type="text"
+                          value={cellDraft}
+                          onChange={(e) => setCellDraft(e.target.value)}
+                          onBlur={saveCell}
+                          onKeyDown={(e) => handleCellKey(e)}
+                          className={cellInputClass + " font-medium"}
+                        />
                       ) : (
-                        <span className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded max-w-full">
-                          <Building2 size={10} className="flex-shrink-0" />
-                          <span className="truncate">{prop?.nombre || `#${c.propiedad_interesada}`}</span>
-                        </span>
+                        <div
+                          onClick={() => startEdit(c.id, "nombre", c.nombre)}
+                          className="cursor-text hover:bg-cobalt/5 -mx-1 px-1 py-1 rounded font-medium text-foreground truncate"
+                          title="Click para editar"
+                        >
+                          {c.nombre}
+                        </div>
                       )}
                     </td>
-                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs tabular-nums`}>
-                      {c.presupuesto_max ? `$${c.presupuesto_max.toLocaleString("es-MX")}` : "—"}
+
+                    {/* Correo */}
+                    <td className={`${tdBase} px-4 py-2 text-xs text-muted-foreground`}>
+                      {textCell("correo", c.correo, "email@ejemplo.com")}
                     </td>
-                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs`}>
-                      {c.fecha_visita
-                        ? new Date(c.fecha_visita).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })
-                        : "—"}
-                    </td>
-                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-[11px] tabular-nums`}>
-                      {new Date(c.created_at).toLocaleDateString("es-MX", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                        timeZone: "America/Mexico_City",
-                      })}
-                    </td>
-                    <td className={`${tdClass} border-b border-border/30`}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openEdit(c)}
-                          className="p-2 rounded-lg hover:bg-cobalt/10 transition-colors"
-                          title="Editar"
+
+                    {/* Etapa */}
+                    <td className={`${tdBase} px-4 py-2`}>
+                      {isEditing("etapa_seguimiento") ? (
+                        <select
+                          autoFocus
+                          value={cellDraft}
+                          onChange={(e) => {
+                            setCellDraft(e.target.value);
+                            // auto-save on select
+                            setTimeout(() => saveCell(), 0);
+                          }}
+                          onBlur={saveCell}
+                          onKeyDown={(e) => handleCellKey(e)}
+                          className={cellInputClass + " cursor-pointer"}
                         >
-                          <Pencil size={13} className="text-cobalt" />
+                          {ETAPAS.map((e) => (
+                            <option key={e.value} value={e.value}>{e.label}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div
+                          onClick={() => startEdit(c.id, "etapa_seguimiento", c.etapa_seguimiento)}
+                          className="cursor-pointer -mx-1 px-1 py-1 rounded hover:bg-cobalt/5 transition-colors"
+                          title="Click para cambiar"
+                        >
+                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${etapa?.color || "bg-gray-100 text-gray-600"}`}>
+                            {etapa?.label || c.etapa_seguimiento}
+                          </span>
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Teléfono */}
+                    <td className={`${tdBase} px-4 py-2 text-xs text-muted-foreground tabular-nums`}>
+                      {textCell("telefono", c.telefono, "+52 ...")}
+                    </td>
+
+                    {/* Crédito */}
+                    <td className={`${tdBase} px-4 py-2 text-xs text-muted-foreground capitalize`}>
+                      {isEditing("tipo_credito") ? (
+                        <select
+                          autoFocus
+                          value={cellDraft}
+                          onChange={(e) => {
+                            setCellDraft(e.target.value);
+                            setTimeout(() => saveCell(), 0);
+                          }}
+                          onBlur={saveCell}
+                          onKeyDown={(e) => handleCellKey(e)}
+                          className={cellInputClass + " cursor-pointer"}
+                        >
+                          {CREDITO_OPTIONS.map((opt) => (
+                            <option key={opt || "_"} value={opt}>
+                              {opt || "— sin especificar —"}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div
+                          onClick={() => startEdit(c.id, "tipo_credito", c.tipo_credito || "")}
+                          className="cursor-pointer hover:bg-cobalt/5 -mx-1 px-1 py-1 rounded min-h-[28px] flex items-center transition-colors truncate"
+                          title="Click para cambiar"
+                        >
+                          {c.tipo_credito || <span className="text-muted-foreground/40 italic normal-case">Sin especificar</span>}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Zona */}
+                    <td className={`${tdBase} px-4 py-2 text-xs text-muted-foreground`}>
+                      {textCell("zona_interes", c.zona_interes, "Zona...")}
+                    </td>
+
+                    {/* Propiedad */}
+                    <td className={`${tdBase} px-4 py-2 text-xs`}>
+                      {isEditing("propiedad_interesada") ? (
+                        <select
+                          autoFocus
+                          value={cellDraft}
+                          onChange={(e) => {
+                            setCellDraft(e.target.value);
+                            setTimeout(() => saveCell(), 0);
+                          }}
+                          onBlur={saveCell}
+                          onKeyDown={(e) => handleCellKey(e)}
+                          className={cellInputClass + " cursor-pointer"}
+                        >
+                          <option value="">— Sin especificar —</option>
+                          {propiedades.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.nombre} — {p.zona}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="flex items-center gap-1.5 min-h-[28px]">
+                          {!c.propiedad_interesada ? (
+                            <button
+                              type="button"
+                              onClick={() => startEdit(c.id, "propiedad_interesada", "")}
+                              className="text-muted-foreground/40 italic hover:text-cobalt text-xs"
+                            >
+                              Asignar propiedad
+                            </button>
+                          ) : prop && onOpenProperty ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => onOpenProperty(prop)}
+                                className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded hover:bg-cobalt/15 hover:underline transition-colors cursor-pointer max-w-full min-w-0"
+                                title={`Abrir "${prop.nombre}"`}
+                              >
+                                <Building2 size={10} className="flex-shrink-0" />
+                                <span className="truncate">{prop.nombre}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => startEdit(c.id, "propiedad_interesada", String(c.propiedad_interesada ?? ""))}
+                                className="text-[9px] text-muted-foreground/60 hover:text-cobalt underline underline-offset-2"
+                                title="Cambiar propiedad"
+                              >
+                                cambiar
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => startEdit(c.id, "propiedad_interesada", String(c.propiedad_interesada ?? ""))}
+                              className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded"
+                            >
+                              <Building2 size={10} />
+                              <span className="truncate">{prop?.nombre || `#${c.propiedad_interesada}`}</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Presupuesto */}
+                    <td className={`${tdBase} px-4 py-2 text-xs text-muted-foreground tabular-nums`}>
+                      {isEditing("presupuesto_max") ? (
+                        <input
+                          autoFocus
+                          type="text"
+                          inputMode="numeric"
+                          value={cellDraft ? formatBudget(parseBudget(cellDraft)) : ""}
+                          onChange={(e) => setCellDraft(String(parseBudget(e.target.value)))}
+                          onBlur={saveCell}
+                          onKeyDown={(e) => handleCellKey(e)}
+                          className={cellInputClass + " tabular-nums"}
+                          placeholder="1,500,000"
+                        />
+                      ) : (
+                        <div
+                          onClick={() => startEdit(c.id, "presupuesto_max", String(c.presupuesto_max || ""))}
+                          className="cursor-text hover:bg-cobalt/5 -mx-1 px-1 py-1 rounded min-h-[28px] flex items-center transition-colors truncate"
+                          title="Click para editar"
+                        >
+                          {c.presupuesto_max ? `$${c.presupuesto_max.toLocaleString("es-MX")}` : <span className="text-muted-foreground/40 italic">$0</span>}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Fecha visita */}
+                    <td className={`${tdBase} px-4 py-2 text-xs text-muted-foreground`}>
+                      {isEditing("fecha_visita") ? (
+                        <input
+                          autoFocus
+                          type="datetime-local"
+                          value={cellDraft}
+                          onChange={(e) => setCellDraft(e.target.value)}
+                          onBlur={saveCell}
+                          onKeyDown={(e) => handleCellKey(e)}
+                          className={cellInputClass}
+                        />
+                      ) : (
+                        <div
+                          onClick={() => startEdit(c.id, "fecha_visita", toDateTimeLocalInput(c.fecha_visita))}
+                          className="cursor-text hover:bg-cobalt/5 -mx-1 px-1 py-1 rounded min-h-[28px] flex items-center transition-colors truncate tabular-nums"
+                          title="Click para editar"
+                        >
+                          {c.fecha_visita ? formatDateTime(c.fecha_visita) : <span className="text-muted-foreground/40 italic">Sin fecha</span>}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Creación (read-only) */}
+                    <td className={`${tdBase} px-4 py-2 text-[11px] text-muted-foreground tabular-nums`}>
+                      <div className="truncate" title={new Date(c.created_at).toLocaleString("es-MX", { timeZone: "America/Mexico_City" })}>
+                        {new Date(c.created_at).toLocaleString("es-MX", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          timeZone: "America/Mexico_City",
+                        })}
+                      </div>
+                    </td>
+
+                    {/* Acciones */}
+                    <td className={`${tdBase} px-4 py-2`}>
+                      <div className="flex items-center justify-end">
+                        <button
+                          onClick={() => startRowDelete(c.id)}
+                          className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+                          title="Eliminar contacto"
+                        >
+                          <Trash2 size={13} className="text-destructive/60 hover:text-destructive" />
                         </button>
-                        {isDeleting ? (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleDelete(c.id)}
-                              className="text-[10px] font-bold text-white bg-destructive rounded px-2 py-1 hover:bg-destructive/80"
-                            >
-                              Sí
-                            </button>
-                            <button
-                              onClick={() => setDeletingId(null)}
-                              className="text-[10px] text-muted-foreground px-1.5 py-1"
-                            >
-                              No
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setDeletingId(c.id)}
-                            className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
-                            title="Eliminar"
-                          >
-                            <Trash2 size={13} className="text-destructive/60" />
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -689,11 +962,11 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
         </div>
       )}
 
-      {/* Bulk Delete Confirmation Modal */}
-      {showBulkConfirm && (
+      {/* Delete Confirmation Modal (single or bulk) */}
+      {confirmDeleteIds && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => !bulkDeleting && setShowBulkConfirm(false)}
+          onClick={() => !bulkDeleting && setConfirmDeleteIds(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -705,14 +978,14 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-heading text-base font-bold text-foreground mb-1">
-                  Eliminar {selectedCount} contacto{selectedCount > 1 ? "s" : ""}
+                  Eliminar {pendingDeleteCount} contacto{pendingDeleteCount > 1 ? "s" : ""}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Esta acción no se puede deshacer. Para confirmar, escribe <span className="font-bold text-foreground tabular-nums">{selectedCount}</span> en el campo de abajo.
+                  Esta acción no se puede deshacer. Para confirmar, escribe <span className="font-bold text-foreground tabular-nums">{pendingDeleteCount}</span> en el campo de abajo.
                 </p>
               </div>
               <button
-                onClick={() => setShowBulkConfirm(false)}
+                onClick={() => setConfirmDeleteIds(null)}
                 disabled={bulkDeleting}
                 className="p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground flex-shrink-0 disabled:opacity-50"
               >
@@ -720,66 +993,58 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
               </button>
             </div>
 
-            {/* Summary of selected */}
             <div className="bg-muted/40 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto">
               <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1.5">
-                Contactos a eliminar:
+                {pendingDeleteCount > 1 ? "Contactos a eliminar:" : "Contacto a eliminar:"}
               </p>
               <ul className="space-y-0.5">
-                {contacts
-                  .filter((c) => selectedIds.has(c.id))
-                  .slice(0, 8)
-                  .map((c) => (
-                    <li key={c.id} className="text-xs text-foreground/80 truncate">
-                      • {c.nombre}
-                    </li>
-                  ))}
-                {selectedCount > 8 && (
+                {pendingContacts.slice(0, 8).map((c) => (
+                  <li key={c.id} className="text-xs text-foreground/80 truncate">
+                    • {c.nombre}
+                  </li>
+                ))}
+                {pendingDeleteCount > 8 && (
                   <li className="text-[11px] text-muted-foreground italic pt-1">
-                    …y {selectedCount - 8} más
+                    …y {pendingDeleteCount - 8} más
                   </li>
                 )}
               </ul>
             </div>
 
             <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1.5">
-              Escribe "{selectedCount}" para confirmar
+              Escribe "{pendingDeleteCount}" para confirmar
             </label>
             <input
               type="text"
               inputMode="numeric"
               value={confirmInput}
               onChange={(e) => setConfirmInput(e.target.value.replace(/[^0-9]/g, ""))}
-              placeholder={String(selectedCount)}
+              placeholder={String(pendingDeleteCount)}
               autoFocus
               disabled={bulkDeleting}
               className={`w-full border-2 rounded-lg px-4 py-2.5 text-base sm:text-sm bg-white text-foreground outline-none transition-all tabular-nums font-bold ${
-                confirmInput === String(selectedCount)
+                confirmInput === String(pendingDeleteCount)
                   ? "border-destructive focus:ring-2 focus:ring-destructive/20"
                   : "border-border/80 focus:ring-2 focus:ring-cobalt/20 focus:border-cobalt/40"
               }`}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && confirmInput === String(selectedCount) && !bulkDeleting) {
-                  handleBulkDelete();
+                if (e.key === "Enter" && confirmInput === String(pendingDeleteCount) && !bulkDeleting) {
+                  handleConfirmDelete();
                 }
               }}
             />
 
             <div className="flex gap-2 mt-5">
               <button
-                onClick={handleBulkDelete}
-                disabled={confirmInput !== String(selectedCount) || bulkDeleting}
+                onClick={handleConfirmDelete}
+                disabled={confirmInput !== String(pendingDeleteCount) || bulkDeleting}
                 className="flex-1 flex items-center justify-center gap-2 bg-destructive text-white font-semibold text-xs px-5 py-3 rounded-lg hover:bg-destructive/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {bulkDeleting ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Trash2 size={14} />
-                )}
-                {bulkDeleting ? "Eliminando..." : `Eliminar ${selectedCount} fila${selectedCount > 1 ? "s" : ""}`}
+                {bulkDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {bulkDeleting ? "Eliminando..." : `Eliminar ${pendingDeleteCount} fila${pendingDeleteCount > 1 ? "s" : ""}`}
               </button>
               <button
-                onClick={() => setShowBulkConfirm(false)}
+                onClick={() => setConfirmDeleteIds(null)}
                 disabled={bulkDeleting}
                 className="px-5 py-3 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
               >
