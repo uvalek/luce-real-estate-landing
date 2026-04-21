@@ -256,12 +256,49 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
 
         <div className="mt-4">
           <label className={labelClass}>Tipos de crédito</label>
-          <input
-            value={form.tipos_credito || ""}
-            onChange={(e) => set("tipos_credito", e.target.value)}
-            placeholder="bancario, infonavit, fovissste, contado"
-            className={inputClass}
-          />
+          <div className="flex flex-wrap gap-2 mt-1">
+            {["bancario", "infonavit", "fovissste"].map((tipo) => {
+              const selected = (form.tipos_credito || "").split(",").map((s) => s.trim().toLowerCase()).includes(tipo);
+              return (
+                <button
+                  key={tipo}
+                  type="button"
+                  onClick={() => {
+                    const current = (form.tipos_credito || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+                    const next = selected ? current.filter((t) => t !== tipo) : [...current, tipo];
+                    set("tipos_credito", next.join(", "));
+                  }}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                    selected
+                      ? "bg-cobalt/10 text-cobalt border-cobalt/30"
+                      : "bg-white text-muted-foreground border-border/60 hover:bg-muted/50"
+                  }`}
+                >
+                  {tipo}
+                </button>
+              );
+            })}
+            {(() => {
+              const isContado = (form.tipos_credito || "").split(",").map((s) => s.trim().toLowerCase()).includes("contado");
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = (form.tipos_credito || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+                    const next = isContado ? current.filter((t) => t !== "contado") : [...current, "contado"];
+                    set("tipos_credito", next.join(", "));
+                  }}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold border-2 transition-all duration-200 ${
+                    isContado
+                      ? "bg-emerald-500/10 text-emerald-700 border-emerald-400"
+                      : "bg-white text-emerald-700 border-emerald-300/50 hover:bg-emerald-50"
+                  }`}
+                >
+                  contado
+                </button>
+              );
+            })()}
+          </div>
         </div>
       </div>
 

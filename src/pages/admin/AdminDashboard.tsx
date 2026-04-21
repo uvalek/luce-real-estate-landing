@@ -13,6 +13,8 @@ import {
   TrendingUp,
   CheckCircle2,
   XCircle,
+  KeyRound,
+  ArrowLeftRight,
   BedDouble,
   Bath,
   Maximize,
@@ -126,7 +128,9 @@ const AdminDashboard = () => {
   const totalProps = properties.length;
   const disponibles = properties.filter((p) => p.disponible).length;
   const noDisponibles = totalProps - disponibles;
-  const ventaCount = properties.filter((p) => p.tipo_oferta?.toUpperCase().includes("VENTA")).length;
+  const ventaCount = properties.filter((p) => p.tipo_oferta?.toUpperCase() === "VENTA").length;
+  const rentaCount = properties.filter((p) => p.tipo_oferta?.toUpperCase() === "RENTA").length;
+  const rentaVentaCount = properties.filter((p) => p.tipo_oferta?.toUpperCase() === "RENTA Y VENTA").length;
 
   return (
     <div className="min-h-screen bg-[hsl(220,20%,95%)]">
@@ -167,46 +171,60 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 lg:px-8 py-6 lg:py-8 max-w-7xl">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8">
-          <div className="bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-black/[0.04]">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4 mb-8">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-lg bg-cobalt/10 flex items-center justify-center">
-                <Building2 size={18} className="text-cobalt" />
+              <div className="w-8 h-8 rounded-lg bg-cobalt/10 flex items-center justify-center">
+                <Building2 size={16} className="text-cobalt" />
               </div>
-              <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">Total</span>
             </div>
-            <p className="font-heading text-2xl lg:text-3xl font-bold text-foreground tabular-nums">{totalProps}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Propiedades</p>
+            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{totalProps}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Total</p>
           </div>
-          <div className="bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-black/[0.04]">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <CheckCircle2 size={18} className="text-emerald-600" />
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <CheckCircle2 size={16} className="text-emerald-600" />
               </div>
-              <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">Activas</span>
             </div>
-            <p className="font-heading text-2xl lg:text-3xl font-bold text-foreground tabular-nums">{disponibles}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Disponibles</p>
+            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{disponibles}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Disponibles</p>
           </div>
-          <div className="bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-black/[0.04]">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                <XCircle size={18} className="text-orange-500" />
+              <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <XCircle size={16} className="text-orange-500" />
               </div>
-              <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">Inactivas</span>
             </div>
-            <p className="font-heading text-2xl lg:text-3xl font-bold text-foreground tabular-nums">{noDisponibles}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">No disponibles</p>
+            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{noDisponibles}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Inactivas</p>
           </div>
-          <div className="bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-black/[0.04]">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-lg bg-gold/10 flex items-center justify-center">
-                <TrendingUp size={18} className="text-gold" />
+              <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
+                <TrendingUp size={16} className="text-gold" />
               </div>
-              <span className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">Venta</span>
             </div>
-            <p className="font-heading text-2xl lg:text-3xl font-bold text-foreground tabular-nums">{ventaCount}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">En venta</p>
+            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{ventaCount}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Venta</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                <KeyRound size={16} className="text-purple-600" />
+              </div>
+            </div>
+            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{rentaCount}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Renta</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                <ArrowLeftRight size={16} className="text-cyan-600" />
+              </div>
+            </div>
+            <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{rentaVentaCount}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Renta y Venta</p>
           </div>
         </div>
 
