@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Plus,
   Loader2,
@@ -10,6 +10,8 @@ import {
   Users,
   Search,
   Building2,
+  AlertTriangle,
+  CheckSquare,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Contacto, Propiedad } from "@/types";
@@ -46,6 +48,41 @@ const parseBudget = (s: string) => {
   return d ? parseInt(d, 10) : 0;
 };
 
+// ─── Column definitions ───────────────────────────────────────────────
+interface ColumnDef {
+  key: string;
+  label: string;
+  defaultWidth: number;
+  minWidth: number;
+}
+
+const COLUMNS: ColumnDef[] = [
+  { key: "select",     label: "",            defaultWidth: 40,  minWidth: 40 },
+  { key: "nombre",     label: "Nombre",      defaultWidth: 180, minWidth: 100 },
+  { key: "correo",     label: "Correo",      defaultWidth: 200, minWidth: 120 },
+  { key: "etapa",      label: "Etapa",       defaultWidth: 150, minWidth: 100 },
+  { key: "telefono",   label: "Teléfono",    defaultWidth: 140, minWidth: 100 },
+  { key: "credito",    label: "Crédito",     defaultWidth: 110, minWidth: 80 },
+  { key: "zona",       label: "Zona",        defaultWidth: 160, minWidth: 100 },
+  { key: "propiedad",  label: "Propiedad",   defaultWidth: 220, minWidth: 140 },
+  { key: "presupuesto",label: "Presupuesto", defaultWidth: 140, minWidth: 100 },
+  { key: "visita",     label: "Visita",      defaultWidth: 130, minWidth: 90 },
+  { key: "creacion",   label: "Creación",    defaultWidth: 130, minWidth: 90 },
+  { key: "acciones",   label: "Acciones",    defaultWidth: 100, minWidth: 90 },
+];
+
+const WIDTHS_STORAGE_KEY = "crm:contactos:column-widths:v1";
+
+const loadSavedWidths = (): Record<string, number> => {
+  try {
+    const raw = localStorage.getItem(WIDTHS_STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+};
+
 interface ContactsViewProps {
   onOpenProperty?: (prop: Propiedad) => void;
 }
@@ -64,6 +101,69 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   const [form, setForm] = useState<ContactoForm>(emptyForm);
   const [presupuestoDisplay, setPresupuestoDisplay] = useState("");
 
+  // ─── Selection state ─────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
+  const [confirmInput, setConfirmInput] = useState("");
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // ─── Column widths state ─────────────────────────────────────────
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    const saved = loadSavedWidths();
+    const initial: Record<string, number> = {};
+    COLUMNS.forEach((col) => {
+      initial[col.key] = saved[col.key] ?? col.defaultWidth;
+    });
+    return initial;
+  });
+
+  // Persist widths
+  useEffect(() => {
+    try {
+      localStorage.setItem(WIDTHS_STORAGE_KEY, JSON.stringify(columnWidths));
+    } catch {
+      /* ignore */
+    }
+  }, [columnWidths]);
+
+  const resizingRef = useRef<{ key: string; startX: number; startWidth: number } | null>(null);
+
+  const handleResizeStart = (e: React.MouseEvent, key: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const col = COLUMNS.find((c) => c.key === key);
+    if (!col) return;
+    resizingRef.current = {
+      key,
+      startX: e.clientX,
+      startWidth: columnWidths[key] ?? col.defaultWidth,
+    };
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMove = (ev: MouseEvent) => {
+      const ref = resizingRef.current;
+      if (!ref) return;
+      const delta = ev.clientX - ref.startX;
+      const col = COLUMNS.find((c) => c.key === ref.key);
+      const minW = col?.minWidth ?? 50;
+      const newWidth = Math.max(minW, ref.startWidth + delta);
+      setColumnWidths((prev) => ({ ...prev, [ref.key]: newWidth }));
+    };
+
+    const onUp = () => {
+      resizingRef.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  // ─── Fetch ───────────────────────────────────────────────────────
   const fetchContacts = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
@@ -137,6 +237,26 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   const handleDelete = async (id: number) => {
     await supabase.from("contactos").delete().eq("id", id);
     setDeletingId(null);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    await fetchContacts();
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkDeleting(true);
+    const { error } = await supabase.from("contactos").delete().in("id", ids);
+    if (error) {
+      alert("Error al eliminar: " + error.message);
+    }
+    setBulkDeleting(false);
+    setShowBulkConfirm(false);
+    setConfirmInput("");
+    setSelectedIds(new Set());
     await fetchContacts();
   };
 
@@ -155,6 +275,36 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     );
   });
 
+  // ─── Selection helpers ───────────────────────────────────────────
+  const toggleOne = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allVisibleIds = filteredContacts.map((c) => c.id);
+  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.has(id));
+  const someSelected = allVisibleIds.some((id) => selectedIds.has(id));
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        allVisibleIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        allVisibleIds.forEach((id) => next.add(id));
+        return next;
+      });
+    }
+  };
+
   // Stats
   const totalContacts = contacts.length;
   const etapaCounts = ETAPAS.map((e) => ({
@@ -162,8 +312,15 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     count: contacts.filter((c) => c.etapa_seguimiento === e.value).length,
   }));
 
+  const selectedCount = selectedIds.size;
+
   const inputClass =
     "w-full border border-border/80 rounded-lg px-3 py-2.5 text-base sm:text-sm bg-white text-foreground outline-none focus:ring-2 focus:ring-cobalt/20 focus:border-cobalt/40 placeholder:text-muted-foreground/50 transition-all";
+
+  const thClass = "relative text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 select-none";
+  const tdClass = "px-4 py-3 align-middle overflow-hidden whitespace-nowrap text-ellipsis";
+
+  const totalTableWidth = COLUMNS.reduce((sum, c) => sum + (columnWidths[c.key] ?? c.defaultWidth), 0);
 
   return (
     <div>
@@ -201,6 +358,32 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
           </button>
         )}
       </div>
+
+      {/* Selection Bar */}
+      {selectedCount > 0 && (
+        <div className="flex items-center justify-between gap-3 mb-4 bg-cobalt/5 border border-cobalt/20 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center gap-2">
+            <CheckSquare size={15} className="text-cobalt" />
+            <span className="text-xs font-semibold text-cobalt">
+              {selectedCount} fila{selectedCount > 1 ? "s" : ""} seleccionada{selectedCount > 1 ? "s" : ""}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-[11px] font-medium text-muted-foreground hover:text-foreground px-3 py-1.5 rounded transition-colors"
+            >
+              Deseleccionar
+            </button>
+            <button
+              onClick={() => { setConfirmInput(""); setShowBulkConfirm(true); }}
+              className="flex items-center gap-1.5 bg-destructive text-white text-[11px] font-bold px-3 py-1.5 rounded hover:bg-destructive/90 transition-colors"
+            >
+              <Trash2 size={12} /> Eliminar {selectedCount}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Inline Form */}
       {showForm && (
@@ -335,81 +518,127 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-black/[0.04] overflow-x-auto">
-          <table className="w-full text-sm">
+          <table
+            className="text-sm border-separate border-spacing-0"
+            style={{ width: totalTableWidth, tableLayout: "fixed" }}
+          >
+            <colgroup>
+              {COLUMNS.map((col) => (
+                <col key={col.key} style={{ width: columnWidths[col.key] ?? col.defaultWidth }} />
+              ))}
+            </colgroup>
             <thead>
-              <tr className="border-b border-border/50 bg-muted/30">
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Nombre</th>
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Correo</th>
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Etapa</th>
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden md:table-cell">Teléfono</th>
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Crédito</th>
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Zona</th>
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Propiedad</th>
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Presupuesto</th>
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Visita</th>
-                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden md:table-cell">Creación</th>
-                <th className="text-right text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3">Acciones</th>
+              <tr className="bg-muted/30">
+                {COLUMNS.map((col, idx) => {
+                  const isLast = idx === COLUMNS.length - 1;
+                  const isSelect = col.key === "select";
+                  return (
+                    <th
+                      key={col.key}
+                      className={`${thClass} border-b border-border/50 ${isSelect ? "px-3" : ""}`}
+                    >
+                      <div className="flex items-center gap-1 truncate">
+                        {isSelect ? (
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            ref={(el) => { if (el) el.indeterminate = !allSelected && someSelected; }}
+                            onChange={toggleAll}
+                            className="w-3.5 h-3.5 accent-cobalt cursor-pointer"
+                            aria-label="Seleccionar todos"
+                          />
+                        ) : col.key === "acciones" ? (
+                          <span className="ml-auto">{col.label}</span>
+                        ) : (
+                          <span className="truncate">{col.label}</span>
+                        )}
+                      </div>
+                      {!isLast && (
+                        <div
+                          onMouseDown={(e) => handleResizeStart(e, col.key)}
+                          className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize group z-10"
+                          title="Arrastra para redimensionar"
+                        >
+                          <div className="absolute top-1/2 right-0 -translate-y-1/2 h-1/2 w-px bg-border/60 group-hover:bg-cobalt group-hover:w-0.5 transition-all" />
+                        </div>
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
               {filteredContacts.map((c) => {
                 const etapa = ETAPAS.find((e) => e.value === c.etapa_seguimiento);
                 const isDeleting = deletingId === c.id;
+                const isSelected = selectedIds.has(c.id);
+                const prop = c.propiedad_interesada ? allPropiedades.find((p) => p.id === c.propiedad_interesada) : null;
 
                 return (
-                  <tr key={c.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3">
+                  <tr
+                    key={c.id}
+                    className={`border-b border-border/30 last:border-0 transition-colors ${
+                      isSelected ? "bg-cobalt/[0.04]" : "hover:bg-muted/20"
+                    }`}
+                  >
+                    <td className={`${tdClass} px-3 border-b border-border/30`}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleOne(c.id)}
+                        className="w-3.5 h-3.5 accent-cobalt cursor-pointer"
+                        aria-label={`Seleccionar ${c.nombre}`}
+                      />
+                    </td>
+                    <td className={`${tdClass} border-b border-border/30`}>
                       <span className="font-medium text-foreground">{c.nombre}</span>
                     </td>
-                    <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground text-xs">
+                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs`}>
                       {c.correo || "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={`${tdClass} border-b border-border/30`}>
                       <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${etapa?.color || "bg-gray-100 text-gray-600"}`}>
                         {etapa?.label || c.etapa_seguimiento}
                       </span>
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell text-muted-foreground text-xs tabular-nums">
+                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs tabular-nums`}>
                       {c.telefono || "—"}
                     </td>
-                    <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground text-xs capitalize">
+                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs capitalize`}>
                       {c.tipo_credito || "—"}
                     </td>
-                    <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground text-xs">
+                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs`}>
                       {c.zona_interes || "—"}
                     </td>
-                    <td className="px-4 py-3 hidden lg:table-cell text-xs">
-                      {(() => {
-                        if (!c.propiedad_interesada) return <span className="text-muted-foreground">—</span>;
-                        const prop = allPropiedades.find((p) => p.id === c.propiedad_interesada);
-                        const label = prop?.nombre || `#${c.propiedad_interesada}`;
-                        return prop && onOpenProperty ? (
-                          <button
-                            type="button"
-                            onClick={() => onOpenProperty(prop)}
-                            className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded hover:bg-cobalt/15 hover:underline transition-colors cursor-pointer"
-                            title={`Abrir "${label}" en Propiedades`}
-                          >
-                            <Building2 size={10} />
-                            {label}
-                          </button>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded">
-                            <Building2 size={10} />
-                            {label}
-                          </span>
-                        );
-                      })()}
+                    <td className={`${tdClass} border-b border-border/30 text-xs`}>
+                      {!c.propiedad_interesada ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : prop && onOpenProperty ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenProperty(prop)}
+                          className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded hover:bg-cobalt/15 hover:underline transition-colors cursor-pointer max-w-full"
+                          title={`Abrir "${prop.nombre}" en Propiedades`}
+                        >
+                          <Building2 size={10} className="flex-shrink-0" />
+                          <span className="truncate">{prop.nombre}</span>
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded max-w-full">
+                          <Building2 size={10} className="flex-shrink-0" />
+                          <span className="truncate">{prop?.nombre || `#${c.propiedad_interesada}`}</span>
+                        </span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 hidden xl:table-cell text-muted-foreground text-xs tabular-nums">
+                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs tabular-nums`}>
                       {c.presupuesto_max ? `$${c.presupuesto_max.toLocaleString("es-MX")}` : "—"}
                     </td>
-                    <td className="px-4 py-3 hidden xl:table-cell text-muted-foreground text-xs">
+                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-xs`}>
                       {c.fecha_visita
                         ? new Date(c.fecha_visita).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })
                         : "—"}
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell text-muted-foreground text-[11px] tabular-nums">
+                    <td className={`${tdClass} border-b border-border/30 text-muted-foreground text-[11px] tabular-nums`}>
                       {new Date(c.created_at).toLocaleDateString("es-MX", {
                         day: "numeric",
                         month: "short",
@@ -417,7 +646,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                         timeZone: "America/Mexico_City",
                       })}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className={`${tdClass} border-b border-border/30`}>
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => openEdit(c)}
@@ -457,6 +686,107 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkConfirm && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => !bulkDeleting && setShowBulkConfirm(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+          >
+            <div className="flex items-start gap-4 mb-5">
+              <div className="w-11 h-11 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={20} className="text-destructive" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-heading text-base font-bold text-foreground mb-1">
+                  Eliminar {selectedCount} contacto{selectedCount > 1 ? "s" : ""}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Esta acción no se puede deshacer. Para confirmar, escribe <span className="font-bold text-foreground tabular-nums">{selectedCount}</span> en el campo de abajo.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowBulkConfirm(false)}
+                disabled={bulkDeleting}
+                className="p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground flex-shrink-0 disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Summary of selected */}
+            <div className="bg-muted/40 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-1.5">
+                Contactos a eliminar:
+              </p>
+              <ul className="space-y-0.5">
+                {contacts
+                  .filter((c) => selectedIds.has(c.id))
+                  .slice(0, 8)
+                  .map((c) => (
+                    <li key={c.id} className="text-xs text-foreground/80 truncate">
+                      • {c.nombre}
+                    </li>
+                  ))}
+                {selectedCount > 8 && (
+                  <li className="text-[11px] text-muted-foreground italic pt-1">
+                    …y {selectedCount - 8} más
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1.5">
+              Escribe "{selectedCount}" para confirmar
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder={String(selectedCount)}
+              autoFocus
+              disabled={bulkDeleting}
+              className={`w-full border-2 rounded-lg px-4 py-2.5 text-base sm:text-sm bg-white text-foreground outline-none transition-all tabular-nums font-bold ${
+                confirmInput === String(selectedCount)
+                  ? "border-destructive focus:ring-2 focus:ring-destructive/20"
+                  : "border-border/80 focus:ring-2 focus:ring-cobalt/20 focus:border-cobalt/40"
+              }`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && confirmInput === String(selectedCount) && !bulkDeleting) {
+                  handleBulkDelete();
+                }
+              }}
+            />
+
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={handleBulkDelete}
+                disabled={confirmInput !== String(selectedCount) || bulkDeleting}
+                className="flex-1 flex items-center justify-center gap-2 bg-destructive text-white font-semibold text-xs px-5 py-3 rounded-lg hover:bg-destructive/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {bulkDeleting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Trash2 size={14} />
+                )}
+                {bulkDeleting ? "Eliminando..." : `Eliminar ${selectedCount} fila${selectedCount > 1 ? "s" : ""}`}
+              </button>
+              <button
+                onClick={() => setShowBulkConfirm(false)}
+                disabled={bulkDeleting}
+                className="px-5 py-3 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
