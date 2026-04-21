@@ -9,9 +9,10 @@ import {
   UserPlus,
   Users,
   Search,
+  Building2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import type { Contacto } from "@/types";
+import type { Contacto, Propiedad } from "@/types";
 
 const ETAPAS = [
   { value: "nuevo", label: "Nuevo", color: "bg-blue-100 text-blue-700" },
@@ -33,6 +34,7 @@ const emptyForm: ContactoForm = {
   zona_interes: "",
   presupuesto_max: 0,
   fecha_visita: null,
+  propiedad_interesada: null,
 };
 
 const formatBudget = (n: number) => {
@@ -46,6 +48,8 @@ const parseBudget = (s: string) => {
 
 const ContactsView = () => {
   const [contacts, setContacts] = useState<Contacto[]>([]);
+  const [propiedades, setPropiedades] = useState<Propiedad[]>([]);
+  const [allPropiedades, setAllPropiedades] = useState<Propiedad[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -66,9 +70,20 @@ const ContactsView = () => {
     setLoading(false);
   }, []);
 
+  const fetchPropiedades = useCallback(async () => {
+    const { data } = await supabase
+      .from("propiedades")
+      .select("id, nombre, tipo, zona, disponible")
+      .order("nombre", { ascending: true });
+    const all = (data as Propiedad[]) || [];
+    setAllPropiedades(all);
+    setPropiedades(all.filter((p) => p.disponible));
+  }, []);
+
   useEffect(() => {
     fetchContacts();
-  }, [fetchContacts]);
+    fetchPropiedades();
+  }, [fetchContacts, fetchPropiedades]);
 
   const openNew = () => {
     setEditing(null);
@@ -88,6 +103,7 @@ const ContactsView = () => {
       zona_interes: c.zona_interes,
       presupuesto_max: c.presupuesto_max,
       fecha_visita: c.fecha_visita,
+      propiedad_interesada: c.propiedad_interesada,
     });
     setPresupuestoDisplay(formatBudget(c.presupuesto_max));
     setShowForm(true);
@@ -236,6 +252,24 @@ const ContactsView = () => {
                 <input value={form.zona_interes || ""} onChange={(e) => set("zona_interes", e.target.value)} placeholder="Apizaco, Tlaxcala" className={inputClass} />
               </div>
               <div>
+                <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Propiedad interesada</label>
+                <div className="relative">
+                  <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none" />
+                  <select
+                    value={form.propiedad_interesada ?? ""}
+                    onChange={(e) => set("propiedad_interesada", e.target.value ? Number(e.target.value) : null)}
+                    className={inputClass + " pl-9 appearance-none cursor-pointer"}
+                  >
+                    <option value="">Sin especificar</option>
+                    {propiedades.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nombre} — {p.zona} ({p.tipo})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
                 <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Presupuesto máx.</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/50">$</span>
@@ -306,6 +340,7 @@ const ContactsView = () => {
                 <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden md:table-cell">Teléfono</th>
                 <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Crédito</th>
                 <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Zona</th>
+                <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Propiedad</th>
                 <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Presupuesto</th>
                 <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Visita</th>
                 <th className="text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 hidden md:table-cell">Creación</th>
@@ -338,6 +373,16 @@ const ContactsView = () => {
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell text-muted-foreground text-xs">
                       {c.zona_interes || "—"}
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell text-xs">
+                      {c.propiedad_interesada ? (
+                        <span className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded">
+                          <Building2 size={10} />
+                          {allPropiedades.find((p) => p.id === c.propiedad_interesada)?.nombre || `#${c.propiedad_interesada}`}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 hidden xl:table-cell text-muted-foreground text-xs tabular-nums">
                       {c.presupuesto_max ? `$${c.presupuesto_max.toLocaleString("es-MX")}` : "—"}

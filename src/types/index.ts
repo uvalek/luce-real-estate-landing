@@ -49,6 +49,7 @@ export interface Contacto {
   zona_interes: string | null;
   presupuesto_max: number;
   fecha_visita: string | null;
+  propiedad_interesada: number | null;
   created_at: string;
 }
 
