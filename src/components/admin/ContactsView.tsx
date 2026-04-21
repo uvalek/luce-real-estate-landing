@@ -46,7 +46,11 @@ const parseBudget = (s: string) => {
   return d ? parseInt(d, 10) : 0;
 };
 
-const ContactsView = () => {
+interface ContactsViewProps {
+  onOpenProperty?: (prop: Propiedad) => void;
+}
+
+const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   const [contacts, setContacts] = useState<Contacto[]>([]);
   const [propiedades, setPropiedades] = useState<Propiedad[]>([]);
   const [allPropiedades, setAllPropiedades] = useState<Propiedad[]>([]);
@@ -375,14 +379,27 @@ const ContactsView = () => {
                       {c.zona_interes || "—"}
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell text-xs">
-                      {c.propiedad_interesada ? (
-                        <span className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded">
-                          <Building2 size={10} />
-                          {allPropiedades.find((p) => p.id === c.propiedad_interesada)?.nombre || `#${c.propiedad_interesada}`}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
+                      {(() => {
+                        if (!c.propiedad_interesada) return <span className="text-muted-foreground">—</span>;
+                        const prop = allPropiedades.find((p) => p.id === c.propiedad_interesada);
+                        const label = prop?.nombre || `#${c.propiedad_interesada}`;
+                        return prop && onOpenProperty ? (
+                          <button
+                            type="button"
+                            onClick={() => onOpenProperty(prop)}
+                            className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded hover:bg-cobalt/15 hover:underline transition-colors cursor-pointer"
+                            title={`Abrir "${label}" en Propiedades`}
+                          >
+                            <Building2 size={10} />
+                            {label}
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-cobalt/5 text-cobalt font-medium px-2 py-0.5 rounded">
+                            <Building2 size={10} />
+                            {label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 hidden xl:table-cell text-muted-foreground text-xs tabular-nums">
                       {c.presupuesto_max ? `$${c.presupuesto_max.toLocaleString("es-MX")}` : "—"}

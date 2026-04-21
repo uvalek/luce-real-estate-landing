@@ -434,7 +434,22 @@ const AdminDashboard = () => {
           )}
 
           {/* ──────── CONTACTOS VIEW ──────── */}
-          {activeView === "contactos" && <ContactsView />}
+          {activeView === "contactos" && (
+            <ContactsView
+              onOpenProperty={(prop) => {
+                const full = properties.find((p) => p.id === prop.id);
+                if (full) {
+                  setEditing(full);
+                  setShowForm(true);
+                  setActiveView("propiedades");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                } else {
+                  setActiveView("propiedades");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+            />
+          )}
 
         </main>
       </div>
