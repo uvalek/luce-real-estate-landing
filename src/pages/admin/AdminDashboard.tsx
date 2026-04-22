@@ -11,8 +11,6 @@ import {
   EyeOff,
   Building2,
   TrendingUp,
-  CheckCircle2,
-  XCircle,
   KeyRound,
   ArrowLeftRight,
   BedDouble,
@@ -22,6 +20,10 @@ import {
   Users,
   ChevronLeft,
   Menu,
+  Sparkles,
+  Activity,
+  MapPin,
+  Calendar,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatPrice } from "@/lib/formatPrice";
@@ -142,6 +144,37 @@ const AdminDashboard = () => {
   const rentaCount = properties.filter((p) => p.tipo_oferta?.toUpperCase() === "RENTA").length;
   const rentaVentaCount = properties.filter((p) => p.tipo_oferta?.toUpperCase() === "RENTA Y VENTA").length;
 
+  // Richer analytics
+  const pct = (n: number) => (totalProps > 0 ? Math.round((n / totalProps) * 100) : 0);
+  const disponiblePct = pct(disponibles);
+
+  // Distribution by type
+  const tipoDist = [
+    { key: "casa",         label: "Casas",          count: properties.filter((p) => p.tipo === "casa").length,         color: "bg-cobalt",       icon: Home },
+    { key: "departamento", label: "Departamentos",  count: properties.filter((p) => p.tipo === "departamento").length, color: "bg-purple-500",   icon: Building2 },
+    { key: "terreno",      label: "Terrenos",       count: properties.filter((p) => p.tipo === "terreno").length,      color: "bg-emerald-500",  icon: MapPin },
+    { key: "local",        label: "Locales",        count: properties.filter((p) => p.tipo === "local").length,        color: "bg-orange-500",   icon: Activity },
+  ];
+
+  // Top zones
+  const zonaMap = new Map<string, number>();
+  properties.forEach((p) => {
+    if (p.zona) zonaMap.set(p.zona, (zonaMap.get(p.zona) || 0) + 1);
+  });
+  const topZonas = Array.from(zonaMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
+
+  // Average price of available
+  const precios = properties.filter((p) => p.disponible && p.precio > 0).map((p) => p.precio);
+  const precioPromedio = precios.length > 0 ? Math.round(precios.reduce((a, b) => a + b, 0) / precios.length) : 0;
+  const precioPromedioFmt = precioPromedio > 0 ? `$${precioPromedio.toLocaleString("es-MX")}` : "—";
+
+  // Greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
+  const fechaHoy = new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
   return (
     <div className="min-h-screen bg-[hsl(220,20%,95%)] flex">
       {/* ─── Sidebar ─── */}
@@ -248,75 +281,206 @@ const AdminDashboard = () => {
           {/* ──────── PROPIEDADES VIEW ──────── */}
           {activeView === "propiedades" && (
             <>
-              {/* Stats Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4 mb-8">
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-cobalt/10 flex items-center justify-center">
-                      <Building2 size={16} className="text-cobalt" />
+              {/* ─ Welcome header ─ */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cobalt via-cobalt to-[hsl(220,70%,25%)] text-white px-6 py-6 mb-6 shadow-lg">
+                {/* Decorative blobs */}
+                <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-gold/20 blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-20 -left-10 w-48 h-48 rounded-full bg-white/5 blur-2xl pointer-events-none" />
+                <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-gold uppercase tracking-[0.2em] mb-1">
+                      <Sparkles size={12} /> Panel de control
                     </div>
+                    <h1 className="font-heading text-2xl sm:text-3xl font-bold leading-tight">{greeting}, Admin</h1>
+                    <p className="text-xs text-white/70 mt-1 capitalize flex items-center gap-1.5">
+                      <Calendar size={11} /> {fechaHoy}
+                    </p>
                   </div>
-                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{totalProps}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Total</p>
-                </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                      <CheckCircle2 size={16} className="text-emerald-600" />
-                    </div>
-                  </div>
-                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{disponibles}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Disponibles</p>
-                </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                      <XCircle size={16} className="text-orange-500" />
-                    </div>
-                  </div>
-                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{noDisponibles}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Inactivas</p>
-                </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
-                      <TrendingUp size={16} className="text-gold" />
-                    </div>
-                  </div>
-                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{ventaCount}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Venta</p>
-                </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                      <KeyRound size={16} className="text-purple-600" />
-                    </div>
-                  </div>
-                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{rentaCount}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Renta</p>
-                </div>
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-black/[0.04]">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                      <ArrowLeftRight size={16} className="text-cyan-600" />
-                    </div>
-                  </div>
-                  <p className="font-heading text-2xl font-bold text-foreground tabular-nums">{rentaVentaCount}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Renta y Venta</p>
+                  {!showForm && (
+                    <button
+                      onClick={() => { setEditing(null); setShowForm(true); }}
+                      className="group flex items-center gap-2 bg-white text-cobalt font-bold text-xs px-5 py-3 rounded-xl hover:bg-gold hover:text-white transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                    >
+                      <Plus size={15} className="group-hover:rotate-90 transition-transform duration-300" /> Nueva Propiedad
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Header + Actions */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                <h2 className="font-heading text-lg font-bold text-foreground">Propiedades</h2>
-                {!showForm && (
-                  <button
-                    onClick={() => { setEditing(null); setShowForm(true); }}
-                    className="flex items-center gap-2 bg-cobalt text-white font-semibold text-xs px-5 py-2.5 rounded-lg hover:bg-cobalt-light transition-colors shadow-sm"
-                  >
-                    <Plus size={15} /> Nueva Propiedad
-                  </button>
-                )}
+              {/* ─ Hero KPI row ─ */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                {/* Total + ring chart */}
+                <div className="relative bg-white rounded-2xl p-5 shadow-sm border border-black/[0.04] overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cobalt/5 to-transparent rounded-full blur-2xl" />
+                  <div className="relative flex items-center gap-4">
+                    {/* Ring */}
+                    <div className="relative w-20 h-20 flex-shrink-0">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 40 40">
+                        <circle cx="20" cy="20" r="16" fill="none" stroke="hsl(220 20% 92%)" strokeWidth="4" />
+                        <circle
+                          cx="20" cy="20" r="16" fill="none"
+                          stroke="hsl(220 70% 45%)" strokeWidth="4" strokeLinecap="round"
+                          strokeDasharray={`${(disponiblePct / 100) * 100.53} 100.53`}
+                          className="transition-all duration-700"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="font-heading text-base font-bold text-foreground tabular-nums leading-none">{disponiblePct}%</span>
+                        <span className="text-[8px] text-muted-foreground uppercase tracking-wider mt-0.5">activo</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Portafolio</p>
+                      <p className="font-heading text-3xl font-bold text-foreground tabular-nums mt-0.5">{totalProps}</p>
+                      <div className="flex items-center gap-3 mt-1.5 text-[11px]">
+                        <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {disponibles} activas
+                        </span>
+                        <span className="flex items-center gap-1 text-muted-foreground/70">
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" /> {noDisponibles} ocultas
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Average price */}
+                <div className="relative bg-white rounded-2xl p-5 shadow-sm border border-black/[0.04] overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-gold/10 to-transparent rounded-full blur-2xl" />
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Precio promedio</p>
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gold to-amber-500 flex items-center justify-center shadow-sm">
+                        <TrendingUp size={16} className="text-white" />
+                      </div>
+                    </div>
+                    <p className="font-heading text-2xl sm:text-3xl font-bold text-foreground tabular-nums leading-tight">
+                      {precioPromedioFmt}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/80 mt-1.5">
+                      Basado en {precios.length} propiedad{precios.length !== 1 ? "es" : ""} disponible{precios.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Oferta breakdown */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-black/[0.04]">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em] mb-3">Tipo de oferta</p>
+                  <div className="space-y-2.5">
+                    {[
+                      { label: "Venta",         count: ventaCount,      color: "bg-gold",       icon: TrendingUp    },
+                      { label: "Renta",         count: rentaCount,      color: "bg-purple-500", icon: KeyRound      },
+                      { label: "Renta y Venta", count: rentaVentaCount, color: "bg-cyan-500",   icon: ArrowLeftRight},
+                    ].map((o) => {
+                      const percent = pct(o.count);
+                      const Icon = o.icon;
+                      return (
+                        <div key={o.label} className="flex items-center gap-3">
+                          <div className={`w-7 h-7 rounded-lg ${o.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                            <Icon size={13} className="text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline justify-between mb-0.5">
+                              <span className="text-[11px] font-semibold text-foreground/80">{o.label}</span>
+                              <span className="font-heading text-sm font-bold tabular-nums text-foreground">{o.count}</span>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                              <div className={`h-full ${o.color} rounded-full transition-all duration-700`} style={{ width: `${percent}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* ─ Secondary row: Distribution + Top zones ─ */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+                {/* Type distribution */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-black/[0.04] lg:col-span-2">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Distribución por tipo</p>
+                      <p className="font-heading text-sm font-bold text-foreground mt-0.5">Inventario actual</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                      <Activity size={14} className="text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {tipoDist.map((t) => {
+                      const Icon = t.icon;
+                      const percent = pct(t.count);
+                      return (
+                        <div key={t.key} className="relative rounded-xl border border-border/50 p-3 hover:border-border hover:shadow-sm transition-all">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-6 h-6 rounded-md ${t.color} flex items-center justify-center`}>
+                              <Icon size={11} className="text-white" />
+                            </div>
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t.label}</span>
+                          </div>
+                          <p className="font-heading text-xl font-bold text-foreground tabular-nums leading-none">{t.count}</p>
+                          <p className="text-[10px] text-muted-foreground/60 mt-1">{percent}% del total</p>
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted rounded-b-xl overflow-hidden">
+                            <div className={`h-full ${t.color} transition-all duration-700`} style={{ width: `${percent}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Top zones */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-black/[0.04]">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Zonas</p>
+                      <p className="font-heading text-sm font-bold text-foreground mt-0.5">Top ubicaciones</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                      <MapPin size={14} className="text-muted-foreground" />
+                    </div>
+                  </div>
+                  {topZonas.length === 0 ? (
+                    <p className="text-xs text-muted-foreground/60 py-6 text-center">Sin datos aún</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {topZonas.map(([zona, count], idx) => {
+                        const percent = pct(count);
+                        return (
+                          <div key={zona} className="flex items-center gap-3">
+                            <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                              idx === 0 ? "bg-gold/20 text-gold" : "bg-muted text-muted-foreground"
+                            }`}>
+                              #{idx + 1}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline justify-between gap-2 mb-1">
+                                <span className="text-[11px] font-semibold text-foreground truncate capitalize">{zona}</span>
+                                <span className="font-heading text-xs font-bold tabular-nums text-foreground/80">{count}</span>
+                              </div>
+                              <div className="h-1 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full bg-cobalt rounded-full transition-all duration-700" style={{ width: `${percent}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Header + section label */}
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-1 h-7 bg-cobalt rounded-full" />
+                  <h2 className="font-heading text-lg font-bold text-foreground">Propiedades</h2>
+                  <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    {totalProps}
+                  </span>
+                </div>
               </div>
 
               {/* Form */}

@@ -14,17 +14,24 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Contacto, Propiedad } from "@/types";
+import type { OpcionAtributo } from "@/lib/atributos";
 
-const ETAPAS = [
-  { value: "nuevo", label: "Nuevo", color: "bg-blue-100 text-blue-700" },
-  { value: "contactado", label: "Contactado", color: "bg-purple-100 text-purple-700" },
-  { value: "visita programada", label: "Visita programada", color: "bg-amber-100 text-amber-700" },
-  { value: "negociacion", label: "Negociación", color: "bg-orange-100 text-orange-700" },
-  { value: "cerrado", label: "Cerrado", color: "bg-emerald-100 text-emerald-700" },
-  { value: "perdido", label: "Perdido", color: "bg-red-100 text-red-700" },
+// Fallback defaults in case the config table is empty
+const DEFAULT_ETAPAS: OpcionAtributo[] = [
+  { id: -1, campo: "etapa_seguimiento", valor: "nuevo", etiqueta: "Nuevo", color: "bg-blue-100 text-blue-700", orden: 0 },
+  { id: -2, campo: "etapa_seguimiento", valor: "contactado", etiqueta: "Contactado", color: "bg-purple-100 text-purple-700", orden: 1 },
+  { id: -3, campo: "etapa_seguimiento", valor: "visita programada", etiqueta: "Visita programada", color: "bg-amber-100 text-amber-700", orden: 2 },
+  { id: -4, campo: "etapa_seguimiento", valor: "negociacion", etiqueta: "Negociación", color: "bg-orange-100 text-orange-700", orden: 3 },
+  { id: -5, campo: "etapa_seguimiento", valor: "cerrado", etiqueta: "Cerrado", color: "bg-emerald-100 text-emerald-700", orden: 4 },
+  { id: -6, campo: "etapa_seguimiento", valor: "perdido", etiqueta: "Perdido", color: "bg-red-100 text-red-700", orden: 5 },
 ];
 
-const CREDITO_OPTIONS = ["", "bancario", "infonavit", "fovissste", "contado"];
+const DEFAULT_CREDITOS: OpcionAtributo[] = [
+  { id: -7, campo: "tipo_credito", valor: "bancario", etiqueta: "Bancario", color: "bg-slate-100 text-slate-700", orden: 0 },
+  { id: -8, campo: "tipo_credito", valor: "infonavit", etiqueta: "Infonavit", color: "bg-rose-100 text-rose-700", orden: 1 },
+  { id: -9, campo: "tipo_credito", valor: "fovissste", etiqueta: "Fovissste", color: "bg-teal-100 text-teal-700", orden: 2 },
+  { id: -10, campo: "tipo_credito", valor: "contado", etiqueta: "Contado", color: "bg-emerald-100 text-emerald-700", orden: 3 },
+];
 
 type ContactoForm = Omit<Contacto, "id" | "created_at">;
 
@@ -104,6 +111,8 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   const [contacts, setContacts] = useState<Contacto[]>([]);
   const [propiedades, setPropiedades] = useState<Propiedad[]>([]);
   const [allPropiedades, setAllPropiedades] = useState<Propiedad[]>([]);
+  const [etapas, setEtapas] = useState<OpcionAtributo[]>(DEFAULT_ETAPAS);
+  const [creditos, setCreditos] = useState<OpcionAtributo[]>(DEFAULT_CREDITOS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -200,10 +209,23 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     setPropiedades(all.filter((p) => p.disponible));
   }, []);
 
+  const fetchOpciones = useCallback(async () => {
+    const { data } = await supabase
+      .from("crm_atributo_opciones")
+      .select("*")
+      .order("orden", { ascending: true });
+    const all = (data as OpcionAtributo[]) || [];
+    const etapasDB = all.filter((o) => o.campo === "etapa_seguimiento");
+    const creditosDB = all.filter((o) => o.campo === "tipo_credito");
+    if (etapasDB.length > 0) setEtapas(etapasDB);
+    if (creditosDB.length > 0) setCreditos(creditosDB);
+  }, []);
+
   useEffect(() => {
     fetchContacts();
     fetchPropiedades();
-  }, [fetchContacts, fetchPropiedades]);
+    fetchOpciones();
+  }, [fetchContacts, fetchPropiedades, fetchOpciones]);
 
   const openNew = () => {
     setForm(emptyForm);
@@ -234,7 +256,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     setCellDraft("");
   };
 
-  const saveCell = async () => {
+  const saveCell = async (overrideValue?: string) => {
     if (!editingCell) return;
     const { id, field } = editingCell;
     const current = contacts.find((c) => c.id === id);
@@ -243,15 +265,18 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
       return;
     }
 
-    let newValue: unknown = cellDraft;
+    // Use explicit override when provided (e.g. select onChange). Otherwise fall back to state.
+    const draft = overrideValue !== undefined ? overrideValue : cellDraft;
+
+    let newValue: unknown = draft;
     if (field === "presupuesto_max") {
-      newValue = parseBudget(cellDraft);
+      newValue = parseBudget(draft);
     } else if (field === "propiedad_interesada") {
-      newValue = cellDraft ? Number(cellDraft) : null;
+      newValue = draft ? Number(draft) : null;
     } else if (field === "fecha_visita") {
-      newValue = cellDraft ? new Date(cellDraft).toISOString() : null;
+      newValue = draft ? new Date(draft).toISOString() : null;
     } else if (field === "nombre") {
-      const trimmed = cellDraft.trim();
+      const trimmed = draft.trim();
       if (!trimmed) {
         cancelEdit();
         return;
@@ -259,7 +284,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
       newValue = trimmed;
     } else {
       // text fields: treat empty as null
-      newValue = cellDraft === "" ? null : cellDraft;
+      newValue = draft === "" ? null : draft;
     }
 
     // Skip if unchanged
@@ -350,9 +375,9 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
 
   // Stats
   const totalContacts = contacts.length;
-  const etapaCounts = ETAPAS.map((e) => ({
+  const etapaCounts = etapas.map((e) => ({
     ...e,
-    count: contacts.filter((c) => c.etapa_seguimiento === e.value).length,
+    count: contacts.filter((c) => c.etapa_seguimiento === e.valor).length,
   }));
 
   const selectedCount = selectedIds.size;
@@ -427,8 +452,8 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
           <span className="text-[10px] text-muted-foreground">contactos</span>
         </div>
         {etapaCounts.filter((e) => e.count > 0).map((e) => (
-          <div key={e.value} className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[11px] font-semibold ${e.color}`}>
-            {e.count} {e.label}
+          <div key={e.valor} className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[11px] font-semibold ${e.color || "bg-gray-100 text-gray-700"}`}>
+            {e.count} {e.etiqueta}
           </div>
         ))}
       </div>
@@ -512,8 +537,8 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
               <div>
                 <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Etapa</label>
                 <select value={form.etapa_seguimiento} onChange={(e) => set("etapa_seguimiento", e.target.value)} className={inputClass + " appearance-none cursor-pointer"}>
-                  {ETAPAS.map((e) => (
-                    <option key={e.value} value={e.value}>{e.label}</option>
+                  {etapas.map((e) => (
+                    <option key={e.valor} value={e.valor}>{e.etiqueta}</option>
                   ))}
                 </select>
               </div>
@@ -521,10 +546,9 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                 <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Tipo de crédito</label>
                 <select value={form.tipo_credito || ""} onChange={(e) => set("tipo_credito", e.target.value)} className={inputClass + " appearance-none cursor-pointer"}>
                   <option value="">Sin especificar</option>
-                  <option value="bancario">bancario</option>
-                  <option value="infonavit">infonavit</option>
-                  <option value="fovissste">fovissste</option>
-                  <option value="contado">contado</option>
+                  {creditos.map((c) => (
+                    <option key={c.valor} value={c.valor}>{c.etiqueta}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -662,7 +686,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
             </thead>
             <tbody>
               {filteredContacts.map((c) => {
-                const etapa = ETAPAS.find((e) => e.value === c.etapa_seguimiento);
+                const etapa = etapas.find((e) => e.valor === c.etapa_seguimiento);
                 const isSelected = selectedIds.has(c.id);
                 const prop = c.propiedad_interesada ? allPropiedades.find((p) => p.id === c.propiedad_interesada) : null;
                 const rowBg = isSelected ? "bg-cobalt/[0.04]" : "hover:bg-muted/20";
@@ -679,7 +703,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                         type="text"
                         value={cellDraft}
                         onChange={(e) => setCellDraft(e.target.value)}
-                        onBlur={saveCell}
+                        onBlur={() => saveCell()}
                         onKeyDown={(e) => handleCellKey(e)}
                         className={cellInputClass}
                         placeholder={placeholder}
@@ -722,7 +746,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                           type="text"
                           value={cellDraft}
                           onChange={(e) => setCellDraft(e.target.value)}
-                          onBlur={saveCell}
+                          onBlur={() => saveCell()}
                           onKeyDown={(e) => handleCellKey(e)}
                           className={cellInputClass + " font-medium"}
                         />
@@ -749,16 +773,16 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                           autoFocus
                           value={cellDraft}
                           onChange={(e) => {
-                            setCellDraft(e.target.value);
-                            // auto-save on select
-                            setTimeout(() => saveCell(), 0);
+                            const v = e.target.value;
+                            setCellDraft(v);
+                            saveCell(v);
                           }}
-                          onBlur={saveCell}
+                          onBlur={() => saveCell()}
                           onKeyDown={(e) => handleCellKey(e)}
                           className={cellInputClass + " cursor-pointer"}
                         >
-                          {ETAPAS.map((e) => (
-                            <option key={e.value} value={e.value}>{e.label}</option>
+                          {etapas.map((e) => (
+                            <option key={e.valor} value={e.valor}>{e.etiqueta}</option>
                           ))}
                         </select>
                       ) : (
@@ -768,7 +792,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                           title="Click para cambiar"
                         >
                           <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${etapa?.color || "bg-gray-100 text-gray-600"}`}>
-                            {etapa?.label || c.etapa_seguimiento}
+                            {etapa?.etiqueta || c.etapa_seguimiento}
                           </span>
                         </div>
                       )}
@@ -786,26 +810,38 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                           autoFocus
                           value={cellDraft}
                           onChange={(e) => {
-                            setCellDraft(e.target.value);
-                            setTimeout(() => saveCell(), 0);
+                            const v = e.target.value;
+                            setCellDraft(v);
+                            saveCell(v);
                           }}
-                          onBlur={saveCell}
+                          onBlur={() => saveCell()}
                           onKeyDown={(e) => handleCellKey(e)}
                           className={cellInputClass + " cursor-pointer"}
                         >
-                          {CREDITO_OPTIONS.map((opt) => (
-                            <option key={opt || "_"} value={opt}>
-                              {opt || "— sin especificar —"}
+                          <option value="">— sin especificar —</option>
+                          {creditos.map((opt) => (
+                            <option key={opt.valor} value={opt.valor}>
+                              {opt.etiqueta}
                             </option>
                           ))}
                         </select>
                       ) : (
                         <div
                           onClick={() => startEdit(c.id, "tipo_credito", c.tipo_credito || "")}
-                          className="cursor-pointer hover:bg-cobalt/5 -mx-1 px-1 py-1 rounded min-h-[28px] flex items-center transition-colors truncate"
+                          className="cursor-pointer -mx-1 px-1 py-1 rounded min-h-[28px] flex items-center hover:bg-cobalt/5 transition-colors"
                           title="Click para cambiar"
                         >
-                          {c.tipo_credito || <span className="text-muted-foreground/40 italic normal-case">Sin especificar</span>}
+                          {(() => {
+                            const cred = creditos.find((o) => o.valor === c.tipo_credito);
+                            if (cred) {
+                              return (
+                                <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${cred.color || "bg-gray-100 text-gray-600"}`}>
+                                  {cred.etiqueta}
+                                </span>
+                              );
+                            }
+                            return <span className="text-muted-foreground/40 italic normal-case">Sin especificar</span>;
+                          })()}
                         </div>
                       )}
                     </td>
@@ -822,10 +858,11 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                           autoFocus
                           value={cellDraft}
                           onChange={(e) => {
-                            setCellDraft(e.target.value);
-                            setTimeout(() => saveCell(), 0);
+                            const v = e.target.value;
+                            setCellDraft(v);
+                            saveCell(v);
                           }}
-                          onBlur={saveCell}
+                          onBlur={() => saveCell()}
                           onKeyDown={(e) => handleCellKey(e)}
                           className={cellInputClass + " cursor-pointer"}
                         >
@@ -889,7 +926,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                           inputMode="numeric"
                           value={cellDraft ? formatBudget(parseBudget(cellDraft)) : ""}
                           onChange={(e) => setCellDraft(String(parseBudget(e.target.value)))}
-                          onBlur={saveCell}
+                          onBlur={() => saveCell()}
                           onKeyDown={(e) => handleCellKey(e)}
                           className={cellInputClass + " tabular-nums"}
                           placeholder="1,500,000"
@@ -913,7 +950,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                           type="datetime-local"
                           value={cellDraft}
                           onChange={(e) => setCellDraft(e.target.value)}
-                          onBlur={saveCell}
+                          onBlur={() => saveCell()}
                           onKeyDown={(e) => handleCellKey(e)}
                           className={cellInputClass}
                         />
