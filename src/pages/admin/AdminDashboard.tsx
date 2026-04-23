@@ -24,15 +24,17 @@ import {
   Activity,
   MapPin,
   Calendar,
+  MessageCircle,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatPrice } from "@/lib/formatPrice";
 import { useAuth } from "@/hooks/useAuth";
 import PropertyForm from "@/components/admin/PropertyForm";
 import ContactsView from "@/components/admin/ContactsView";
+import ConversationsView from "@/components/admin/ConversationsView";
 import type { Propiedad } from "@/types";
 
-type AdminView = "propiedades" | "contactos";
+type AdminView = "propiedades" | "contactos" | "conversaciones";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -240,6 +242,17 @@ const AdminDashboard = () => {
             >
               <Users size={15} />
               Contactos
+            </button>
+            <button
+              onClick={() => switchView("conversaciones")}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 mt-1 ${
+                activeView === "conversaciones"
+                  ? "bg-white/15 text-white"
+                  : "text-white/50 hover:text-white/80 hover:bg-white/5"
+              }`}
+            >
+              <MessageCircle size={15} />
+              Conversaciones
             </button>
           </div>
         </nav>
@@ -614,6 +627,9 @@ const AdminDashboard = () => {
               }}
             />
           )}
+
+          {/* ──────── CONVERSACIONES VIEW ──────── */}
+          {activeView === "conversaciones" && <ConversationsView />}
 
         </main>
       </div>
