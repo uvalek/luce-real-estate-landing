@@ -74,10 +74,13 @@ export type ConversationPatch = {
   bot_enabled?: boolean;
   etapa_seguimiento?: string;
   asesor_asignado?: string;
-  zona_interes?: string;
-  tipo_credito?: string;
-  presupuesto_max?: number;
+  zona_interes?: string | null;
+  tipo_credito?: string | null;
+  presupuesto_max?: number | null;
   notas_internas?: string;
+  nombre?: string | null;
+  telefono?: string | null;
+  correo?: string | null;
 };
 
 export const chatbotApi = {

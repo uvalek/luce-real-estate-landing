@@ -500,6 +500,93 @@ function Row({ icon: Icon, label, value, mono }: { icon: any; label: string; val
   );
 }
 
+// Fila editable inline. Click → input. Blur o Enter → guarda.
+function EditableRow({
+  icon: Icon,
+  label,
+  value,
+  onSave,
+  mono,
+  type = 'text',
+  placeholder = '—',
+  options,
+}: {
+  icon: any;
+  label: string;
+  value: string | number | null | undefined;
+  onSave: (next: string | number | null) => void;
+  mono?: boolean;
+  type?: 'text' | 'number' | 'email';
+  placeholder?: string;
+  options?: { value: string; label: string }[]; // si se pasa, render select
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<string>(value == null ? '' : String(value));
+  useEffect(() => { setDraft(value == null ? '' : String(value)); }, [value]);
+
+  const commit = () => {
+    setEditing(false);
+    const trimmed = draft.trim();
+    const cur = value == null ? '' : String(value);
+    if (trimmed === cur) return;
+    if (trimmed === '') { onSave(null); return; }
+    if (type === 'number') {
+      const n = Number(trimmed.replace(/[, $]/g, ''));
+      if (Number.isFinite(n)) onSave(n);
+      return;
+    }
+    onSave(trimmed);
+  };
+
+  const display = value == null || value === '' ? placeholder : String(value);
+
+  return (
+    <div className="flex items-start gap-2.5 py-1.5">
+      <Icon size={14} className="text-zinc-400 mt-0.5 shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">{label}</div>
+        {editing ? (
+          options ? (
+            <select
+              autoFocus
+              value={draft}
+              onChange={e => { setDraft(e.target.value); }}
+              onBlur={commit}
+              className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[13px] text-zinc-900 dark:text-zinc-100 outline-none"
+            >
+              <option value="">—</option>
+              {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          ) : (
+            <input
+              autoFocus
+              type={type === 'number' ? 'text' : type}
+              inputMode={type === 'number' ? 'numeric' : undefined}
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onBlur={commit}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { e.preventDefault(); commit(); }
+                if (e.key === 'Escape') { setDraft(value == null ? '' : String(value)); setEditing(false); }
+              }}
+              className={`w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[13px] text-zinc-900 dark:text-zinc-100 outline-none ${mono ? 'font-mono' : ''}`}
+            />
+          )
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            title="Click para editar"
+            className={`text-left w-full text-[13px] truncate hover:bg-zinc-100 dark:hover:bg-zinc-800/60 rounded px-1 -mx-1 transition-colors ${mono ? 'font-mono' : ''} ${value == null || value === '' ? 'text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'}`}
+          >
+            {display}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ContactPanel({ conversation, detail, onUpdateField }: {
   conversation: Conversation;
   detail: ConversationDetail | null;
@@ -525,15 +612,27 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
         <div className="mt-2"><StageChip stage={stage} /></div>
       </div>
       <Section title="Datos de contacto">
-        <Row icon={Phone} label="Teléfono" value={c.telefono} mono />
-        <Row icon={Mail} label="Email" value={c.correo} />
+        <EditableRow icon={Phone} label="Teléfono" value={c.telefono} mono
+          onSave={v => onUpdateField({ telefono: v })} placeholder="Sin teléfono" />
+        <EditableRow icon={Mail} label="Email" value={c.correo} type="email"
+          onSave={v => onUpdateField({ correo: v })} placeholder="Sin email" />
         <Row icon={MessageCircle} label="Canal" value={CHANNELS[c.channel].label} />
         <Row icon={Calendar} label="Última actividad" value={fmtTime(c.last_at)} />
       </Section>
       <Section title="Información de prospecto">
-        <Row icon={MapPin} label="Zona de interés" value={c.zona_interes} />
-        <Row icon={Home} label="Presupuesto máx." value={fmtMoney(c.presupuesto_max)} mono />
-        <Row icon={Sparkles} label="Tipo de crédito" value={c.tipo_credito} />
+        <EditableRow icon={MapPin} label="Zona de interés" value={c.zona_interes}
+          onSave={v => onUpdateField({ zona_interes: v })} placeholder="Sin definir" />
+        <EditableRow icon={Home} label="Presupuesto máx." value={c.presupuesto_max ?? null} mono type="number"
+          onSave={v => onUpdateField({ presupuesto_max: v })} placeholder="Sin definir" />
+        <EditableRow icon={Sparkles} label="Tipo de crédito" value={c.tipo_credito}
+          onSave={v => onUpdateField({ tipo_credito: v })} placeholder="Sin definir"
+          options={[
+            { value: 'infonavit', label: 'Infonavit' },
+            { value: 'fovissste', label: 'Fovissste' },
+            { value: 'bancario', label: 'Bancario' },
+            { value: 'contado', label: 'Contado' },
+            { value: 'otro', label: 'Otro' },
+          ]} />
         <div className="mt-3">
           <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1.5">Etapa de seguimiento</div>
           <div className="flex gap-1">
