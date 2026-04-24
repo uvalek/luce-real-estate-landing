@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Instagram, Send, Search, Phone, Mail, MapPin, Calendar,
-  MoreHorizontal, Paperclip, Smile, Pause, Bot, User, CheckCheck,
+  Paperclip, Smile, Pause, Bot, User, CheckCheck,
   Home, Sparkles, PanelRightClose, PanelRightOpen, AlertTriangle,
   MessageCircle, Loader2,
 } from 'lucide-react';
@@ -212,14 +212,9 @@ function ConversationList({
   }), [conversations, search, filter]);
 
   return (
-    <aside className="h-full w-full flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
-      <div className="px-5 pt-5 pb-3">
-        <div className="flex items-baseline justify-between">
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-white">Conversaciones</h1>
-          <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
-            {conversations.length} total · {conversations.filter(c => c.unread_count > 0).length} nuevas
-          </span>
-        </div>
+    <aside className="h-full w-full flex flex-col border-r border-zinc-200/70 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-[1px_0_0_0_rgba(0,0,0,0.02)]">
+      <div className="px-4 pt-5 pb-3">
+        <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-white">Conversaciones</h1>
       </div>
       <div className="px-4 pb-3">
         <div className="relative">
@@ -228,20 +223,20 @@ function ConversationList({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por nombre o teléfono…"
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-900 outline-none transition text-zinc-900 dark:text-white placeholder:text-zinc-400"
+            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-2xl bg-zinc-100/80 dark:bg-zinc-800/60 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-900 focus:shadow-sm outline-none transition text-zinc-900 dark:text-white placeholder:text-zinc-400"
           />
         </div>
       </div>
-      <div className="px-4 pb-3 overflow-x-auto">
-        <div className="flex gap-1.5 w-max">
+      <div className="px-4 pb-3">
+        <div className="flex flex-wrap gap-1.5">
           {FILTERS.map(f => (
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
               className={`px-2.5 py-1 text-[12px] rounded-full border whitespace-nowrap transition-all
                 ${filter === f.id
-                  ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white'
-                  : 'bg-transparent text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'}`}
+                  ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm dark:bg-white dark:text-zinc-900 dark:border-white'
+                  : 'bg-transparent text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 hover:shadow-sm'}`}
             >
               {f.label}
             </button>
@@ -265,10 +260,10 @@ function ConversationList({
             <button
               key={c.chat_id}
               onClick={() => onSelect(c.chat_id)}
-              className={`w-full text-left rounded-xl p-3 mb-0.5 flex gap-3 transition-all
+              className={`w-full text-left rounded-2xl p-3 mb-1 flex gap-3 transition-all
                 ${isActive
-                  ? 'bg-zinc-900 dark:bg-zinc-800 shadow-sm'
-                  : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/50'}`}
+                  ? 'bg-zinc-900 dark:bg-zinc-800 shadow-md ring-1 ring-zinc-900/5 dark:ring-white/5'
+                  : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:shadow-sm'}`}
             >
               <Avatar name={c.name} chatId={c.chat_id} channel={c.channel} size={44} />
               <div className="flex-1 min-w-0">
@@ -315,10 +310,10 @@ function MessageBubble({ m, prevSender }: { m: Message; prevSender: string | nul
   const isIn = m.sender === 'user';
   const isBot = m.sender === 'bot';
   const bubbleClass = isIn
-    ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tr-xl rounded-br-xl rounded-bl-xl rounded-tl-md'
+    ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tr-2xl rounded-br-2xl rounded-bl-2xl rounded-tl-md ring-1 ring-zinc-900/5 dark:ring-white/5'
     : isBot
-      ? 'bg-zinc-100 dark:bg-zinc-800/60 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700/60 rounded-tl-xl rounded-bl-xl rounded-br-md rounded-tr-xl'
-      : 'bg-emerald-600 text-white rounded-tl-xl rounded-bl-xl rounded-br-md rounded-tr-xl';
+      ? 'bg-zinc-100 dark:bg-zinc-800/60 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700/60 rounded-tl-2xl rounded-bl-2xl rounded-br-md rounded-tr-2xl'
+      : 'bg-emerald-600 text-white rounded-tl-2xl rounded-bl-2xl rounded-br-md rounded-tr-2xl';
   const showLabel = prevSender !== m.sender;
 
   return (
@@ -337,7 +332,7 @@ function MessageBubble({ m, prevSender }: { m: Message; prevSender: string | nul
             )}
           </div>
         )}
-        <div className={`px-3.5 py-2 text-[14px] shadow-sm whitespace-pre-wrap break-words ${bubbleClass}`}>
+        <div className={`px-3.5 py-2 text-[14px] shadow-[0_1px_2px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] whitespace-pre-wrap break-words ${bubbleClass}`}>
           {m.content}
           <div className={`text-[10px] mt-0.5 text-right ${isIn ? 'text-zinc-400' : isBot ? 'text-zinc-400' : 'text-emerald-100/80'}`}>
             {fmtTime(m.created_at)}
@@ -390,10 +385,10 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
           </div>
         </div>
       )}
-      <div className={`flex items-end gap-2 rounded-xl border transition-colors
+      <div className={`flex items-end gap-2 rounded-2xl border transition-all
         ${botOn
           ? 'bg-zinc-100/60 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 opacity-70'
-          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 focus-within:border-emerald-500'}`}>
+          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 shadow-sm focus-within:border-emerald-500 focus-within:shadow-md'}`}>
         <button disabled={botOn} className="p-2.5 text-zinc-500 disabled:cursor-not-allowed">
           <Paperclip size={18} />
         </button>
@@ -412,10 +407,10 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
         <button
           onClick={send}
           disabled={botOn || !text.trim() || sending}
-          className={`m-1 px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-semibold transition-all
+          className={`m-1 px-3 py-2 rounded-xl flex items-center gap-1.5 text-sm font-semibold transition-all
             ${botOn || !text.trim() || sending
               ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'
-              : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
+              : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm hover:shadow-md'}`}
         >
           {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} strokeWidth={2.5} />}
           Enviar
@@ -461,10 +456,9 @@ function ConversationPane({
           </div>
           <div className="flex items-center gap-2">
             <BotToggle on={botOn} busy={togglingBot} onChange={onToggleBot} />
-            <button onClick={onOpenPanel} title={panelOpen ? 'Ocultar perfil' : 'Mostrar perfil'} className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500">
+            <button onClick={onOpenPanel} title={panelOpen ? 'Ocultar perfil' : 'Mostrar perfil'} className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:shadow-sm text-zinc-500 transition-all">
               {panelOpen ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}
             </button>
-            <button className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"><MoreHorizontal size={17} /></button>
           </div>
         </div>
       </header>
