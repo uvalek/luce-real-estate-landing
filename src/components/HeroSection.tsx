@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import SearchModal from "@/components/SearchModal";
 import { BlurFade } from "@/components/ui/blur-fade";
+import { AnimatedLayerButton } from "@/components/ui/animated-layer-button";
 
 const ZONAS = [
   "Tlaxcala",
@@ -16,7 +16,9 @@ const ZONAS = [
 
 const HeroSection = () => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [ctaPressed, setCtaPressed] = useState(false);
   const [zonaIdx, setZonaIdx] = useState(0);
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -24,6 +26,31 @@ const HeroSection = () => {
     }, 2500);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (openTimer.current) clearTimeout(openTimer.current);
+    };
+  }, []);
+
+  const handleCtaClick = () => {
+    // On touch devices (no hover) play the button animation first, then open the modal.
+    const isTouch =
+      typeof window !== "undefined" &&
+      window.matchMedia("(hover: none)").matches;
+
+    if (isTouch) {
+      setCtaPressed(true);
+      if (openTimer.current) clearTimeout(openTimer.current);
+      openTimer.current = setTimeout(() => {
+        setSearchOpen(true);
+        // Release the pressed state after the modal opens
+        setTimeout(() => setCtaPressed(false), 350);
+      }, 550);
+    } else {
+      setSearchOpen(true);
+    }
+  };
 
   const zona = ZONAS[zonaIdx];
 
@@ -70,16 +97,15 @@ const HeroSection = () => {
           </BlurFade>
 
           <BlurFade delay={0.75} duration={0.6} yOffset={8} blur="6px">
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="mt-8 group relative z-0 inline-flex cursor-pointer items-center justify-center gap-2.5 overflow-hidden rounded bg-cobalt px-7 py-3.5 text-sm font-semibold text-primary-foreground transition-all duration-500
-              before:absolute before:inset-0 before:-z-10 before:translate-x-[150%] before:translate-y-[150%] before:scale-[2.5] before:rounded-[100%] before:bg-gold before:transition-transform before:duration-1000 before:content-['']
-              hover:scale-105 hover:text-cobalt hover:before:translate-x-[0%] hover:before:translate-y-[0%]
-              active:scale-95"
-            >
-              <Search size={16} className="transition-transform duration-300 group-hover:rotate-12" />
-              Comenzar Búsqueda
-            </button>
+            <div className="mt-10">
+              <AnimatedLayerButton
+                onClick={handleCtaClick}
+                forceActive={ctaPressed}
+                aria-label="Comenzar búsqueda"
+              >
+                Comenzar Búsqueda
+              </AnimatedLayerButton>
+            </div>
           </BlurFade>
         </div>
       </div>
