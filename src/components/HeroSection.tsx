@@ -1,9 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import SearchModal from "@/components/SearchModal";
 
+const ZONAS = [
+  "Tlaxcala",
+  "Cholula",
+  "Apizaco",
+  "Huamantla",
+  "Xaloztoc",
+  "Contla",
+  "Angelópolis",
+  "Tlaxco",
+];
+
 const HeroSection = () => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [zonaIdx, setZonaIdx] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setZonaIdx((i) => (i + 1) % ZONAS.length);
+    }, 2500);
+    return () => clearInterval(id);
+  }, []);
+
+  const zona = ZONAS[zonaIdx];
 
   return (
     <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center">
@@ -20,7 +41,19 @@ const HeroSection = () => {
       <div className="relative z-10 container mx-auto px-4 lg:px-8 pt-24 pb-16 lg:pt-28 lg:pb-24">
         <div className="max-w-2xl">
           <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-cobalt">
-            Encuentra la luz de tu nuevo hogar en Angelópolis
+            Encuentra la luz de tu nuevo hogar en{" "}
+            <span
+              className="relative inline-flex overflow-hidden align-bottom"
+              style={{ height: "1.1em", lineHeight: "1.1em" }}
+              aria-live="polite"
+            >
+              <span
+                key={zona}
+                className="inline-block animate-word-roll-in whitespace-nowrap bg-gradient-to-r from-cobalt via-cobalt-light to-gold bg-clip-text text-transparent"
+              >
+                {zona}
+              </span>
+            </span>
           </h1>
           <p className="mt-5 text-base text-foreground/70 max-w-md leading-relaxed">
             En LUCE te ayudamos a descubrir espacios iluminados y modernos que se adaptan a tu
