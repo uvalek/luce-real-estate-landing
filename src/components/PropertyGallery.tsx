@@ -38,12 +38,12 @@ const PropertyGallery = ({ galeria }: PropertyGalleryProps) => {
         />
 
         {/* Category badge */}
-        <span className="absolute top-3 left-3 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded capitalize">
+        <span className="absolute top-3 left-3 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded-full capitalize">
           {current.categoria}
         </span>
 
         {/* Counter */}
-        <span className="absolute top-3 right-3 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded">
+        <span className="absolute top-3 right-3 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
           {currentIndex + 1} / {allImages.length}
         </span>
 
@@ -75,7 +75,7 @@ const PropertyGallery = ({ galeria }: PropertyGalleryProps) => {
             <button
               key={i}
               onClick={() => setCurrentIndex(i)}
-              className={`flex-shrink-0 w-14 h-14 rounded overflow-hidden border-2 transition-colors ${
+              className={`flex-shrink-0 w-14 h-14 rounded-2xl overflow-hidden border-2 transition-colors ${
                 i === currentIndex ? "border-gold" : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >

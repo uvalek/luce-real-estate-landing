@@ -87,13 +87,13 @@ const PropertyFilter = () => {
   return (
     <section className="relative z-10 -mt-6 sm:-mt-10 px-4">
       <div className="container mx-auto max-w-5xl">
-        <div className="bg-card rounded-lg shadow-xl p-6 md:p-8">
+        <div className="bg-card rounded-[2.5rem] shadow-[0_25px_60px_-20px_rgba(15,23,42,0.25)] p-6 md:p-10">
           <h3 className="font-heading text-lg font-semibold text-foreground mb-5">
             Busca propiedades disponibles
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Estado */}
-            <div className="flex items-center border border-border rounded px-4 py-3 min-w-0">
+            <div className="flex items-center border border-border rounded-2xl px-4 py-3 min-w-0">
               <select
                 value={filters.state}
                 onChange={(e) => handleFilterChange("state", e.target.value)}
@@ -107,7 +107,7 @@ const PropertyFilter = () => {
             </div>
 
             {/* Municipio */}
-            <div className="flex items-center border border-border rounded px-4 py-3 min-w-0">
+            <div className="flex items-center border border-border rounded-2xl px-4 py-3 min-w-0">
               <select
                 value={filters.municipality}
                 onChange={(e) => handleFilterChange("municipality", e.target.value)}
@@ -127,7 +127,7 @@ const PropertyFilter = () => {
             </div>
 
             {/* Tipo de Propiedad */}
-            <div className="flex items-center border border-border rounded px-4 py-3 min-w-0">
+            <div className="flex items-center border border-border rounded-2xl px-4 py-3 min-w-0">
               <select
                 value={filters.propertyType}
                 onChange={(e) => handleFilterChange("propertyType", e.target.value)}
@@ -143,7 +143,7 @@ const PropertyFilter = () => {
             </div>
 
             {/* Presupuesto */}
-            <div className="flex items-center border border-border rounded px-4 py-3 min-w-0">
+            <div className="flex items-center border border-border rounded-2xl px-4 py-3 min-w-0">
               <span className="text-sm text-foreground/70 mr-1">$</span>
               <input
                 type="text"
@@ -157,7 +157,7 @@ const PropertyFilter = () => {
             </div>
 
             {/* Renta o Venta */}
-            <div className="flex items-center border border-border rounded px-4 py-3 min-w-0">
+            <div className="flex items-center border border-border rounded-2xl px-4 py-3 min-w-0">
               <select
                 value={filters.listingType}
                 onChange={(e) => handleFilterChange("listingType", e.target.value)}
@@ -173,7 +173,7 @@ const PropertyFilter = () => {
             {/* Buscar */}
             <button
               onClick={handleSearch}
-              className="flex items-center justify-center gap-2 bg-foreground text-background font-semibold text-sm rounded px-6 py-3 hover:bg-foreground/80 transition-colors"
+              className="flex items-center justify-center gap-2 bg-foreground text-background font-semibold text-sm rounded-2xl px-6 py-3 hover:bg-foreground/80 transition-colors"
             >
               <Search size={16} className="flex-shrink-0" />
               Buscar
@@ -182,7 +182,7 @@ const PropertyFilter = () => {
         </div>
 
         {/* Stats */}
-        <div className="flex flex-wrap justify-center gap-8 md:gap-16 mt-8">
+        <div className="flex flex-wrap justify-center gap-8 md:gap-16 mt-20 md:mt-28 mb-4">
           {stats.map((s) => (
             <AnimatedStat key={s.label} value={s.value} label={s.label} />
           ))}

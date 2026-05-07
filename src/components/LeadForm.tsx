@@ -35,7 +35,7 @@ const LeadForm = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-card rounded-lg shadow-xl p-6 md:p-8 space-y-5">
+        <form onSubmit={handleSubmit} className="bg-card rounded-[2.5rem] shadow-[0_25px_60px_-20px_rgba(15,23,42,0.25)] p-6 md:p-10 space-y-5">
           <div>
             <label htmlFor="lead-name" className="block text-sm font-medium text-foreground mb-1.5">
               Nombre completo
@@ -47,7 +47,7 @@ const LeadForm = () => {
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Tu nombre"
-              className="w-full border border-border rounded px-4 py-3 text-base sm:text-sm bg-transparent text-foreground outline-none focus:ring-2 focus:ring-gold/50 placeholder:text-muted-foreground"
+              className="w-full border border-border rounded-2xl px-4 py-3 text-base sm:text-sm bg-transparent text-foreground outline-none focus:ring-2 focus:ring-gold/50 placeholder:text-muted-foreground"
             />
           </div>
 
@@ -62,7 +62,7 @@ const LeadForm = () => {
               value={formData.email}
               onChange={(e) => handleChange("email", e.target.value)}
               placeholder="tu@email.com"
-              className="w-full border border-border rounded px-4 py-3 text-base sm:text-sm bg-transparent text-foreground outline-none focus:ring-2 focus:ring-gold/50 placeholder:text-muted-foreground"
+              className="w-full border border-border rounded-2xl px-4 py-3 text-base sm:text-sm bg-transparent text-foreground outline-none focus:ring-2 focus:ring-gold/50 placeholder:text-muted-foreground"
             />
           </div>
 
@@ -77,7 +77,7 @@ const LeadForm = () => {
               value={formData.phone}
               onChange={(e) => handleChange("phone", e.target.value)}
               placeholder="+52 222 000 0000"
-              className="w-full border border-border rounded px-4 py-3 text-base sm:text-sm bg-transparent text-foreground outline-none focus:ring-2 focus:ring-gold/50 placeholder:text-muted-foreground"
+              className="w-full border border-border rounded-2xl px-4 py-3 text-base sm:text-sm bg-transparent text-foreground outline-none focus:ring-2 focus:ring-gold/50 placeholder:text-muted-foreground"
             />
           </div>
 
@@ -89,7 +89,7 @@ const LeadForm = () => {
               id="lead-interest"
               value={formData.interestType}
               onChange={(e) => handleChange("interestType", e.target.value)}
-              className="w-full border border-border rounded px-4 py-3 text-base sm:text-sm bg-transparent text-foreground outline-none focus:ring-2 focus:ring-gold/50"
+              className="w-full border border-border rounded-2xl px-4 py-3 text-base sm:text-sm bg-transparent text-foreground outline-none focus:ring-2 focus:ring-gold/50"
             >
               <option value="compra">Compra</option>
               <option value="renta">Renta</option>
@@ -100,7 +100,7 @@ const LeadForm = () => {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-cobalt text-primary-foreground font-semibold text-sm px-7 py-3.5 rounded hover:bg-cobalt-light transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-cobalt text-primary-foreground font-semibold text-sm px-7 py-3.5 rounded-2xl hover:bg-cobalt-light transition-colors"
           >
             <Send size={16} />
             Enviar Información

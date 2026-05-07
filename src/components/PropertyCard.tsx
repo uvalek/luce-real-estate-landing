@@ -14,7 +14,7 @@ const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
 
   return (
     <div
-      className="group bg-card rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow cursor-pointer"
+      className="group bg-card rounded-[2.5rem] overflow-hidden shadow-[0_15px_40px_-15px_rgba(15,23,42,0.2)] hover:shadow-[0_25px_50px_-15px_rgba(28,55,140,0.3)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
       onClick={onClick}
     >
       <div className="relative h-56 overflow-hidden">
@@ -31,11 +31,11 @@ const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
           </div>
         )}
         <div className="absolute top-3 left-3 flex gap-1.5">
-          <span className="bg-cobalt/90 text-white text-xs font-semibold px-2.5 py-1 rounded capitalize">
+          <span className="bg-cobalt/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full capitalize">
             {tipo}
           </span>
           {tipo_oferta && (
-            <span className="bg-gold/90 text-white text-xs font-semibold px-2.5 py-1 rounded">
+            <span className="bg-gold/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
               {tipo_oferta}
             </span>
           )}
@@ -66,7 +66,7 @@ const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <button className="bg-gold text-accent-foreground text-xs font-semibold px-4 py-2 rounded hover:bg-gold-light transition-colors">
+            <button className="bg-gold text-accent-foreground text-xs font-semibold px-4 py-2 rounded-full hover:bg-gold-light transition-colors">
               Ver Detalles
             </button>
             <a
@@ -74,7 +74,7 @@ const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1.5 bg-[#0088cc] text-white text-xs font-semibold px-3 py-2.5 rounded hover:bg-[#006da3] transition-colors"
+              className="flex items-center gap-1.5 bg-[#0088cc] text-white text-xs font-semibold px-3 py-2.5 rounded-full hover:bg-[#006da3] transition-colors"
               title="Enviar mensaje"
             >
               <MessageCircle size={14} />

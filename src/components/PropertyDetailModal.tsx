@@ -23,7 +23,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
       onClick={onClose}
     >
       <div
-        className="relative bg-card rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto overscroll-contain touch-pan-y"
+        className="relative bg-card rounded-[2.5rem] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto overscroll-contain touch-pan-y"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -44,16 +44,16 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
         <div className="p-6 md:p-8">
           {/* Badge + Title */}
           <div className="flex items-start gap-3 mb-4">
-            <span className="inline-block bg-gold/20 text-gold text-xs font-semibold px-2.5 py-1 rounded capitalize">
+            <span className="inline-block bg-gold/20 text-gold text-xs font-semibold px-2.5 py-1 rounded-full capitalize">
               {property.tipo}
             </span>
             {property.tipo_oferta && (
-              <span className="inline-block bg-gold/20 text-gold text-xs font-semibold px-2.5 py-1 rounded">
+              <span className="inline-block bg-gold/20 text-gold text-xs font-semibold px-2.5 py-1 rounded-full">
                 {property.tipo_oferta}
               </span>
             )}
             {property.acepta_credito && (
-              <span className="inline-block bg-cobalt/10 text-cobalt text-xs font-semibold px-2.5 py-1 rounded">
+              <span className="inline-block bg-cobalt/10 text-cobalt text-xs font-semibold px-2.5 py-1 rounded-full">
                 Acepta crédito
               </span>
             )}
@@ -152,7 +152,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
               href="https://cal.com/alek-nava-i4gvq6/visita-propiedad-programada?overlayCalendar=true"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 text-center bg-cobalt text-primary-foreground font-semibold text-sm px-7 py-3.5 rounded hover:bg-cobalt-light transition-colors"
+              className="flex-1 text-center bg-cobalt text-primary-foreground font-semibold text-sm px-7 py-3.5 rounded-2xl hover:bg-cobalt-light transition-colors"
             >
               Agendar Visita
             </a>
@@ -160,7 +160,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
               href={getTelegramLink(property)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#0088cc] text-white font-semibold text-sm px-5 py-3.5 rounded hover:bg-[#006da3] transition-colors"
+              className="flex items-center justify-center gap-2 bg-[#0088cc] text-white font-semibold text-sm px-5 py-3.5 rounded-2xl hover:bg-[#006da3] transition-colors"
             >
               <MessageCircle size={18} />
               Mensaje
