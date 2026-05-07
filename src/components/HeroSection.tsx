@@ -44,12 +44,12 @@ const HeroSection = () => {
             Encuentra la luz de tu nuevo hogar en{" "}
             <span
               className="relative inline-flex overflow-hidden align-bottom"
-              style={{ height: "1.1em", lineHeight: "1.1em" }}
+              style={{ height: "1.2em", lineHeight: "1.2em" }}
               aria-live="polite"
             >
               <span
                 key={zona}
-                className="inline-block animate-word-roll-in whitespace-nowrap bg-gradient-to-r from-cobalt via-cobalt-light to-gold bg-clip-text text-transparent"
+                className="inline-block animate-word-roll-in whitespace-nowrap text-cobalt"
               >
                 {zona}
               </span>
