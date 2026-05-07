@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import SearchModal from "@/components/SearchModal";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { AnimatedLayerButton } from "@/components/ui/animated-layer-button";
+
+// Modal is only loaded when the user opens it.
+const SearchModal = lazy(() => import("@/components/SearchModal"));
 
 const ZONAS = [
   "Tlaxcala",
@@ -60,6 +62,8 @@ const HeroSection = () => {
       <img
         src="/h1defi.jpg"
         alt="Edificio moderno en Angelópolis"
+        decoding="async"
+        fetchPriority="high"
         className="absolute inset-0 w-full h-full object-cover object-right"
       />
 
@@ -110,7 +114,11 @@ const HeroSection = () => {
         </div>
       </div>
 
-      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {searchOpen && (
+        <Suspense fallback={null}>
+          <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+        </Suspense>
+      )}
     </section>
   );
 };

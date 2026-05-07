@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { useProperties } from "@/hooks/useProperties";
 import PropertyCard from "@/components/PropertyCard";
-import PropertyDetailModal from "@/components/PropertyDetailModal";
 import type { Propiedad } from "@/types";
+
+const PropertyDetailModal = lazy(() => import("@/components/PropertyDetailModal"));
 
 const FEATURED_COUNT = 3;
 
@@ -93,10 +94,12 @@ const PropertyGrid = () => {
 
       {/* Detail Modal */}
       {selectedProperty && (
-        <PropertyDetailModal
-          property={selectedProperty}
-          onClose={() => setSelectedProperty(null)}
-        />
+        <Suspense fallback={null}>
+          <PropertyDetailModal
+            property={selectedProperty}
+            onClose={() => setSelectedProperty(null)}
+          />
+        </Suspense>
       )}
     </>
   );

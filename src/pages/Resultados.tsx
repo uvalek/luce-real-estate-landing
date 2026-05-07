@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, Loader2, SearchX, MapPinned, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Propiedad } from "@/types";
 import PropertyCard from "@/components/PropertyCard";
-import PropertyDetailModal from "@/components/PropertyDetailModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+const PropertyDetailModal = lazy(() => import("@/components/PropertyDetailModal"));
 
 type FallbackLevel =
   | "exact"          // matched all filters
@@ -288,10 +289,12 @@ const Resultados = () => {
       <Footer />
 
       {selectedProperty && (
-        <PropertyDetailModal
-          property={selectedProperty}
-          onClose={() => setSelectedProperty(null)}
-        />
+        <Suspense fallback={null}>
+          <PropertyDetailModal
+            property={selectedProperty}
+            onClose={() => setSelectedProperty(null)}
+          />
+        </Suspense>
       )}
     </div>
   );

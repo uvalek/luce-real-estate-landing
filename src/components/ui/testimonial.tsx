@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Quote } from "lucide-react";
 
 // ─── Equipo LUCE — agentes inmobiliarios ───
@@ -56,6 +56,9 @@ const AnimatedTestimonials = ({
   autoplay?: boolean;
 }) => {
   const [active, setActive] = useState(0);
+  const [inView, setInView] = useState(false);
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   const handleNext = React.useCallback(() => {
     setActive((prev) => (prev + 1) % testimonials.length);
@@ -65,11 +68,25 @@ const AnimatedTestimonials = ({
     setActive((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
+  // Pause autoplay when the section is off-screen — saves CPU on mobile.
   useEffect(() => {
-    if (!autoplay) return;
-    const interval = setInterval(handleNext, 6000);
+    if (!sectionRef.current || typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin: "100px" },
+    );
+    obs.observe(sectionRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!autoplay || !inView || prefersReducedMotion) return;
+    const interval = setInterval(handleNext, 7000);
     return () => clearInterval(interval);
-  }, [autoplay, handleNext]);
+  }, [autoplay, inView, prefersReducedMotion, handleNext]);
 
   const isActive = (index: number) => index === active;
 
@@ -80,7 +97,7 @@ const AnimatedTestimonials = ({
   );
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-16 font-sans antialiased md:max-w-5xl md:px-8 md:py-24 lg:px-12">
+    <div ref={sectionRef} className="mx-auto max-w-sm px-4 py-16 font-sans antialiased md:max-w-5xl md:px-8 md:py-24 lg:px-12">
       <div className="text-center mb-12">
         <p className="text-xs font-semibold tracking-[0.25em] text-gold uppercase mb-3">
           — Conoce al equipo
@@ -121,6 +138,8 @@ const AnimatedTestimonials = ({
                     alt={t.name}
                     width={500}
                     height={500}
+                    loading="lazy"
+                    decoding="async"
                     draggable={false}
                     className="h-full w-full rounded-[2.5rem] object-cover shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] ring-1 ring-white/20"
                     onError={(e) => {
@@ -201,29 +220,20 @@ const AnimatedTestimonials = ({
 export function Component() {
   return (
     <section className="relative overflow-hidden bg-cobalt">
-      {/* Decorative animated grid */}
-      <style>
-        {`
-          @keyframes animate-grid-move {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
-          }
-          .luce-animated-grid {
-            width: 200%;
-            height: 200%;
-            background-image:
-              linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px);
-            background-size: 3rem 3rem;
-            animation: animate-grid-move 40s linear infinite alternate;
-          }
-        `}
-      </style>
-      <div className="luce-animated-grid absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-40 pointer-events-none" />
+      {/* Static decorative grid — no infinite animation, far cheaper on mobile */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 opacity-[0.18] pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.6) 1px, transparent 1px)",
+          backgroundSize: "3rem 3rem",
+        }}
+      />
 
-      {/* Soft gold glow */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-cobalt-light/30 blur-3xl pointer-events-none" />
+      {/* Soft glows — static, no animation */}
+      <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-cobalt-light/25 blur-3xl pointer-events-none" />
 
       <div className="relative z-10">
         <AnimatedTestimonials testimonials={testimonials} />
