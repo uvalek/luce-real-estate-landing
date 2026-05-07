@@ -58,13 +58,22 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
       requestAnimationFrame(() => requestAnimationFrame(() => setAnimateIn(true)));
     } else {
       setAnimateIn(false);
+      // Restore scroll IMMEDIATELY so navigations away from this view aren't stuck.
+      document.body.style.overflow = "";
       const t = setTimeout(() => {
         setVisible(false);
-        document.body.style.overflow = "";
       }, 350); // matches CSS transition duration
       return () => clearTimeout(t);
     }
   }, [open]);
+
+  // Safety net: always release the scroll lock if the modal unmounts unexpectedly
+  // (e.g. navigation before the close transition finishes).
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
 
   /* ── filters ── */
   const [state, setState] = useState("");
