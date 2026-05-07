@@ -38,6 +38,9 @@ const HeroSection = () => {
       {/* White overlay — only visible on screens ≤890px for text readability */}
       <div className="absolute inset-0 bg-white/60 hero-overlay-mobile" />
 
+      {/* Bottom fade-to-white — softens the edge between hero image and the page */}
+      <div className="absolute inset-x-0 bottom-0 h-32 md:h-40 bg-gradient-to-b from-transparent via-white/60 to-white pointer-events-none z-[1]" />
+
       <div className="relative z-10 container mx-auto px-4 lg:px-8 pt-24 pb-16 lg:pt-28 lg:pb-24">
         <div className="max-w-2xl">
           <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-cobalt">
