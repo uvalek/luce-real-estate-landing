@@ -107,13 +107,14 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
   return (
     <div
       ref={backdropRef}
-      className={`fixed inset-0 z-[200] flex items-start justify-center transition-all duration-350 ${
+      className={`fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto overscroll-contain transition-all duration-350 ${
         animateIn ? "bg-black/50 backdrop-blur-md" : "bg-black/0 backdrop-blur-none"
       }`}
+      style={{ WebkitOverflowScrolling: "touch" }}
       onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
     >
       <div
-        className={`relative w-full max-w-2xl mx-4 mt-[8vh] sm:mt-[12vh] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`relative w-full max-w-2xl mx-4 mt-[5vh] mb-8 sm:mt-[12vh] sm:mb-12 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           animateIn
             ? "opacity-100 translate-y-0 scale-100"
             : "opacity-0 translate-y-8 scale-95"
