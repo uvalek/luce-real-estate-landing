@@ -69,13 +69,16 @@ const AnimatedStat = ({ value, label, duration = 2000 }: AnimatedStatProps) => {
   }, [num, duration]);
 
   return (
-    <div ref={ref} className="text-center">
-      <p className="font-heading text-2xl md:text-3xl font-bold text-cobalt tabular-nums">
+    <div ref={ref} className="text-center group">
+      <p className="font-heading text-5xl md:text-6xl lg:text-7xl font-extrabold text-cobalt tabular-nums leading-none tracking-tight">
         {prefix}
         {current.toLocaleString("es-MX")}
-        {suffix}
+        <span className="text-gold">{suffix}</span>
       </p>
-      <p className="text-xs text-muted-foreground mt-1">{label}</p>
+      <div className="mt-3 mx-auto h-[3px] w-10 rounded-full bg-gold/80 transition-all duration-300 group-hover:w-16" />
+      <p className="mt-3 text-xs md:text-sm font-semibold tracking-[0.18em] uppercase text-foreground/70">
+        {label}
+      </p>
     </div>
   );
 };

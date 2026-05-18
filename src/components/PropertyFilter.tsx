@@ -182,9 +182,11 @@ const PropertyFilter = () => {
         </div>
 
         {/* Stats */}
-        <div className="flex flex-wrap justify-center gap-8 md:gap-16 mt-20 md:mt-28 mb-4">
+        <div className="mt-20 md:mt-28 mb-4 max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-y-12 sm:gap-y-0 sm:divide-x sm:divide-border/60">
           {stats.map((s) => (
-            <AnimatedStat key={s.label} value={s.value} label={s.label} />
+            <div key={s.label} className="px-6 sm:px-8 flex justify-center">
+              <AnimatedStat value={s.value} label={s.label} />
+            </div>
           ))}
         </div>
       </div>
