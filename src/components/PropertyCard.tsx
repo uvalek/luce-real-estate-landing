@@ -33,21 +33,21 @@ const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
         {/* Top gradient overlay — legibility for the tags */}
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/70 via-black/30 to-transparent pointer-events-none"
+          className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/75 via-black/40 to-transparent pointer-events-none"
         />
         {/* Tipo — top left */}
-        <div className="absolute top-4 left-4">
-          <span className="font-heading text-[11px] font-bold tracking-[0.22em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+        <div className="absolute top-6 left-7">
+          <span className="font-heading text-[14px] font-bold tracking-[0.22em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
             {tipo}
           </span>
         </div>
         {/* Oferta — top right */}
         {tipo_oferta && (
-          <div className="absolute top-4 right-4 flex items-center gap-1.5">
-            <span className="font-heading text-[11px] font-extrabold tracking-[0.3em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+          <div className="absolute top-6 right-5 flex items-center gap-2">
+            <span className="font-heading text-[14px] font-extrabold tracking-[0.3em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.75)]">
               {tipo_oferta}
             </span>
-            <span className="h-px w-5 bg-white/80" />
+            <span className="h-px w-6 bg-white/80" />
           </div>
         )}
       </div>
