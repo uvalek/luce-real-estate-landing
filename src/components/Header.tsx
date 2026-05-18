@@ -14,10 +14,8 @@ const Header = () => {
   }, []);
 
   const navLinks = [
-    { label: "Inicio", href: "#" },
     { label: "Quiénes Somos", href: "#about" },
     { label: "Propiedades", href: "#properties" },
-    { label: "Agentes", href: "#agents" },
   ];
 
   return (

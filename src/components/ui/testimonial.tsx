@@ -219,7 +219,7 @@ const AnimatedTestimonials = ({
 
 export function Component() {
   return (
-    <section className="relative overflow-hidden bg-cobalt">
+    <section id="about" className="relative overflow-hidden bg-cobalt scroll-mt-20">
       {/* Static decorative grid — no infinite animation, far cheaper on mobile */}
       <div
         aria-hidden="true"

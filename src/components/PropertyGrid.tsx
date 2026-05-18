@@ -17,7 +17,7 @@ const PropertyGrid = () => {
 
   if (error) {
     return (
-      <section id="properties" className="py-16 md:py-24">
+      <section id="properties" className="py-16 md:py-24 scroll-mt-20">
         <div className="container mx-auto px-4 lg:px-8 text-center">
           <p className="text-sm text-destructive">Error al cargar propiedades: {error}</p>
         </div>
@@ -27,7 +27,7 @@ const PropertyGrid = () => {
 
   return (
     <>
-      <section id="properties" className="py-16 md:py-24">
+      <section id="properties" className="py-16 md:py-24 scroll-mt-20">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-end justify-between mb-10">
             <div>
