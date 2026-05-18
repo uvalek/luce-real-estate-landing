@@ -162,7 +162,7 @@ const PropertyFilter = () => {
             {/* Ubicación — dominant capsule (Estado + Municipio) */}
             <div className="lg:col-span-7 group">
               <FieldLabel>Ubicación</FieldLabel>
-              <div className="flex items-stretch rounded-[60px] border border-border bg-background/40 transition-all duration-300 focus-within:border-cobalt focus-within:bg-background focus-within:shadow-[0_10px_30px_-12px_rgba(15,23,42,0.25),0_0_0_4px_rgba(184,134,11,0.08)] hover:border-cobalt/30">
+              <div className="flex items-stretch rounded-[45px] border border-border bg-background/40 transition-all duration-300 focus-within:border-cobalt focus-within:bg-background focus-within:shadow-[0_10px_30px_-12px_rgba(15,23,42,0.25),0_0_0_4px_rgba(184,134,11,0.08)] hover:border-cobalt/30">
                 {/* Estado */}
                 <div className="relative flex items-center pl-5 pr-3 py-3.5 flex-1 min-w-0">
                   <MapPin
@@ -224,7 +224,7 @@ const PropertyFilter = () => {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-[60px] border bg-background/40 text-left transition-all duration-300 hover:border-cobalt/30 ${
+                    className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-[45px] border bg-background/40 text-left transition-all duration-300 hover:border-cobalt/30 ${
                       typeOpen
                         ? "border-cobalt bg-background shadow-[0_10px_30px_-12px_rgba(15,23,42,0.25),0_0_0_4px_rgba(184,134,11,0.08)]"
                         : "border-border"
@@ -319,7 +319,7 @@ const PropertyFilter = () => {
             {/* Presupuesto */}
             <div className="lg:col-span-8">
               <FieldLabel>Presupuesto máximo</FieldLabel>
-              <div className="flex items-center gap-3 px-5 py-3.5 rounded-[60px] border border-border bg-background/40 transition-all duration-300 focus-within:border-cobalt focus-within:bg-background focus-within:shadow-[0_10px_30px_-12px_rgba(15,23,42,0.25),0_0_0_4px_rgba(184,134,11,0.08)] hover:border-cobalt/30">
+              <div className="flex items-center gap-3 px-5 py-3.5 rounded-[45px] border border-border bg-background/40 transition-all duration-300 focus-within:border-cobalt focus-within:bg-background focus-within:shadow-[0_10px_30px_-12px_rgba(15,23,42,0.25),0_0_0_4px_rgba(184,134,11,0.08)] hover:border-cobalt/30">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/10 text-gold font-heading text-lg font-bold flex-shrink-0">
                   $
                 </span>
@@ -340,10 +340,10 @@ const PropertyFilter = () => {
             </div>
 
             {/* CTA */}
-            <div className="lg:col-span-4 flex">
+            <div className="lg:col-span-4 flex mt-4 lg:mt-0">
               <button
                 onClick={handleSearch}
-                className="group relative w-full mt-0 lg:mt-[26px] flex items-center justify-center gap-3 bg-cobalt text-primary-foreground font-semibold text-sm rounded-[60px] px-6 py-4 overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_-10px_rgba(15,23,42,0.5)] active:scale-[0.98]"
+                className="group relative w-full lg:mt-[30px] flex items-center justify-center gap-3 bg-cobalt text-primary-foreground font-semibold text-sm rounded-[45px] px-6 py-4 overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_-10px_rgba(15,23,42,0.5)] active:scale-[0.98]"
               >
                 {/* Gold sweep on hover */}
                 <span
@@ -374,7 +374,7 @@ const PropertyFilter = () => {
 };
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <label className="block mb-2 ml-2 text-xs font-semibold tracking-wide text-foreground/55">
+  <label className="block mb-2 ml-2 text-sm md:text-[15px] font-semibold tracking-wide text-foreground/65">
     {children}
   </label>
 );
