@@ -156,7 +156,7 @@ const AnimatedTestimonials = ({
         </div>
 
         {/* ── Text + controls ── */}
-        <div className="flex flex-col justify-center py-4">
+        <div className="flex flex-col justify-start py-4 min-h-[460px] md:min-h-[440px]">
           <Quote size={36} className="text-gold mb-5 opacity-90" />
           <AnimatePresence mode="wait">
             <motion.div
