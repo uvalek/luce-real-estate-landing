@@ -89,11 +89,9 @@ export default {
           to: { height: "0" },
         },
         "word-roll-in": {
-          "0%":   { transform: "translateY(-110%) skewY(8deg)", opacity: "0", filter: "blur(4px)" },
-          "30%":  { opacity: "1", filter: "blur(0px)" },
-          "55%":  { transform: "translateY(8%) skewY(-2deg)" },
-          "75%":  { transform: "translateY(-3%) skewY(1deg)" },
-          "100%": { transform: "translateY(0%) skewY(0deg)",   opacity: "1", filter: "blur(0px)" },
+          "0%":   { transform: "translateY(-100%)", opacity: "0", filter: "blur(6px)" },
+          "60%":  { filter: "blur(2px)" },
+          "100%": { transform: "translateY(0%)",    opacity: "1", filter: "blur(0px)" },
         },
       },
       animation: {
