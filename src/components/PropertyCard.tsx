@@ -30,16 +30,27 @@ const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
             Sin imagen
           </div>
         )}
-        <div className="absolute top-3 left-3 flex gap-1.5">
-          <span className="bg-cobalt/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full capitalize">
+        {/* Top gradient overlay — legibility for the tags */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/70 via-black/30 to-transparent pointer-events-none"
+        />
+        {/* Tipo — top left */}
+        <div className="absolute top-4 left-4 flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_10px_rgba(212,160,23,0.9)]" />
+          <span className="font-heading text-[11px] font-bold tracking-[0.22em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
             {tipo}
           </span>
-          {tipo_oferta && (
-            <span className="bg-gold/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+        </div>
+        {/* Oferta — top right */}
+        {tipo_oferta && (
+          <div className="absolute top-4 right-4 flex items-center gap-1.5">
+            <span className="font-heading text-[11px] font-extrabold tracking-[0.3em] uppercase text-gold drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
               {tipo_oferta}
             </span>
-          )}
-        </div>
+            <span className="h-px w-5 bg-gold/80" />
+          </div>
+        )}
       </div>
       <div className="p-5">
         <h3 className="font-heading text-sm font-semibold text-foreground mb-2 capitalize line-clamp-1">
