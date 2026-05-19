@@ -227,27 +227,27 @@ export const Liquid = ({ isHovered, colors }: LiquidProps) => (
    LiquidButton — the integrated CTA
 ────────────────────────────────────────────────────────────────── */
 
-/* LUCE palette — adapted from the original blue/indigo demo so the
-   animation matches the cobalt + gold brand: deep navy as the dominant
-   tone with warm gold highlights replacing the bright purples. */
+/* LUCE palette — pure cobalt + gold + cream tones. Removed the muddy
+   pale cobalts that washed out the animation; the gradient now cycles
+   between deep navy bases and warm gold accents only. */
 const DEFAULT_COLORS: Colors = {
   color1: "#FFFFFF",       // bright highlight
-  color2: "#1C378C",       // cobalt-light
-  color3: "#7D8BC7",       // soft cobalt
-  color4: "#FFF6E2",       // warm cream (gold/white blend)
-  color5: "#F7EFD8",       // cream
-  color6: "#A7B3DE",       // pale cobalt
-  color7: "#1C378C",       // cobalt-light
-  color8: "#0F1F3D",       // cobalt (brand)
-  color9: "#D49120",       // gold (brand)
-  color10: "#EDB652",      // gold-light
-  color11: "#0F1F3D",      // cobalt (deep)
-  color12: "#C7CDE8",      // pale cobalt
-  color13: "#16275F",      // cobalt-mid
-  color14: "#E0C77A",      // warm gold/cream
-  color15: "#B6BEDF",      // cobalt-tint
+  color2: "#16275F",       // cobalt-mid
+  color3: "#D49120",       // GOLD accent (was pale gray)
+  color4: "#FFF6E2",       // warm cream
+  color5: "#F4E7C5",       // gold cream
+  color6: "#1C378C",       // cobalt-light
+  color7: "#0F1F3D",       // cobalt brand
+  color8: "#0B1731",       // cobalt deep
+  color9: "#D49120",       // gold brand
+  color10: "#EDB652",      // gold light
+  color11: "#0F1F3D",      // cobalt deep
+  color12: "#F4E7C5",      // gold cream (was pale cobalt)
+  color13: "#16275F",      // cobalt mid
+  color14: "#E0C77A",      // warm gold
+  color15: "#D49120",      // gold (was pale cobalt)
   color16: "#0B1731",      // very deep cobalt
-  color17: "#37549B",      // mid cobalt
+  color17: "#1C378C",      // cobalt light
 };
 
 interface LiquidButtonProps
@@ -325,7 +325,7 @@ export const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
             <Search
               size={17}
               strokeWidth={2.4}
-              className="text-gold flex-shrink-0 transition-transform duration-300 group-hover:rotate-[-8deg] group-hover:scale-110"
+              className="text-white flex-shrink-0 transition-transform duration-300 group-hover:rotate-[-8deg] group-hover:scale-110"
             />
             {children}
           </span>
