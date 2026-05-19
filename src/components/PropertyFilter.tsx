@@ -123,7 +123,7 @@ const PropertyFilter = () => {
           <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-7">
             <div>
               <h3 className="font-heading text-2xl md:text-3xl font-bold text-cobalt leading-tight">
-                Búsqueda <span className="text-gold">a tu medida</span>
+                Búsqueda a tu medida
               </h3>
             </div>
 

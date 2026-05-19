@@ -1,5 +1,6 @@
-import { useState, lazy, Suspense } from "react";
-import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { lazy, Suspense, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, Loader2 } from "lucide-react";
 import { useProperties } from "@/hooks/useProperties";
 import PropertyCard from "@/components/PropertyCard";
 import type { Propiedad } from "@/types";
@@ -10,10 +11,9 @@ const FEATURED_COUNT = 3;
 
 const PropertyGrid = () => {
   const { properties, loading, error } = useProperties();
-  const [showAll, setShowAll] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Propiedad | null>(null);
 
-  const displayedProperties = showAll ? properties : properties.slice(0, FEATURED_COUNT);
+  const displayedProperties = properties.slice(0, FEATURED_COUNT);
 
   if (error) {
     return (
@@ -29,31 +29,30 @@ const PropertyGrid = () => {
     <>
       <section id="properties" className="py-16 md:py-24 scroll-mt-20">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between gap-4 mb-10">
             <div>
               <p className="text-xs font-semibold tracking-widest text-gold uppercase mb-2">
-                {showAll ? "— Catálogo Completo" : "— Destacadas"}
+                — Destacadas
               </p>
               <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
-                {showAll
-                  ? `Todas las Propiedades (${properties.length})`
-                  : "Nuestras Propiedades Destacadas"}
+                Nuestras Propiedades Destacadas
               </h2>
             </div>
-            <button
-              onClick={() => setShowAll(!showAll)}
-              className="hidden sm:flex items-center gap-1 text-sm font-medium text-foreground/70 hover:text-cobalt transition-colors"
+            <Link
+              to="/resultados"
+              className="group/cta relative hidden sm:inline-flex items-center gap-2 overflow-hidden rounded-full bg-cobalt px-5 h-11 text-[11px] font-bold tracking-[0.18em] uppercase text-primary-foreground shadow-[0_10px_24px_-10px_rgba(15,23,42,0.5)] transition-all duration-300 hover:shadow-[0_14px_28px_-10px_rgba(28,55,140,0.55)] active:scale-[0.97]"
             >
-              {showAll ? (
-                <>
-                  Ver Menos <ArrowLeft size={16} />
-                </>
-              ) : (
-                <>
-                  Explorar Todas <ArrowRight size={16} />
-                </>
-              )}
-            </button>
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-gold/35 to-transparent transition-transform duration-700 group-hover/cta:translate-x-full"
+              />
+              <span className="relative">Explorar todas</span>
+              <ArrowUpRight
+                size={13}
+                strokeWidth={2.6}
+                className="relative text-gold transition-transform duration-300 group-hover/cta:translate-x-0.5 group-hover/cta:-translate-y-0.5"
+              />
+            </Link>
           </div>
 
           {loading ? (
@@ -72,22 +71,23 @@ const PropertyGrid = () => {
             </div>
           )}
 
-          {/* Mobile toggle */}
-          <div className="flex justify-center mt-8 sm:hidden">
-            <button
-              onClick={() => setShowAll(!showAll)}
-              className="flex items-center gap-1 text-sm font-medium text-foreground/70 hover:text-cobalt transition-colors"
+          {/* Mobile CTA */}
+          <div className="flex justify-center mt-10 sm:hidden">
+            <Link
+              to="/resultados"
+              className="group/cta relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-cobalt px-6 h-12 text-[11px] font-bold tracking-[0.18em] uppercase text-primary-foreground shadow-[0_10px_24px_-10px_rgba(15,23,42,0.5)] transition-all duration-300 hover:shadow-[0_14px_28px_-10px_rgba(28,55,140,0.55)] active:scale-[0.97]"
             >
-              {showAll ? (
-                <>
-                  Ver Menos <ArrowLeft size={16} />
-                </>
-              ) : (
-                <>
-                  Explorar Todas <ArrowRight size={16} />
-                </>
-              )}
-            </button>
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-gold/35 to-transparent transition-transform duration-700 group-hover/cta:translate-x-full"
+              />
+              <span className="relative">Explorar todas</span>
+              <ArrowUpRight
+                size={13}
+                strokeWidth={2.6}
+                className="relative text-gold transition-transform duration-300 group-hover/cta:translate-x-0.5 group-hover/cta:-translate-y-0.5"
+              />
+            </Link>
           </div>
         </div>
       </section>
