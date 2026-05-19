@@ -1,4 +1,4 @@
-import { MapPin, BedDouble, Bath, Maximize, MessageCircle } from "lucide-react";
+import { MapPin, BedDouble, Bath, Maximize, ArrowUpRight, Send } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
 import { getTelegramLink } from "@/lib/telegramLink";
 import type { Propiedad } from "@/types";
@@ -74,20 +74,41 @@ const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
             <Maximize size={14} className="text-gold" /> {metros_cuadrados} m²
           </span>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <button className="bg-gold text-accent-foreground text-xs font-semibold px-4 py-2 rounded-full hover:bg-gold-light transition-colors">
-              Ver Detalles
+            {/* Ver Detalles — primary CTA */}
+            <button
+              type="button"
+              className="group/cta relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-cobalt px-4 h-9 text-[11px] font-bold tracking-[0.18em] uppercase text-primary-foreground shadow-[0_8px_20px_-10px_rgba(15,23,42,0.55)] transition-all duration-300 hover:shadow-[0_14px_28px_-10px_rgba(28,55,140,0.55)] active:scale-[0.97]"
+            >
+              {/* gold sweep on hover */}
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-gold/35 to-transparent transition-transform duration-700 group-hover/cta:translate-x-full"
+              />
+              <span className="relative">Ver detalles</span>
+              <ArrowUpRight
+                size={13}
+                strokeWidth={2.6}
+                className="relative text-gold transition-transform duration-300 group-hover/cta:translate-x-0.5 group-hover/cta:-translate-y-0.5"
+              />
             </button>
+
+            {/* Mensaje — outlined satellite action */}
             <a
               href={getTelegramLink(property)}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1.5 bg-[#0088cc] text-white text-xs font-semibold px-3 py-2.5 rounded-full hover:bg-[#006da3] transition-colors"
               title="Enviar mensaje"
+              aria-label="Enviar mensaje por Telegram"
+              className="group/msg relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-cobalt/15 bg-cobalt/[0.03] text-cobalt transition-all duration-300 hover:bg-cobalt hover:text-primary-foreground hover:border-cobalt hover:shadow-[0_8px_20px_-10px_rgba(15,23,42,0.45),0_0_0_3px_rgba(184,134,11,0.18)]"
             >
-              <MessageCircle size={14} />
+              <Send
+                size={14}
+                strokeWidth={2.2}
+                className="transition-transform duration-300 group-hover/msg:-translate-y-0.5 group-hover/msg:translate-x-0.5 group-hover/msg:rotate-[12deg]"
+              />
             </a>
           </div>
           <span className="font-heading text-base font-bold text-foreground">
