@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,10 +15,15 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinks = [
-    { label: "Quiénes Somos", href: "#about" },
-    { label: "Propiedades", href: "#properties" },
-  ];
+  // Anchor links only make sense on the home page (they target sections of /).
+  // Hide them on every other route to avoid dead links.
+  const isHome = location.pathname === "/";
+  const navLinks = isHome
+    ? [
+        { label: "Quiénes Somos", href: "#about" },
+        { label: "Propiedades", href: "#properties" },
+      ]
+    : [];
 
   return (
     <header
@@ -27,8 +34,8 @@ const Header = () => {
       }`}
     >
       <div className="container mx-auto flex items-center justify-between py-4 px-4 lg:px-8 pt-[max(1rem,env(safe-area-inset-top))]">
-        {/* Logo */}
-        <a href="#" className="flex items-center gap-2">
+        {/* Logo — always navigates to home */}
+        <Link to="/" className="flex items-center gap-2" aria-label="Ir al inicio">
           <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="text-cobalt">
             <rect x="4" y="8" width="12" height="20" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
             <rect x="20" y="4" width="12" height="24" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
@@ -36,7 +43,7 @@ const Header = () => {
             <line x1="26" y1="10" x2="26" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
           </svg>
           <span className="font-heading text-xl font-bold tracking-wider text-cobalt">LUCE</span>
-        </a>
+        </Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">

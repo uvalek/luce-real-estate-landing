@@ -254,9 +254,13 @@ const Resultados = () => {
           <div className="mb-8">
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-cobalt transition-colors mb-4"
+              className="group/back inline-flex items-center gap-2 mb-5 px-4 h-10 rounded-full bg-cobalt text-primary-foreground text-xs font-bold tracking-[0.18em] uppercase shadow-[0_10px_24px_-10px_rgba(15,23,42,0.5)] hover:shadow-[0_14px_28px_-10px_rgba(28,55,140,0.55)] transition-all duration-300 active:scale-[0.97]"
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft
+                size={14}
+                strokeWidth={2.6}
+                className="text-gold transition-transform duration-300 group-hover/back:-translate-x-0.5"
+              />
               Volver al inicio
             </Link>
             <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
