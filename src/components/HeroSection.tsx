@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { BlurFade } from "@/components/ui/blur-fade";
-import { AnimatedLayerButton } from "@/components/ui/animated-layer-button";
+import { LiquidButton } from "@/components/ui/liquid-button";
 
 // Modal is only loaded when the user opens it.
 const SearchModal = lazy(() => import("@/components/SearchModal"));
@@ -102,13 +102,13 @@ const HeroSection = () => {
 
           <BlurFade delay={0.75} duration={0.6} yOffset={8} blur="6px">
             <div className="mt-10">
-              <AnimatedLayerButton
+              <LiquidButton
                 onClick={handleCtaClick}
                 forceActive={ctaPressed}
                 aria-label="Comenzar búsqueda"
               >
                 Comenzar Búsqueda
-              </AnimatedLayerButton>
+              </LiquidButton>
             </div>
           </BlurFade>
         </div>
