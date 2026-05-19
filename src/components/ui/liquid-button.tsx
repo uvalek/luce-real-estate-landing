@@ -268,10 +268,13 @@ export const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
     const active = !prefersReducedMotion && (isHovered || forceActive);
 
     return (
-      <div className="relative inline-block group h-[3.4em]">
-        {/* Outer glow */}
-        <div className="absolute -inset-1 rounded-[30px] bg-cobalt/40 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500 pointer-events-none" />
-
+      <div
+        className={`relative inline-block group h-[3.4em] rounded-[30px] transition-shadow duration-500 ${
+          active
+            ? "shadow-[0_10px_30px_-10px_rgba(15,31,61,0.35)]"
+            : "shadow-[0_6px_18px_-10px_rgba(15,31,61,0.25)]"
+        }`}
+      >
         {/* Card shell */}
         <div className="absolute inset-0 rounded-[30px] bg-[#0B1731] overflow-hidden">
           {/* Static base gradient — visible whenever the liquid layers
@@ -285,23 +288,6 @@ export const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
           />
           {/* Liquid effect — only mounted when active, fully unmounts on idle */}
           {active && <Liquid isHovered={isHovered || forceActive} colors={colors} />}
-
-          {/* Soft inner highlight rings */}
-          {[1, 2, 3].map((i) => (
-            <span
-              key={i}
-              aria-hidden="true"
-              className={`absolute inset-0 rounded-[30px] border-[2px] border-white/40 mix-blend-overlay ${
-                i === 1 ? "blur-[3px]" : i === 2 ? "blur-[5px]" : "blur-[4px]"
-              }`}
-            />
-          ))}
-
-          {/* Bottom glow — cobalt instead of electric blue */}
-          <span
-            aria-hidden="true"
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[70%] h-[42%] rounded-[30px] bg-cobalt-light/70 blur-[15px]"
-          />
         </div>
 
         {/* The actual button — text + search icon with breathing room */}
