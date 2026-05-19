@@ -93,7 +93,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
           {/* Price + credit chip */}
           <div className="flex flex-wrap items-end justify-between gap-4 pb-7 mb-7 border-b border-border">
             <div>
-              <p className="text-[10px] font-bold tracking-[0.28em] text-foreground/50 uppercase mb-1">
+              <p className="text-sm font-bold tracking-[0.14em] text-foreground/55 uppercase mb-1.5">
                 {property.tipo_oferta === "renta" ? "Precio mensual" : "Precio"}
               </p>
               <p className="font-heading leading-none tracking-tight tabular-nums">
@@ -164,7 +164,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
           {/* Description */}
           {property.descripcion && (
             <div className="relative mb-8 pl-5 border-l-2 border-gold">
-              <p className="text-[10px] font-bold tracking-[0.28em] text-gold uppercase mb-2">
+              <p className="text-sm font-bold tracking-[0.14em] text-gold mb-2.5">
                 Descripción
               </p>
               <p className="text-[15px] text-foreground/75 leading-relaxed">
