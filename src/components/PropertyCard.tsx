@@ -35,21 +35,29 @@ const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
           aria-hidden="true"
           className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/75 via-black/40 to-transparent pointer-events-none"
         />
-        {/* Tipo — top left */}
-        <div className="absolute top-6 left-7">
-          <span className="font-heading text-[14px] font-bold tracking-[0.22em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+        {/* Tags row — tipo (left) + tipo_oferta (right) share a single
+            flex row so they can never collide. Each side gets a max
+            width and shrinks (truncates on a single line) when the card
+            is narrow, e.g. inside a 3-column grid on desktop. */}
+        <div className="absolute top-5 inset-x-5 sm:inset-x-6 flex items-start justify-between gap-3 pointer-events-none">
+          <span
+            className="font-heading text-[11px] sm:text-[13px] font-bold tracking-[0.14em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] truncate max-w-[55%]"
+            title={tipo}
+          >
             {tipo}
           </span>
+          {tipo_oferta && (
+            <div className="flex items-center gap-2 min-w-0 max-w-[55%] justify-end">
+              <span
+                className="font-heading text-[11px] sm:text-[13px] font-extrabold tracking-[0.16em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.75)] truncate text-right"
+                title={tipo_oferta}
+              >
+                {tipo_oferta}
+              </span>
+              <span className="h-px w-5 bg-white/80 flex-shrink-0 hidden md:block" />
+            </div>
+          )}
         </div>
-        {/* Oferta — top right */}
-        {tipo_oferta && (
-          <div className="absolute top-6 right-5 flex items-center gap-2">
-            <span className="font-heading text-[14px] font-extrabold tracking-[0.3em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.75)]">
-              {tipo_oferta}
-            </span>
-            <span className="h-px w-6 bg-white/80" />
-          </div>
-        )}
       </div>
       <div className="p-5">
         <h3 className="font-heading text-sm font-semibold text-foreground mb-2 capitalize line-clamp-1">

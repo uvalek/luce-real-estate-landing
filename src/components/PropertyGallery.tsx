@@ -52,21 +52,32 @@ const PropertyGallery = ({ galeria, tipo, tipoOferta }: PropertyGalleryProps) =>
           className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none"
         />
 
-        {/* Tipo — top left */}
-        {tipo && (
-          <div className="absolute top-6 left-7">
-            <span className="font-heading text-[14px] font-bold tracking-[0.22em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
-              {tipo}
-            </span>
-          </div>
-        )}
-        {/* Oferta — top right */}
-        {tipoOferta && (
-          <div className="absolute top-6 right-7 flex items-center gap-2">
-            <span className="font-heading text-[14px] font-extrabold tracking-[0.3em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.75)]">
-              {tipoOferta}
-            </span>
-            <span className="h-px w-6 bg-white/80" />
+        {/* Tags row — tipo (left) + tipo_oferta (right) share one flex
+            row so long values never overlap. Each side truncates when
+            the modal is narrow. */}
+        {(tipo || tipoOferta) && (
+          <div className="absolute top-5 inset-x-6 md:inset-x-7 flex items-start justify-between gap-3 pointer-events-none">
+            {tipo ? (
+              <span
+                className="font-heading text-[12px] sm:text-[14px] font-bold tracking-[0.14em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] truncate max-w-[55%]"
+                title={tipo}
+              >
+                {tipo}
+              </span>
+            ) : (
+              <span />
+            )}
+            {tipoOferta && (
+              <div className="flex items-center gap-2 min-w-0 max-w-[55%] justify-end">
+                <span
+                  className="font-heading text-[12px] sm:text-[14px] font-extrabold tracking-[0.16em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.75)] truncate text-right"
+                  title={tipoOferta}
+                >
+                  {tipoOferta}
+                </span>
+                <span className="h-px w-5 bg-white/80 flex-shrink-0 hidden md:block" />
+              </div>
+            )}
           </div>
         )}
 
