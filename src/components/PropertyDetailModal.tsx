@@ -72,8 +72,8 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
         {/* Content */}
         <div className="relative px-6 md:px-10 pt-2 pb-10">
           {/* Eyebrow */}
-          <p className="text-[11px] font-bold tracking-[0.28em] text-gold uppercase mb-3">
-            <span className="capitalize">{property.tipo}</span>
+          <p className="text-sm font-bold tracking-[0.14em] text-gold uppercase mb-3">
+            <span>{property.tipo}</span>
             <span className="mx-2 text-foreground/30">·</span>
             {property.zona}
           </p>
@@ -85,7 +85,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
 
           {/* Address — italic editorial subtitle */}
           {property.direccion && (
-            <p className="font-heading italic text-base md:text-lg text-foreground/55 mb-7 max-w-xl">
+            <p className="font-heading text-base md:text-lg text-foreground/55 mb-7 max-w-xl">
               {property.direccion}
             </p>
           )}
@@ -154,7 +154,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
                   <p className="font-heading text-2xl md:text-3xl font-extrabold text-cobalt tabular-nums leading-none">
                     {value}
                   </p>
-                  <p className="mt-3 text-[11px] font-semibold tracking-[0.18em] uppercase text-foreground/55">
+                  <p className="mt-3 text-sm font-semibold tracking-[0.14em] uppercase text-foreground/55">
                     {label}
                   </p>
                 </div>
