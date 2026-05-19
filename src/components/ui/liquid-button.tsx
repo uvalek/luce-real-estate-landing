@@ -1,6 +1,7 @@
 "use client";
 import { forwardRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { Search } from "lucide-react";
 
 /* ──────────────────────────────────────────────────────────────────
    Liquid gradient effect — adapted from the ui-layouts "GitHub button"
@@ -226,24 +227,27 @@ export const Liquid = ({ isHovered, colors }: LiquidProps) => (
    LiquidButton — the integrated CTA
 ────────────────────────────────────────────────────────────────── */
 
+/* LUCE palette — adapted from the original blue/indigo demo so the
+   animation matches the cobalt + gold brand: deep navy as the dominant
+   tone with warm gold highlights replacing the bright purples. */
 const DEFAULT_COLORS: Colors = {
-  color1: "#FFFFFF",
-  color2: "#1E10C5",
-  color3: "#9089E2",
-  color4: "#FCFCFE",
-  color5: "#F9F9FD",
-  color6: "#B2B8E7",
-  color7: "#0E2DCB",
-  color8: "#0017E9",
-  color9: "#4743EF",
-  color10: "#7D7BF4",
-  color11: "#0B06FC",
-  color12: "#C5C1EA",
-  color13: "#1403DE",
-  color14: "#B6BAF6",
-  color15: "#C1BEEB",
-  color16: "#290ECB",
-  color17: "#3F4CC0",
+  color1: "#FFFFFF",       // bright highlight
+  color2: "#1C378C",       // cobalt-light
+  color3: "#7D8BC7",       // soft cobalt
+  color4: "#FFF6E2",       // warm cream (gold/white blend)
+  color5: "#F7EFD8",       // cream
+  color6: "#A7B3DE",       // pale cobalt
+  color7: "#1C378C",       // cobalt-light
+  color8: "#0F1F3D",       // cobalt (brand)
+  color9: "#D49120",       // gold (brand)
+  color10: "#EDB652",      // gold-light
+  color11: "#0F1F3D",      // cobalt (deep)
+  color12: "#C7CDE8",      // pale cobalt
+  color13: "#16275F",      // cobalt-mid
+  color14: "#E0C77A",      // warm gold/cream
+  color15: "#B6BEDF",      // cobalt-tint
+  color16: "#0B1731",      // very deep cobalt
+  color17: "#37549B",      // mid cobalt
 };
 
 interface LiquidButtonProps
@@ -264,17 +268,18 @@ export const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
     const active = !prefersReducedMotion && (isHovered || forceActive);
 
     return (
-      <div className="relative inline-block group h-[3.4em] sm:w-56 w-44">
+      <div className="relative inline-block group h-[3.4em]">
         {/* Outer glow */}
-        <div className="absolute -inset-1 rounded-[30px] bg-[#0017E9]/30 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500 pointer-events-none" />
+        <div className="absolute -inset-1 rounded-[30px] bg-cobalt/40 opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500 pointer-events-none" />
 
         {/* Card shell */}
-        <div className="absolute inset-0 rounded-[30px] bg-black overflow-hidden">
+        <div className="absolute inset-0 rounded-[30px] bg-[#0B1731] overflow-hidden">
           {/* Static base gradient — visible whenever the liquid layers
-              aren't mounted, so the button never looks plain. */}
+              aren't mounted, so the button never looks plain. Cobalt
+              tones with a faint warm gold core. */}
           <span
             aria-hidden="true"
-            className={`absolute inset-0 rounded-[30px] bg-[radial-gradient(120%_120%_at_30%_30%,#1E10C5_0%,#0B06FC_45%,#010128_80%)] transition-opacity duration-300 ${
+            className={`absolute inset-0 rounded-[30px] bg-[radial-gradient(120%_120%_at_30%_30%,hsl(38_65%_50%/0.25)_0%,hsl(220_60%_25%)_35%,hsl(220_70%_12%)_80%)] transition-opacity duration-300 ${
               active ? "opacity-0" : "opacity-100"
             }`}
           />
@@ -292,17 +297,17 @@ export const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
             />
           ))}
 
-          {/* Bottom glow */}
+          {/* Bottom glow — cobalt instead of electric blue */}
           <span
             aria-hidden="true"
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[70%] h-[42%] rounded-[30px] bg-[#0017E9]/70 blur-[15px]"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[70%] h-[42%] rounded-[30px] bg-cobalt-light/70 blur-[15px]"
           />
         </div>
 
-        {/* The actual button — text only, no icon */}
+        {/* The actual button — text + search icon with breathing room */}
         <button
           ref={ref}
-          className={`absolute inset-0 rounded-[30px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 ${
+          className={`relative h-full w-auto rounded-[30px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-2 ${
             className ?? ""
           }`}
           onMouseEnter={(e) => {
@@ -316,7 +321,12 @@ export const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
           type="button"
           {...rest}
         >
-          <span className="flex h-full w-full items-center justify-center px-5 text-white text-base sm:text-lg font-semibold tracking-wide whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+          <span className="flex h-full w-full items-center justify-center gap-2.5 px-7 sm:px-9 text-white text-sm sm:text-base font-semibold tracking-wide whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]">
+            <Search
+              size={17}
+              strokeWidth={2.4}
+              className="text-gold flex-shrink-0 transition-transform duration-300 group-hover:rotate-[-8deg] group-hover:scale-110"
+            />
             {children}
           </span>
         </button>
