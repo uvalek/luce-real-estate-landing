@@ -322,15 +322,16 @@ const Resultados = () => {
 
           {/* Two-column grid: sidebar + results */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Sidebar — desktop only */}
-            <div className="hidden lg:block lg:col-span-4 xl:col-span-3">
-              <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto overscroll-contain pr-1 -mr-1 [scrollbar-gutter:stable]">
-                <ResultsFilterPanel
-                  initial={initialFilters}
-                  onApply={handleApplyFilters}
-                  resultsCount={loading ? undefined : properties.length}
-                />
-              </div>
+            {/* Sidebar — desktop only.
+              No max-height / no internal scroll so the panel is shown in
+              its full natural height. The column self-aligns to the top
+              of the grid so it doesn't stretch with the results column. */}
+            <div className="hidden lg:block lg:col-span-4 xl:col-span-3 self-start">
+              <ResultsFilterPanel
+                initial={initialFilters}
+                onApply={handleApplyFilters}
+                resultsCount={loading ? undefined : properties.length}
+              />
             </div>
 
             {/* Results column */}
