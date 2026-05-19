@@ -154,7 +154,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
                   <p className="font-heading text-2xl md:text-3xl font-extrabold text-cobalt tabular-nums leading-none">
                     {value}
                   </p>
-                  <p className="mt-3 text-sm font-semibold tracking-[0.14em] uppercase text-foreground/55">
+                  <p className="mt-3 text-sm font-semibold tracking-wide uppercase text-foreground/55">
                     {label}
                   </p>
                 </div>
@@ -164,7 +164,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
           {/* Description */}
           {property.descripcion && (
             <div className="relative mb-8 pl-5 border-l-2 border-gold">
-              <p className="text-sm font-bold tracking-[0.14em] text-gold mb-2.5">
+              <p className="text-sm font-bold tracking-normal text-gold mb-2.5">
                 Descripción
               </p>
               <p className="text-[15px] text-foreground/75 leading-relaxed">
