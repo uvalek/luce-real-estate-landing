@@ -164,12 +164,10 @@ const PropertyFilter = () => {
               <FieldLabel>Ubicación</FieldLabel>
               <div className="flex items-stretch rounded-[45px] border border-border bg-background/40 transition-all duration-300 focus-within:border-cobalt focus-within:bg-background focus-within:shadow-[0_10px_30px_-12px_rgba(15,23,42,0.25),0_0_0_4px_rgba(184,134,11,0.08)] hover:border-cobalt/30">
                 {/* Estado */}
-                <div className="relative flex items-center pl-5 pr-3 py-3.5 flex-1 min-w-0">
-                  <MapPin
-                    size={18}
-                    className="text-gold flex-shrink-0 mr-3"
-                    strokeWidth={2.2}
-                  />
+                <div className="relative flex items-center pl-5 pr-3 py-3.5 flex-1 min-w-0 gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/10 text-gold flex-shrink-0">
+                    <MapPin size={18} strokeWidth={2.2} />
+                  </span>
                   <select
                     value={filters.state}
                     onChange={(e) =>
