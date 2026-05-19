@@ -1,5 +1,5 @@
 "use client";
-import { forwardRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Search } from "lucide-react";
 
@@ -267,6 +267,28 @@ export const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
     // Animate only when needed — saves CPU on mid-range phones.
     const active = !prefersReducedMotion && (isHovered || forceActive);
 
+    /* Smooth crossfade for the Liquid layer:
+       - When `active` becomes true: mount Liquid immediately at opacity 0,
+         then on the next animation frame flip to opacity 1 so the
+         browser sees a real transition (no jump).
+       - When `active` becomes false: fade opacity to 0, then unmount
+         after the transition completes so the expensive nodes leave
+         the tree. */
+    const FADE_MS = 450;
+    const [renderLiquid, setRenderLiquid] = useState(false);
+    const [visibleLiquid, setVisibleLiquid] = useState(false);
+
+    useEffect(() => {
+      if (active) {
+        setRenderLiquid(true);
+        const id = requestAnimationFrame(() => setVisibleLiquid(true));
+        return () => cancelAnimationFrame(id);
+      }
+      setVisibleLiquid(false);
+      const t = setTimeout(() => setRenderLiquid(false), FADE_MS);
+      return () => clearTimeout(t);
+    }, [active]);
+
     return (
       <div
         className={`relative inline-block group h-[3.4em] rounded-[30px] transition-shadow duration-500 ${
@@ -282,12 +304,24 @@ export const LiquidButton = forwardRef<HTMLButtonElement, LiquidButtonProps>(
               tones with a faint warm gold core. */}
           <span
             aria-hidden="true"
-            className={`absolute inset-0 rounded-[30px] bg-[radial-gradient(120%_120%_at_30%_30%,hsl(38_65%_50%/0.25)_0%,hsl(220_60%_25%)_35%,hsl(220_70%_12%)_80%)] transition-opacity duration-300 ${
+            className={`absolute inset-0 rounded-[30px] bg-[radial-gradient(120%_120%_at_30%_30%,hsl(38_65%_50%/0.25)_0%,hsl(220_60%_25%)_35%,hsl(220_70%_12%)_80%)] transition-opacity ease-out ${
               active ? "opacity-0" : "opacity-100"
             }`}
+            style={{ transitionDuration: `${FADE_MS}ms` }}
           />
-          {/* Liquid effect — only mounted when active, fully unmounts on idle */}
-          {active && <Liquid isHovered={isHovered || forceActive} colors={colors} />}
+          {/* Liquid effect — mounted on activate, smoothly faded in/out */}
+          {renderLiquid && (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 transition-opacity ease-out"
+              style={{
+                opacity: visibleLiquid ? 1 : 0,
+                transitionDuration: `${FADE_MS}ms`,
+              }}
+            >
+              <Liquid isHovered={isHovered || forceActive} colors={colors} />
+            </div>
+          )}
         </div>
 
         {/* The actual button — text + search icon with breathing room */}
