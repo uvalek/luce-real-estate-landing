@@ -144,15 +144,17 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
               .map(({ icon: Icon, value, label }) => (
                 <div
                   key={label}
-                  className="relative flex flex-col items-center justify-center text-center px-3 py-5 rounded-2xl bg-cobalt/[0.04] border border-cobalt/10"
+                  className="flex flex-col items-center justify-center text-center px-3 py-4"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/10 text-gold mb-2">
-                    <Icon size={17} strokeWidth={2.2} />
-                  </span>
+                  <Icon
+                    size={28}
+                    strokeWidth={1.8}
+                    className="text-gold mb-4"
+                  />
                   <p className="font-heading text-2xl md:text-3xl font-extrabold text-cobalt tabular-nums leading-none">
                     {value}
                   </p>
-                  <p className="mt-1.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-foreground/55">
+                  <p className="mt-3 text-[11px] font-semibold tracking-[0.18em] uppercase text-foreground/55">
                     {label}
                   </p>
                 </div>
@@ -165,7 +167,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
               <p className="text-[10px] font-bold tracking-[0.28em] text-gold uppercase mb-2">
                 Descripción
               </p>
-              <p className="text-[15px] text-foreground/75 leading-relaxed first-letter:font-heading first-letter:text-cobalt first-letter:text-3xl first-letter:font-extrabold first-letter:mr-1 first-letter:float-left first-letter:leading-none first-letter:pt-1">
+              <p className="text-[15px] text-foreground/75 leading-relaxed">
                 {property.descripcion}
               </p>
             </div>
