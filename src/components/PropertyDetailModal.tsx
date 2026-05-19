@@ -44,13 +44,13 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
       onClick={onClose}
     >
       <div
-        className="relative bg-card rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(15,23,42,0.55)] max-w-3xl w-full max-h-[92vh] overflow-y-auto overscroll-contain touch-pan-y"
+        className="relative bg-card rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(15,23,42,0.55)] max-w-3xl w-full max-h-[92vh] overflow-x-hidden overflow-y-auto overscroll-contain touch-pan-y"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Soft gold glow — top-right corner */}
+        {/* Soft gold glow — top-right corner (kept fully inside to avoid horizontal overflow on mobile) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-28 -right-28 h-72 w-72 rounded-full bg-gold/15 blur-3xl"
+          className="pointer-events-none absolute top-0 right-0 h-48 w-48 rounded-full bg-gold/15 blur-3xl"
         />
 
         {/* Close button */}
@@ -173,51 +173,33 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
             </div>
           )}
 
-          {/* Info grid */}
-          {(property.tipos_credito ||
-            property.asesor_asignado ||
-            property.fecha_publicacion) && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-              {property.tipos_credito && (
-                <InfoTile
-                  icon={CreditCard}
-                  label="Tipos de crédito"
-                  value={property.tipos_credito}
-                />
-              )}
-              {property.asesor_asignado && (
-                <InfoTile
-                  icon={User}
-                  label="Asesor"
-                  value={property.asesor_asignado}
-                />
-              )}
-              {property.fecha_publicacion && (
-                <InfoTile
-                  icon={Calendar}
-                  label="Publicado"
-                  value={new Date(property.fecha_publicacion).toLocaleDateString(
-                    "es-MX",
-                    { year: "numeric", month: "long", day: "numeric" },
-                  )}
-                />
-              )}
-            </div>
-          )}
-
-          {/* Address with pin (full block) */}
-          <div className="flex items-center gap-2.5 mb-7">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/10 text-gold flex-shrink-0">
-              <MapPin size={16} strokeWidth={2.2} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-foreground/50">
-                Zona
-              </p>
-              <p className="font-heading text-sm font-bold text-cobalt truncate">
-                {property.zona}
-              </p>
-            </div>
+          {/* Info grid — bare, no backgrounds */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 mb-8">
+            <InfoTile icon={MapPin} label="Zona" value={property.zona} />
+            {property.tipos_credito && (
+              <InfoTile
+                icon={CreditCard}
+                label="Tipos de crédito"
+                value={property.tipos_credito}
+              />
+            )}
+            {property.asesor_asignado && (
+              <InfoTile
+                icon={User}
+                label="Asesor"
+                value={property.asesor_asignado}
+              />
+            )}
+            {property.fecha_publicacion && (
+              <InfoTile
+                icon={Calendar}
+                label="Publicado"
+                value={new Date(property.fecha_publicacion).toLocaleDateString(
+                  "es-MX",
+                  { year: "numeric", month: "long", day: "numeric" },
+                )}
+              />
+            )}
           </div>
 
           {/* CTAs */}
@@ -266,15 +248,17 @@ interface InfoTileProps {
 }
 
 const InfoTile = ({ icon: Icon, label, value }: InfoTileProps) => (
-  <div className="flex items-start gap-3 p-4 rounded-2xl bg-cobalt/[0.03] border border-cobalt/10">
-    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/10 text-gold flex-shrink-0">
-      <Icon size={15} strokeWidth={2.2} />
-    </span>
+  <div className="flex items-start gap-3 min-w-0">
+    <Icon
+      size={22}
+      strokeWidth={1.8}
+      className="text-gold flex-shrink-0 mt-0.5"
+    />
     <div className="min-w-0">
-      <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-foreground/50 mb-0.5">
+      <p className="text-xs font-semibold tracking-wide uppercase text-foreground/55 mb-1">
         {label}
       </p>
-      <p className="text-sm font-semibold text-cobalt capitalize leading-tight">
+      <p className="text-sm font-semibold text-cobalt capitalize leading-snug break-words">
         {value}
       </p>
     </div>
