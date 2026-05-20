@@ -571,65 +571,83 @@ const AdminDashboard = () => {
                     return (
                       <div
                         key={prop.id}
-                        className="bg-white rounded-3xl shadow-[0_6px_24px_-12px_rgba(15,23,42,0.15)] border border-border/40 overflow-hidden group hover:shadow-[0_16px_40px_-15px_rgba(28,55,140,0.25)] hover:-translate-y-1 hover:border-cobalt/20 transition-all duration-300"
+                        className="group bg-card rounded-[2.5rem] overflow-hidden border border-border/40 shadow-[0_15px_40px_-15px_rgba(15,23,42,0.2)] hover:shadow-[0_25px_50px_-15px_rgba(28,55,140,0.3)] hover:-translate-y-1 transition-all duration-300"
                       >
-                        <div className="relative h-44 bg-gradient-to-br from-muted to-muted/60 overflow-hidden">
+                        <div className="relative h-56 overflow-hidden">
                           {portada ? (
-                            <img src={portada} alt={prop.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                            <img src={portada} alt={prop.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
+                            <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground/40">
                               <Building2 size={40} />
                             </div>
                           )}
-                          {/* gradient overlay for legibility of badges */}
-                          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/30 to-transparent pointer-events-none" />
-                          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
-
-                          <div className="absolute top-3 left-3 flex gap-1.5">
-                            <span className="bg-cobalt/95 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full capitalize shadow-md">{prop.tipo}</span>
+                          {/* Top gradient overlay — legibility for the tags */}
+                          <div
+                            aria-hidden="true"
+                            className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/75 via-black/40 to-transparent pointer-events-none"
+                          />
+                          {/* Tags row — tipo (left) + tipo_oferta (right), editorial style */}
+                          <div className="absolute top-5 inset-x-5 sm:inset-x-6 flex items-start justify-between gap-3 pointer-events-none">
+                            <span
+                              className="font-heading text-[11px] sm:text-[13px] font-bold tracking-[0.14em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] truncate max-w-[55%]"
+                              title={prop.tipo}
+                            >
+                              {prop.tipo}
+                            </span>
                             {prop.tipo_oferta && (
-                              <span className="bg-gold/95 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md">{prop.tipo_oferta}</span>
+                              <div className="flex items-center gap-2 min-w-0 max-w-[55%] justify-end">
+                                <span
+                                  className="font-heading text-[11px] sm:text-[13px] font-extrabold tracking-[0.16em] uppercase text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.75)] truncate text-right"
+                                  title={prop.tipo_oferta}
+                                >
+                                  {prop.tipo_oferta}
+                                </span>
+                                <span className="h-px w-5 bg-white/80 flex-shrink-0 hidden md:block" />
+                              </div>
                             )}
                           </div>
-                          <button
-                            onClick={() => handleToggleDisponible(prop)}
-                            className="absolute top-3 right-3 backdrop-blur-sm rounded-full p-2 transition-all hover:scale-110 shadow-md"
-                            style={{ background: prop.disponible ? "rgba(16,185,129,0.95)" : "rgba(0,0,0,0.6)" }}
-                            title={prop.disponible ? "Disponible — click para ocultar" : "No disponible — click para mostrar"}
-                          >
-                            {prop.disponible ? <Eye size={13} className="text-white" /> : <EyeOff size={13} className="text-white/80" />}
-                          </button>
+                          {/* Photo count — bottom left */}
                           {prop.galeria && prop.galeria.length > 1 && (
-                            <span className="absolute bottom-3 right-3 bg-black/65 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md">
+                            <span className="absolute bottom-4 left-5 bg-black/55 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
                               {prop.galeria.length} fotos
                             </span>
                           )}
                         </div>
                         <div className="p-5">
-                          <h3 className="font-heading text-base font-bold text-foreground capitalize line-clamp-1 mb-1.5">{prop.nombre}</h3>
-                          <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
-                            <MapPin size={11} className="text-cobalt/70" /> {prop.zona}
-                          </p>
-                          <div className="flex items-center gap-2 mb-4">
+                          <h3 className="font-heading text-sm font-semibold text-foreground mb-2 capitalize line-clamp-1">{prop.nombre}</h3>
+                          <div className="flex items-center gap-1.5 text-gold mb-3">
+                            <MapPin size={14} />
+                            <span className="text-sm font-medium">{prop.zona}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
                             {prop.recamaras > 0 && (
-                              <span className="flex items-center gap-1 text-[11px] font-semibold text-foreground/70 bg-muted/60 px-2.5 py-1 rounded-full">
-                                <BedDouble size={11} className="text-cobalt" /> {prop.recamaras}
+                              <span className="flex items-center gap-1">
+                                <BedDouble size={14} className="text-gold" /> {prop.recamaras} Rec
                               </span>
                             )}
                             {prop.banos > 0 && (
-                              <span className="flex items-center gap-1 text-[11px] font-semibold text-foreground/70 bg-muted/60 px-2.5 py-1 rounded-full">
-                                <Bath size={11} className="text-cobalt" /> {prop.banos}
+                              <span className="flex items-center gap-1">
+                                <Bath size={14} className="text-gold" /> {prop.banos} Baños
                               </span>
                             )}
                             {prop.metros_cuadrados > 0 && (
-                              <span className="flex items-center gap-1 text-[11px] font-semibold text-foreground/70 bg-muted/60 px-2.5 py-1 rounded-full">
-                                <Maximize size={11} className="text-cobalt" /> {prop.metros_cuadrados}m²
+                              <span className="flex items-center gap-1">
+                                <Maximize size={14} className="text-gold" /> {prop.metros_cuadrados} m²
                               </span>
                             )}
                           </div>
                           <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                            <span className="font-heading text-lg font-bold bg-gradient-to-r from-cobalt to-cobalt-light bg-clip-text text-transparent tabular-nums">{formatPrice(prop.precio)}</span>
+                            <span className="font-heading text-base font-bold text-foreground tabular-nums">{formatPrice(prop.precio)}</span>
                             <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleToggleDisponible(prop)}
+                                className="p-2 rounded-xl transition-colors hover:bg-muted"
+                                title={prop.disponible ? "Disponible — click para ocultar" : "Oculta — click para mostrar"}
+                              >
+                                {prop.disponible
+                                  ? <Eye size={14} className="text-emerald-600" />
+                                  : <EyeOff size={14} className="text-muted-foreground" />}
+                              </button>
                               <button
                                 onClick={() => { setEditing(prop); setShowForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                                 className="p-2 rounded-xl hover:bg-cobalt/10 transition-colors" title="Editar"
