@@ -1,8 +1,38 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Loader2, Upload, Camera } from "lucide-react";
+import {
+  Save,
+  Loader2,
+  Upload,
+  Camera,
+  Home,
+  Building2,
+  Store,
+  Trees,
+  MapPin,
+  Navigation,
+  BedDouble,
+  Bath,
+  Ruler,
+  Tag,
+  Minus,
+  Plus,
+} from "lucide-react";
 import { uploadImage } from "@/lib/uploadImage";
 import GalleryUpload from "@/components/admin/GalleryUpload";
 import type { Propiedad, GaleriaFoto } from "@/types";
+
+const TIPO_OPTIONS = [
+  { value: "casa", label: "Casa", icon: Home },
+  { value: "departamento", label: "Depto.", icon: Building2 },
+  { value: "local", label: "Local", icon: Store },
+  { value: "terreno", label: "Terreno", icon: Trees },
+] as const;
+
+const OFERTA_OPTIONS = [
+  { value: "VENTA", label: "Venta" },
+  { value: "RENTA", label: "Renta" },
+  { value: "RENTA Y VENTA", label: "Renta y Venta" },
+] as const;
 
 type PropiedadForm = Omit<Propiedad, "id" | "fecha_publicacion">;
 
@@ -93,9 +123,17 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
     onSubmit(form);
   };
 
+  // Legacy plain input (still used by Descripción / Asesor / Observaciones).
   const inputClass =
     "w-full border border-border/80 rounded-lg px-4 py-2.5 text-base sm:text-sm bg-white text-foreground outline-none focus:ring-2 focus:ring-cobalt/20 focus:border-cobalt/40 placeholder:text-muted-foreground/50 transition-all";
   const labelClass = "block text-xs font-semibold text-foreground/70 mb-1.5 uppercase tracking-wide";
+
+  // Refined editorial field styling for the main property fields.
+  const fieldLabel = "block text-sm font-semibold text-foreground/75 mb-2 ml-1";
+  const fieldBox =
+    "flex items-center gap-3 rounded-2xl border border-border/70 bg-white px-4 transition-all duration-200 hover:border-cobalt/30 focus-within:border-cobalt/55 focus-within:ring-4 focus-within:ring-gold/10";
+  const bareInput =
+    "flex-1 min-w-0 bg-transparent py-3 text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/50 placeholder:font-normal";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -106,64 +144,111 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Información</span>
           <div className="h-px flex-1 bg-border/60" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
+          {/* Nombre */}
           <div className="sm:col-span-2">
-            <label className={labelClass}>Nombre de la propiedad *</label>
-            <input
-              required
-              value={form.nombre}
-              onChange={(e) => set("nombre", e.target.value)}
-              placeholder="Casa Residencial Los Pinos"
-              className={inputClass}
-            />
+            <label className={fieldLabel}>Nombre de la propiedad *</label>
+            <div className={fieldBox}>
+              <Home size={16} className="text-gold flex-shrink-0" />
+              <input
+                required
+                value={form.nombre}
+                onChange={(e) => set("nombre", e.target.value)}
+                placeholder="Casa Residencial Los Pinos"
+                className={bareInput}
+              />
+            </div>
           </div>
 
-          <div>
-            <label className={labelClass}>Tipo *</label>
-            <select
-              value={form.tipo}
-              onChange={(e) => set("tipo", e.target.value)}
-              className={inputClass + " appearance-none cursor-pointer"}
-            >
-              <option value="casa">Casa</option>
-              <option value="departamento">Departamento</option>
-              <option value="local">Local</option>
-              <option value="terreno">Terreno</option>
-            </select>
+          {/* Tipo — segmented selector with icons */}
+          <div className="sm:col-span-2">
+            <label className={fieldLabel}>Tipo de propiedad *</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {TIPO_OPTIONS.map(({ value, label, icon: Icon }) => {
+                const activo = form.tipo === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => set("tipo", value)}
+                    className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-3 transition-all duration-200 ${
+                      activo
+                        ? "border-cobalt bg-cobalt/5 shadow-[0_6px_18px_-10px_rgba(28,55,140,0.45)]"
+                        : "border-border/70 hover:border-cobalt/30 bg-white"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
+                        activo ? "bg-cobalt text-white" : "bg-gold/10 text-gold"
+                      }`}
+                    >
+                      <Icon size={16} strokeWidth={2.2} />
+                    </span>
+                    <span
+                      className={`text-xs font-semibold ${
+                        activo ? "text-cobalt" : "text-foreground/65"
+                      }`}
+                    >
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div>
-            <label className={labelClass}>Tipo de oferta *</label>
-            <select
-              value={form.tipo_oferta || ""}
-              onChange={(e) => set("tipo_oferta", e.target.value)}
-              className={inputClass + " appearance-none cursor-pointer"}
-            >
-              <option value="VENTA">Venta</option>
-              <option value="RENTA">Renta</option>
-              <option value="RENTA Y VENTA">Renta y Venta</option>
-            </select>
+          {/* Tipo de oferta — segmented pills */}
+          <div className="sm:col-span-2">
+            <label className={fieldLabel}>Tipo de oferta *</label>
+            <div className="grid grid-cols-3 gap-2">
+              {OFERTA_OPTIONS.map(({ value, label }) => {
+                const activo = (form.tipo_oferta || "") === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => set("tipo_oferta", value)}
+                    className={`flex items-center justify-center gap-1.5 rounded-2xl border px-3 py-3 text-xs font-bold uppercase tracking-wide transition-all duration-200 ${
+                      activo
+                        ? "border-cobalt bg-cobalt text-white shadow-[0_8px_20px_-10px_rgba(28,55,140,0.55)]"
+                        : "border-border/70 bg-white text-foreground/55 hover:border-cobalt/30 hover:text-cobalt"
+                    }`}
+                  >
+                    {activo && <Tag size={12} className="text-gold" />}
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
+          {/* Zona */}
           <div>
-            <label className={labelClass}>Zona *</label>
-            <input
-              required
-              value={form.zona}
-              onChange={(e) => set("zona", e.target.value)}
-              placeholder="Tlaxcala Centro"
-              className={inputClass}
-            />
+            <label className={fieldLabel}>Zona *</label>
+            <div className={fieldBox}>
+              <MapPin size={16} className="text-gold flex-shrink-0" />
+              <input
+                required
+                value={form.zona}
+                onChange={(e) => set("zona", e.target.value)}
+                placeholder="Tlaxcala Centro"
+                className={bareInput}
+              />
+            </div>
           </div>
 
+          {/* Dirección */}
           <div>
-            <label className={labelClass}>Dirección</label>
-            <input
-              value={form.direccion || ""}
-              onChange={(e) => set("direccion", e.target.value)}
-              placeholder="Av. Juárez 145, Col. Centro"
-              className={inputClass}
-            />
+            <label className={fieldLabel}>Dirección</label>
+            <div className={fieldBox}>
+              <Navigation size={16} className="text-gold flex-shrink-0" />
+              <input
+                value={form.direccion || ""}
+                onChange={(e) => set("direccion", e.target.value)}
+                placeholder="Av. Juárez 145, Col. Centro"
+                className={bareInput}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -175,12 +260,14 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Detalles</span>
           <div className="h-px flex-1 bg-border/60" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
           {/* Precio — formatted display, raw number stored */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <label className={labelClass}>Precio (MXN) *</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground/60 font-medium">$</span>
+          <div className="sm:col-span-2">
+            <label className={fieldLabel}>Precio (MXN) *</label>
+            <div className={fieldBox}>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/10 text-gold font-heading text-base font-bold flex-shrink-0">
+                $
+              </span>
               <input
                 required
                 type="text"
@@ -188,42 +275,51 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
                 value={precioDisplay}
                 onChange={(e) => handlePrecioChange(e.target.value)}
                 placeholder="1,500,000"
-                className={inputClass + " pl-7 tabular-nums"}
+                className={`${bareInput} tabular-nums text-base font-semibold`}
               />
+              {precioDisplay && (
+                <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/50 flex-shrink-0">
+                  MXN
+                </span>
+              )}
             </div>
           </div>
 
-          <div>
-            <label className={labelClass}>Recámaras</label>
-            <input
-              type="number"
-              min={0}
-              value={form.recamaras}
-              onChange={(e) => set("recamaras", Number(e.target.value))}
-              className={inputClass}
-            />
-          </div>
+          {/* Recámaras — stepper */}
+          <Stepper
+            label="Recámaras"
+            icon={BedDouble}
+            value={form.recamaras}
+            onChange={(v) => set("recamaras", v)}
+          />
 
-          <div>
-            <label className={labelClass}>Baños</label>
-            <input
-              type="number"
-              min={0}
-              value={form.banos}
-              onChange={(e) => set("banos", Number(e.target.value))}
-              className={inputClass}
-            />
-          </div>
+          {/* Baños — stepper */}
+          <Stepper
+            label="Baños"
+            icon={Bath}
+            value={form.banos}
+            onChange={(v) => set("banos", v)}
+          />
 
-          <div>
-            <label className={labelClass}>Metros²</label>
-            <input
-              type="number"
-              min={0}
-              value={form.metros_cuadrados || ""}
-              onChange={(e) => set("metros_cuadrados", Number(e.target.value))}
-              className={inputClass}
-            />
+          {/* Metros² */}
+          <div className="sm:col-span-2">
+            <label className={fieldLabel}>Superficie</label>
+            <div className={fieldBox}>
+              <Ruler size={16} className="text-gold flex-shrink-0" />
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.metros_cuadrados || ""}
+                onChange={(e) =>
+                  set("metros_cuadrados", parseNum(e.target.value))
+                }
+                placeholder="120"
+                className={`${bareInput} tabular-nums`}
+              />
+              <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/50 flex-shrink-0">
+                m²
+              </span>
+            </div>
           </div>
         </div>
 
@@ -430,5 +526,46 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
     </form>
   );
 };
+
+/* ── Stepper — friendly +/- control for integer counts ── */
+interface StepperProps {
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+  value: number;
+  onChange: (v: number) => void;
+}
+
+const Stepper = ({ label, icon: Icon, value, onChange }: StepperProps) => (
+  <div>
+    <label className="block text-sm font-semibold text-foreground/75 mb-2 ml-1">
+      {label}
+    </label>
+    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-white px-2.5 py-2 transition-all duration-200 hover:border-cobalt/30">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(0, value - 1))}
+        disabled={value <= 0}
+        aria-label={`Quitar ${label.toLowerCase()}`}
+        className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-foreground/70 transition-colors hover:bg-cobalt hover:text-white disabled:opacity-40 disabled:hover:bg-muted disabled:hover:text-foreground/70"
+      >
+        <Minus size={15} strokeWidth={2.6} />
+      </button>
+      <span className="flex items-center gap-2">
+        <Icon size={16} className="text-gold" strokeWidth={2.2} />
+        <span className="font-heading text-xl font-extrabold text-cobalt tabular-nums w-7 text-center">
+          {value}
+        </span>
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        aria-label={`Agregar ${label.toLowerCase()}`}
+        className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-foreground/70 transition-colors hover:bg-cobalt hover:text-white"
+      >
+        <Plus size={15} strokeWidth={2.6} />
+      </button>
+    </div>
+  </div>
+);
 
 export default PropertyForm;
