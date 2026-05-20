@@ -20,7 +20,9 @@ import {
   Users,
   ChevronLeft,
   Menu,
-  Sparkles,
+  Sun,
+  Sunset,
+  Moon,
   Activity,
   MapPin,
   Calendar,
@@ -198,6 +200,29 @@ const AdminDashboard = () => {
   const greeting = hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
   const fechaHoy = new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
+  // Welcome banner theme that follows the time of day:
+  // día → cielo soleado · atardecer → puesta de sol · noche → cielo nocturno.
+  const dayPhase: "day" | "sunset" | "night" =
+    hour >= 6 && hour < 17 ? "day" : hour >= 17 && hour < 20 ? "sunset" : "night";
+  const PHASE = {
+    day: {
+      gradient: "from-[hsl(204,74%,44%)] via-[hsl(214,66%,30%)] to-[hsl(221,70%,20%)]",
+      glow: "bg-amber-300/35",
+      icon: Sun,
+    },
+    sunset: {
+      gradient: "from-[hsl(20,80%,48%)] via-[hsl(330,44%,32%)] to-[hsl(245,56%,20%)]",
+      glow: "bg-orange-400/40",
+      icon: Sunset,
+    },
+    night: {
+      gradient: "from-[hsl(230,52%,17%)] via-[hsl(238,58%,11%)] to-[hsl(220,72%,7%)]",
+      glow: "bg-indigo-300/20",
+      icon: Moon,
+    },
+  }[dayPhase];
+  const PhaseIcon = PHASE.icon;
+
   return (
     <div className="min-h-screen bg-[hsl(220,20%,95%)] flex">
       {/* ─── Sidebar ─── */}
@@ -288,22 +313,22 @@ const AdminDashboard = () => {
         </nav>
 
         {/* Bottom */}
-        <div className="relative border-t border-white/10 px-4 py-4 space-y-3">
-          <a
-            href="/"
-            target="_blank"
-            className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-white/[0.04] hover:bg-white/[0.09] text-[11px] font-medium text-white/55 hover:text-white transition-all duration-200"
-          >
-            <Home size={14} className="text-gold/80 group-hover:text-gold transition-colors" />
-            Ver sitio web
-          </a>
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] text-white/30 truncate max-w-[120px]">{user.email}</span>
+        <div className="relative border-t border-white/10 px-4 py-4 space-y-2.5">
+          <span className="block px-1 text-[10px] text-white/30 truncate">{user.email}</span>
+          <div className="flex items-stretch gap-2">
+            <a
+              href="/"
+              target="_blank"
+              className="group flex-1 flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-white/65 hover:text-white transition-all duration-200"
+            >
+              <Home size={15} className="text-gold/80 group-hover:text-gold transition-colors" />
+              Ver sitio web
+            </a>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1 text-[10px] font-semibold text-white/45 hover:text-red-300 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-xs font-semibold text-red-300 hover:text-red-200 transition-all duration-200"
             >
-              <LogOut size={11} /> Salir
+              <LogOut size={15} /> Salir
             </button>
           </div>
         </div>
@@ -325,18 +350,42 @@ const AdminDashboard = () => {
           {/* ──────── PROPIEDADES VIEW ──────── */}
           {activeView === "propiedades" && (
             <>
-              {/* ─ Welcome header ─ */}
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cobalt via-cobalt to-[hsl(220,70%,25%)] text-white px-6 py-7 mb-6 shadow-[0_20px_50px_-20px_rgba(28,55,140,0.5)]">
-                {/* Decorative blobs */}
-                <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-gold/20 blur-3xl pointer-events-none" />
+              {/* ─ Welcome header — background follows the time of day ─ */}
+              <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${PHASE.gradient} text-white px-6 py-7 mb-6 shadow-[0_20px_50px_-20px_rgba(28,55,140,0.5)]`}>
+                {/* Sun / sunset / moon glow */}
+                <div className={`absolute -top-16 -right-12 w-60 h-60 rounded-full ${PHASE.glow} blur-3xl pointer-events-none`} />
                 <div className="absolute -bottom-20 -left-10 w-48 h-48 rounded-full bg-white/5 blur-2xl pointer-events-none" />
+                {/* Night sky — scattered stars */}
+                {dayPhase === "night" && (
+                  <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
+                    {[
+                      [12, 22], [28, 55], [44, 30], [62, 68], [74, 18],
+                      [86, 48], [55, 14], [38, 78], [92, 80], [20, 84],
+                    ].map(([x, y], i) => (
+                      <span
+                        key={i}
+                        className="absolute rounded-full bg-white"
+                        style={{
+                          left: `${x}%`,
+                          top: `${y}%`,
+                          width: i % 3 === 0 ? 3 : 2,
+                          height: i % 3 === 0 ? 3 : 2,
+                          opacity: i % 2 === 0 ? 0.8 : 0.45,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {/* Phase icon — large, faint, in the corner */}
+                <PhaseIcon
+                  size={120}
+                  strokeWidth={1.1}
+                  className="absolute -top-6 right-6 text-white/10 pointer-events-none"
+                />
                 <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-gold uppercase tracking-[0.2em] mb-1">
-                      <Sparkles size={12} /> Panel de control
-                    </div>
                     <h1 className="font-heading text-2xl sm:text-3xl font-bold leading-tight">{greeting}, Admin</h1>
-                    <p className="text-xs text-white/70 mt-1 capitalize flex items-center gap-1.5">
+                    <p className="text-xs text-white/70 mt-1.5 capitalize flex items-center gap-1.5">
                       <Calendar size={11} /> {fechaHoy}
                     </p>
                   </div>
