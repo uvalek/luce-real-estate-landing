@@ -481,9 +481,9 @@ function ConversationPane({
 
 function Section({ title, children, actions }: { title: string; children: React.ReactNode; actions?: React.ReactNode }) {
   return (
-    <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-[11px] font-mono uppercase tracking-widest text-zinc-500 dark:text-zinc-400">{title}</h3>
+    <div className="px-5 py-5 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-center justify-between mb-3.5">
+        <h3 className="font-heading text-[13px] font-bold tracking-tight text-cobalt dark:text-zinc-200">{title}</h3>
         {actions}
       </div>
       {children}
@@ -493,11 +493,13 @@ function Section({ title, children, actions }: { title: string; children: React.
 
 function Row({ icon: Icon, label, value, mono }: { icon: any; label: string; value: React.ReactNode; mono?: boolean }) {
   return (
-    <div className="flex items-start gap-2.5 py-1.5">
-      <Icon size={14} className="text-zinc-400 mt-0.5 shrink-0" />
+    <div className="flex items-start gap-3 py-2.5">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cobalt/[0.06] text-cobalt/70 shrink-0">
+        <Icon size={15} />
+      </span>
       <div className="flex-1 min-w-0">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">{label}</div>
-        <div className={`text-[13px] text-zinc-900 dark:text-zinc-100 truncate ${mono ? 'font-mono' : ''}`}>{value || '—'}</div>
+        <div className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 mb-0.5">{label}</div>
+        <div className={`text-sm text-zinc-900 dark:text-zinc-100 truncate ${mono ? 'tabular-nums' : ''}`}>{value || '—'}</div>
       </div>
     </div>
   );
@@ -544,10 +546,12 @@ function EditableRow({
   const display = value == null || value === '' ? placeholder : String(value);
 
   return (
-    <div className="flex items-start gap-2.5 py-1.5">
-      <Icon size={14} className="text-zinc-400 mt-0.5 shrink-0" />
+    <div className="flex items-start gap-3 py-2.5">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cobalt/[0.06] text-cobalt/70 shrink-0">
+        <Icon size={15} />
+      </span>
       <div className="flex-1 min-w-0">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">{label}</div>
+        <div className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 mb-0.5">{label}</div>
         {editing ? (
           options ? (
             <select
@@ -555,7 +559,7 @@ function EditableRow({
               value={draft}
               onChange={e => { setDraft(e.target.value); }}
               onBlur={commit}
-              className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[13px] text-zinc-900 dark:text-zinc-100 outline-none"
+              className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
             >
               <option value="">—</option>
               {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -572,7 +576,7 @@ function EditableRow({
                 if (e.key === 'Enter') { e.preventDefault(); commit(); }
                 if (e.key === 'Escape') { setDraft(value == null ? '' : String(value)); setEditing(false); }
               }}
-              className={`w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[13px] text-zinc-900 dark:text-zinc-100 outline-none ${mono ? 'font-mono' : ''}`}
+              className={`w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none ${mono ? 'tabular-nums' : ''}`}
             />
           )
         ) : (
@@ -580,7 +584,7 @@ function EditableRow({
             type="button"
             onClick={() => setEditing(true)}
             title="Click para editar"
-            className={`text-left w-full text-[13px] truncate hover:bg-zinc-100 dark:hover:bg-zinc-800/60 rounded px-1 -mx-1 transition-colors ${mono ? 'font-mono' : ''} ${value == null || value === '' ? 'text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'}`}
+            className={`text-left w-full text-sm truncate hover:bg-zinc-100 dark:hover:bg-zinc-800/60 rounded px-1 -mx-1 py-0.5 transition-colors ${mono ? 'tabular-nums' : ''} ${value == null || value === '' ? 'text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'}`}
           >
             {display}
           </button>
@@ -608,24 +612,24 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
 
   return (
     <aside className="h-full w-full flex flex-col border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-y-auto">
-      <div className="px-5 pt-6 pb-4 flex flex-col items-center text-center border-b border-zinc-200 dark:border-zinc-800">
-        <Avatar name={c.name} chatId={c.chat_id} channel={c.channel} size={72} />
-        <h2 className="mt-3 text-[17px] font-semibold text-zinc-900 dark:text-white">{c.name}</h2>
-        <div className="text-[12px] font-mono text-zinc-500 dark:text-zinc-400">{c.telefono || c.chat_id}</div>
-        <div className="mt-2"><StageChip stage={stage} /></div>
+      <div className="px-5 pt-7 pb-6 flex flex-col items-center text-center border-b border-zinc-200 dark:border-zinc-800">
+        <Avatar name={c.name} chatId={c.chat_id} channel={c.channel} size={76} />
+        <h2 className="mt-4 font-heading text-lg font-bold text-zinc-900 dark:text-white">{c.name}</h2>
+        <div className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400 tabular-nums">{c.telefono || c.chat_id}</div>
+        <div className="mt-3"><StageChip stage={stage} /></div>
       </div>
       <Section title="Datos de contacto">
         <EditableRow icon={Phone} label="Teléfono" value={c.telefono} mono
           onSave={v => onUpdateField({ telefono: v })} placeholder="Sin teléfono" />
-        <EditableRow icon={Mail} label="Email" value={c.correo} type="email"
-          onSave={v => onUpdateField({ correo: v })} placeholder="Sin email" />
-        <Row icon={MessageCircle} label="Canal" value={CHANNELS[c.channel].label} />
+        <EditableRow icon={Mail} label="Correo electrónico" value={c.correo} type="email"
+          onSave={v => onUpdateField({ correo: v })} placeholder="Sin correo" />
+        <Row icon={MessageCircle} label="Canal de origen" value={CHANNELS[c.channel].label} />
         <Row icon={Calendar} label="Última actividad" value={fmtTime(c.last_at)} />
       </Section>
       <Section title="Información de prospecto">
         <EditableRow icon={MapPin} label="Zona de interés" value={c.zona_interes}
           onSave={v => onUpdateField({ zona_interes: v })} placeholder="Sin definir" />
-        <EditableRow icon={Home} label="Presupuesto máx." value={c.presupuesto_max ?? null} mono type="number"
+        <EditableRow icon={Home} label="Presupuesto máximo" value={c.presupuesto_max ?? null} mono type="number"
           onSave={v => onUpdateField({ presupuesto_max: v })} placeholder="Sin definir" />
         <EditableRow icon={Sparkles} label="Tipo de crédito" value={c.tipo_credito}
           onSave={v => onUpdateField({ tipo_credito: v })} placeholder="Sin definir"
@@ -636,9 +640,9 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
             { value: 'contado', label: 'Contado' },
             { value: 'otro', label: 'Otro' },
           ]} />
-        <div className="mt-3">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-1.5">Etapa de seguimiento</div>
-          <div className="flex gap-1">
+        <div className="mt-4">
+          <div className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 mb-2">Etapa de seguimiento</div>
+          <div className="flex gap-1.5">
             {STAGES.map((s, i) => {
               const cur = STAGES.indexOf(stage);
               const done = i <= cur;
@@ -649,8 +653,8 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
                   className="flex-1 flex flex-col items-center gap-1 group"
                   title={STAGE_LABEL[s]}
                 >
-                  <div className={`w-full h-1 rounded-full transition-colors ${done ? 'bg-emerald-500' : 'bg-zinc-200 dark:bg-zinc-800 group-hover:bg-zinc-300 dark:group-hover:bg-zinc-700'}`} />
-                  <span className={`text-[9px] font-mono uppercase text-center leading-tight ${done ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'}`}>
+                  <div className={`w-full h-1.5 rounded-full transition-colors ${done ? 'bg-emerald-500' : 'bg-zinc-200 dark:bg-zinc-800 group-hover:bg-zinc-300 dark:group-hover:bg-zinc-700'}`} />
+                  <span className={`text-[10px] font-semibold text-center leading-tight ${done ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'}`}>
                     {STAGE_LABEL[s].split(' ')[0]}
                   </span>
                 </button>
@@ -661,12 +665,12 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
       </Section>
       {propiedad && (
         <Section title="Propiedad de interés">
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-2.5 bg-zinc-50 dark:bg-zinc-900/50">
-            <div className="text-[12px] font-semibold text-zinc-900 dark:text-zinc-100">{propiedad.nombre}</div>
-            <div className="text-[10px] font-mono text-zinc-500">
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-3.5 bg-zinc-50 dark:bg-zinc-900/50 space-y-1">
+            <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{propiedad.nombre}</div>
+            <div className="text-xs text-zinc-500">
               {propiedad.recamaras} rec · {propiedad.banos} baños · {propiedad.metros_cuadrados} m²
             </div>
-            <div className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">{fmtMoney(Number(propiedad.precio))}</div>
+            <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{fmtMoney(Number(propiedad.precio))}</div>
           </div>
         </Section>
       )}
@@ -679,8 +683,8 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
           rows={4}
           className="w-full resize-none rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-900 outline-none p-2.5 text-[12px] text-zinc-900 dark:text-zinc-100"
         />
-        <div className="text-[10px] font-mono text-zinc-400 mt-1">
-          Asesor asignado: <span className="text-zinc-600 dark:text-zinc-300">{c.asesor_asignado || '—'}</span>
+        <div className="text-xs text-zinc-400 mt-2">
+          Asesor asignado: <span className="font-medium text-zinc-600 dark:text-zinc-300">{c.asesor_asignado || '—'}</span>
         </div>
       </Section>
     </aside>
@@ -843,7 +847,7 @@ export default function ConversationsView() {
       </div>
       {/* Derecha */}
       {panelOpen && selected && (
-        <div className="w-[300px] shrink-0 hidden lg:block">
+        <div className="w-[340px] shrink-0 hidden lg:block">
           <ContactPanel conversation={selected} detail={detail} onUpdateField={handleUpdateField} />
         </div>
       )}
