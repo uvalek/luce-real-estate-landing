@@ -71,6 +71,14 @@ const AdminDashboard = () => {
     if (user) fetchProperties();
   }, [user, fetchProperties]);
 
+  // Lock the page scroll while the property form modal is open.
+  useEffect(() => {
+    document.body.style.overflow = showForm ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showForm]);
+
   const handleCreate = async (formData: Omit<Propiedad, "id" | "fecha_publicacion">) => {
     setSaving(true);
     const { error } = await supabase.from("propiedades").insert(formData);
@@ -532,35 +540,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Form */}
-              {showForm && (
-                <div className="bg-white rounded-3xl shadow-[0_12px_40px_-15px_rgba(15,23,42,0.18)] p-6 md:p-8 mb-8 border border-border/40 relative">
-                  <button
-                    onClick={() => { setShowForm(false); setEditing(null); }}
-                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
-                  >
-                    <X size={18} />
-                  </button>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cobalt/15 to-cobalt/5 flex items-center justify-center border border-cobalt/15 shadow-sm">
-                      {editing ? <Pencil size={17} className="text-cobalt" /> : <Plus size={17} className="text-cobalt" />}
-                    </div>
-                    <div>
-                      <h2 className="font-heading text-lg font-bold text-foreground">
-                        {editing ? "Editar Propiedad" : "Nueva Propiedad"}
-                      </h2>
-                      {editing && <p className="text-xs text-muted-foreground capitalize mt-0.5">{editing.nombre}</p>}
-                    </div>
-                  </div>
-                  <PropertyForm
-                    initial={editing}
-                    onSubmit={editing ? handleUpdate : handleCreate}
-                    onCancel={() => { setShowForm(false); setEditing(null); }}
-                    loading={saving}
-                  />
-                </div>
-              )}
-
               {/* Property Cards Grid */}
               {loading ? (
                 <div className="flex justify-center py-20">
@@ -661,7 +640,7 @@ const AdminDashboard = () => {
                                   : <EyeOff size={14} className="text-muted-foreground" />}
                               </button>
                               <button
-                                onClick={() => { setEditing(prop); setShowForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                                onClick={() => { setEditing(prop); setShowForm(true); }}
                                 className="p-2 rounded-xl hover:bg-cobalt/10 transition-colors" title="Editar"
                               >
                                 <Pencil size={14} className="text-cobalt" />
@@ -696,10 +675,10 @@ const AdminDashboard = () => {
                   setEditing(full);
                   setShowForm(true);
                   setActiveView("propiedades");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                 
                 } else {
                   setActiveView("propiedades");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                 
                 }
               }}
             />
@@ -710,6 +689,46 @@ const AdminDashboard = () => {
 
         </main>
       </div>
+
+      {/* ──────── PROPERTY FORM — MODAL ──────── */}
+      {showForm && (
+        <div
+          className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-cobalt/70 backdrop-blur-md p-3 sm:p-6 overflow-y-auto"
+          onClick={() => { setShowForm(false); setEditing(null); }}
+        >
+          <div
+            className="relative w-full max-w-3xl my-auto bg-white rounded-3xl shadow-[0_40px_80px_-20px_rgba(15,23,42,0.55)] border border-border/40"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => { setShowForm(false); setEditing(null); }}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+              aria-label="Cerrar"
+            >
+              <X size={18} />
+            </button>
+            <div className="p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cobalt/15 to-cobalt/5 flex items-center justify-center border border-cobalt/15 shadow-sm">
+                  {editing ? <Pencil size={17} className="text-cobalt" /> : <Plus size={17} className="text-cobalt" />}
+                </div>
+                <div>
+                  <h2 className="font-heading text-lg font-bold text-foreground">
+                    {editing ? "Editar Propiedad" : "Nueva Propiedad"}
+                  </h2>
+                  {editing && <p className="text-xs text-muted-foreground capitalize mt-0.5">{editing.nombre}</p>}
+                </div>
+              </div>
+              <PropertyForm
+                initial={editing}
+                onSubmit={editing ? handleUpdate : handleCreate}
+                onCancel={() => { setShowForm(false); setEditing(null); }}
+                loading={saving}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
