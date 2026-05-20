@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Instagram, Send, Search, Phone, Mail, MapPin, Calendar,
-  Paperclip, Smile, Pause, Bot, User, CheckCheck,
+  Smile, Pause, Bot, User, CheckCheck,
   Home, Sparkles, PanelRightClose, PanelRightOpen, AlertTriangle,
   MessageCircle, Loader2,
 } from 'lucide-react';
@@ -434,9 +434,6 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
         ${botOn
           ? 'bg-zinc-100/60 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 opacity-70'
           : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 shadow-sm focus-within:border-emerald-500 focus-within:shadow-md'}`}>
-        <button disabled={botOn} className={iconBtn} title="Adjuntar archivo">
-          <Paperclip size={18} />
-        </button>
         <textarea
           ref={taRef}
           value={text}
@@ -445,7 +442,7 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
           disabled={botOn || sending}
           placeholder={botOn ? 'Bot activo — apaga para escribir manualmente' : 'Escribe un mensaje…'}
           rows={1}
-          className="flex-1 resize-none bg-transparent outline-none text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 py-3 max-h-32 self-center"
+          className="flex-1 resize-none bg-transparent outline-none text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 py-3 pl-3 max-h-32 self-center"
         />
         {/* Emoji picker — works identically on every OS */}
         <Popover open={emojiOpen} onOpenChange={(o) => !botOn && setEmojiOpen(o)}>
