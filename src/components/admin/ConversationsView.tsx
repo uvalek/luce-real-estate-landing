@@ -150,24 +150,24 @@ function BotToggle({ on, busy, onChange }: { on: boolean; busy?: boolean; onChan
     <button
       onClick={() => !busy && onChange(!on)}
       disabled={busy}
-      className={`group relative flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full border transition-all duration-200 disabled:opacity-60
+      className={`group relative flex items-center gap-3 pl-2.5 pr-5 py-2.5 rounded-2xl border transition-all duration-200 disabled:opacity-60
         ${on
           ? 'bg-emerald-500/10 border-emerald-500/40 hover:bg-emerald-500/15'
           : 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/15'}`}
       aria-pressed={on}
     >
-      <span className={`relative inline-flex w-11 h-6 rounded-full transition-colors ${on ? 'bg-emerald-500' : 'bg-zinc-500'}`}>
-        <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-200 flex items-center justify-center ${on ? 'translate-x-5' : 'translate-x-0'}`}>
-          {busy ? <Loader2 size={12} className="animate-spin text-zinc-600" /> :
-            on ? <Bot size={12} className="text-emerald-600" strokeWidth={2.5} /> :
-                 <User size={12} className="text-amber-600" strokeWidth={2.5} />}
+      <span className={`relative inline-flex w-12 h-7 rounded-full transition-colors ${on ? 'bg-emerald-500' : 'bg-zinc-500'}`}>
+        <span className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-200 flex items-center justify-center ${on ? 'translate-x-5' : 'translate-x-0'}`}>
+          {busy ? <Loader2 size={13} className="animate-spin text-zinc-600" /> :
+            on ? <Bot size={13} className="text-emerald-600" strokeWidth={2.5} /> :
+                 <User size={13} className="text-amber-600" strokeWidth={2.5} />}
         </span>
       </span>
-      <span className="flex flex-col items-start leading-tight">
-        <span className={`text-[11px] font-mono uppercase tracking-wider ${on ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+      <span className="flex flex-col items-start leading-tight gap-0.5">
+        <span className={`text-[11px] font-semibold tracking-wide ${on ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
           Bot automático
         </span>
-        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
+        <span className="text-sm font-semibold text-zinc-900 dark:text-white whitespace-nowrap">
           {on ? 'Activo · respondiendo' : 'Desactivado · tú controlas'}
         </span>
       </span>
@@ -514,25 +514,29 @@ function ConversationPane({
   const botOn = conversation.bot_enabled;
   return (
     <section className="h-full flex flex-col bg-white dark:bg-zinc-950">
-      <header className={`px-4 md:px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300 ${botOn ? '' : 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06]'}`}>
-        <div className="flex items-center gap-3">
-          <Avatar name={conversation.name} chatId={conversation.chat_id} channel={conversation.channel} size={42} />
+      <header className={`px-4 md:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300 ${botOn ? '' : 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06]'}`}>
+        <div className="flex items-center gap-4">
+          <Avatar name={conversation.name} chatId={conversation.chat_id} channel={conversation.channel} size={46} />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-[15px] font-semibold text-zinc-900 dark:text-white truncate">{conversation.name}</h2>
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center gap-2.5">
+              <h2 className="font-heading text-base font-bold text-zinc-900 dark:text-white truncate">{conversation.name}</h2>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: CHANNELS[conversation.channel].color }} />
                 {CHANNELS[conversation.channel].label}
               </span>
             </div>
-            <div className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">
-              {conversation.telefono || conversation.chat_id} {conversation.etapa_seguimiento && `· ${STAGE_LABEL[conversation.etapa_seguimiento] || conversation.etapa_seguimiento}`}
+            <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              <span className="tabular-nums">{conversation.telefono || conversation.chat_id}</span>
+              {conversation.etapa_seguimiento && (
+                <span className="text-zinc-300 dark:text-zinc-600"> · </span>
+              )}
+              {conversation.etapa_seguimiento && (STAGE_LABEL[conversation.etapa_seguimiento] || conversation.etapa_seguimiento)}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <BotToggle on={botOn} busy={togglingBot} onChange={onToggleBot} />
-            <button onClick={onOpenPanel} title={panelOpen ? 'Ocultar perfil' : 'Mostrar perfil'} className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:shadow-sm text-zinc-500 transition-all">
-              {panelOpen ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}
+            <button onClick={onOpenPanel} title={panelOpen ? 'Ocultar perfil' : 'Mostrar perfil'} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:shadow-sm text-zinc-500 transition-all">
+              {panelOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
             </button>
           </div>
         </div>
