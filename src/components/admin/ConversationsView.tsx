@@ -9,6 +9,7 @@ import {
   Home, Sparkles, PanelRightClose, PanelRightOpen, AlertTriangle,
   MessageCircle, Loader2,
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   chatbotApi,
   type Channel,
@@ -376,14 +377,49 @@ function MessagesPane({ messages, loading }: { messages: Message[]; loading: boo
   );
 }
 
+const EMOJIS = [
+  '😀', '😄', '😊', '😍', '😘', '😎', '🤩', '🥳',
+  '😅', '😉', '🙂', '😇', '🤔', '😴', '😭', '😢',
+  '👍', '👏', '🙌', '🙏', '💪', '👌', '🤝', '✌️',
+  '❤️', '🧡', '💛', '💚', '💙', '💜', '✨', '🔥',
+  '🎉', '🎊', '⭐', '🌟', '💯', '✅', '❌', '⚠️',
+  '🏠', '🏡', '🏢', '🏘️', '🔑', '📍', '📅', '📞',
+  '💰', '💵', '📲', '📧', '☀️', '🌙', '👋', '😉',
+];
+
 function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: string) => void; sending: boolean }) {
   const [text, setText] = useState('');
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const taRef = useRef<HTMLTextAreaElement>(null);
+
   const send = () => {
     const t = text.trim();
     if (!t || botOn || sending) return;
     onSend(t);
     setText('');
   };
+
+  // Insert an emoji at the caret position (or append) and keep focus.
+  const insertEmoji = (emoji: string) => {
+    const ta = taRef.current;
+    if (!ta) {
+      setText((prev) => prev + emoji);
+      return;
+    }
+    const start = ta.selectionStart ?? text.length;
+    const end = ta.selectionEnd ?? text.length;
+    const next = text.slice(0, start) + emoji + text.slice(end);
+    setText(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      const pos = start + emoji.length;
+      ta.setSelectionRange(pos, pos);
+    });
+  };
+
+  const iconBtn =
+    'flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 transition-colors disabled:cursor-not-allowed disabled:opacity-50 enabled:hover:bg-zinc-100 dark:enabled:hover:bg-zinc-800';
+
   return (
     <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 md:px-6 py-3 bg-white dark:bg-zinc-950">
       {botOn && (
@@ -394,29 +430,59 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
           </div>
         </div>
       )}
-      <div className={`flex items-end gap-2 rounded-2xl border transition-all
+      <div className={`flex items-center gap-1.5 px-1.5 rounded-2xl border transition-all
         ${botOn
           ? 'bg-zinc-100/60 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 opacity-70'
           : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 shadow-sm focus-within:border-emerald-500 focus-within:shadow-md'}`}>
-        <button disabled={botOn} className="p-2.5 text-zinc-500 disabled:cursor-not-allowed">
+        <button disabled={botOn} className={iconBtn} title="Adjuntar archivo">
           <Paperclip size={18} />
         </button>
         <textarea
+          ref={taRef}
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           disabled={botOn || sending}
           placeholder={botOn ? 'Bot activo — apaga para escribir manualmente' : 'Escribe un mensaje…'}
           rows={1}
-          className="flex-1 resize-none bg-transparent outline-none text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 py-3 max-h-32"
+          className="flex-1 resize-none bg-transparent outline-none text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 py-3 max-h-32 self-center"
         />
-        <button disabled={botOn} className="p-2.5 text-zinc-500 disabled:cursor-not-allowed">
-          <Smile size={18} />
-        </button>
+        {/* Emoji picker — works identically on every OS */}
+        <Popover open={emojiOpen} onOpenChange={(o) => !botOn && setEmojiOpen(o)}>
+          <PopoverTrigger asChild>
+            <button
+              disabled={botOn}
+              className={`${iconBtn} ${emojiOpen ? 'bg-zinc-100 dark:bg-zinc-800 text-emerald-600' : ''}`}
+              title="Insertar emoji"
+              aria-label="Insertar emoji"
+            >
+              <Smile size={18} />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            sideOffset={10}
+            className="w-[296px] p-2.5 rounded-2xl"
+          >
+            <p className="text-[11px] font-semibold text-zinc-400 px-1 pb-2">Emojis</p>
+            <div className="grid grid-cols-8 gap-0.5">
+              {EMOJIS.map((e, i) => (
+                <button
+                  key={`${e}-${i}`}
+                  type="button"
+                  onClick={() => insertEmoji(e)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
         <button
           onClick={send}
           disabled={botOn || !text.trim() || sending}
-          className={`m-1 px-3 py-2 rounded-xl flex items-center gap-1.5 text-sm font-semibold transition-all
+          className={`my-1 ml-0.5 px-3.5 h-9 rounded-xl flex items-center gap-1.5 text-sm font-semibold transition-all
             ${botOn || !text.trim() || sending
               ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'
               : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm hover:shadow-md'}`}
@@ -425,7 +491,7 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
           Enviar
         </button>
       </div>
-      <div className="text-[10px] font-mono text-zinc-400 mt-1.5 px-1">
+      <div className="text-[10px] text-zinc-400 mt-1.5 px-1">
         Enter para enviar · Shift+Enter para salto de línea
       </div>
     </div>
