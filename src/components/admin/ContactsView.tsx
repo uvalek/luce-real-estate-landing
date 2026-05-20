@@ -446,10 +446,12 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     <div
       className="relative -mx-4 -my-4 px-4 py-6 sm:px-6 sm:py-7 rounded-3xl"
       style={{
-        backgroundColor: "hsl(220 28% 96%)",
+        backgroundColor: "hsl(220 26% 95%)",
+        // Elegant architectural cross-hatch: two sets of fine diagonal
+        // lines form a diamond grid, in a tone noticeably darker than
+        // the surface so the texture actually reads.
         backgroundImage:
-          "radial-gradient(circle, rgba(28,55,140,0.08) 1px, transparent 1.4px)",
-        backgroundSize: "22px 22px",
+          "repeating-linear-gradient(45deg, hsl(220 34% 87%) 0, hsl(220 34% 87%) 1px, transparent 1px, transparent 17px), repeating-linear-gradient(-45deg, hsl(220 34% 87%) 0, hsl(220 34% 87%) 1px, transparent 1px, transparent 17px)",
       }}
     >
       {/* Header */}
