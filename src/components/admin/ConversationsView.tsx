@@ -759,7 +759,7 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
 
 // ---------- Vista principal ----------
 
-export default function ConversationsView() {
+export default function ConversationsView({ advisorName }: { advisorName?: string } = {}) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [search, setSearch] = useState('');
@@ -854,7 +854,7 @@ export default function ConversationsView() {
     if (!selected) return;
     setSending(true);
     try {
-      await chatbotApi.sendMessage(selected.chat_id, text /*, advisorName */);
+      await chatbotApi.sendMessage(selected.chat_id, text, advisorName);
       // Realtime traerá el mensaje, pero refrescamos por si acaso
       fetchMessages(selected.chat_id);
     } catch (e) {

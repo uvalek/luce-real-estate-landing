@@ -195,6 +195,15 @@ const AdminDashboard = () => {
   const precioPromedio = precios.length > 0 ? Math.round(precios.reduce((a, b) => a + b, 0) / precios.length) : 0;
   const precioPromedioFmt = precioPromedio > 0 ? `$${precioPromedio.toLocaleString("es-MX")}` : "—";
 
+  // Display name — read from the user's Supabase Auth metadata
+  // (full_name / name / display_name), falling back to the email handle.
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const displayName =
+    (meta.full_name as string) ||
+    (meta.name as string) ||
+    (meta.display_name as string) ||
+    (user.email ? user.email.split("@")[0] : "Admin");
+
   // Greeting
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Buenos días" : hour < 19 ? "Buenas tardes" : "Buenas noches";
@@ -384,7 +393,7 @@ const AdminDashboard = () => {
                 />
                 <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h1 className="font-heading text-2xl sm:text-3xl font-bold leading-tight">{greeting}, Admin</h1>
+                    <h1 className="font-heading text-2xl sm:text-3xl font-bold leading-tight">{greeting}, {displayName}</h1>
                     <p className="text-xs text-white/70 mt-1.5 capitalize flex items-center gap-1.5">
                       <Calendar size={11} /> {fechaHoy}
                     </p>
@@ -745,7 +754,7 @@ const AdminDashboard = () => {
           )}
 
           {/* ──────── CONVERSACIONES VIEW ──────── */}
-          {activeView === "conversaciones" && <ConversationsView />}
+          {activeView === "conversaciones" && <ConversationsView advisorName={displayName} />}
 
         </main>
       </div>
