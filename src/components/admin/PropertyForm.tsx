@@ -178,11 +178,11 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
                     }`}
                   >
                     <span
-                      className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
-                        activo ? "bg-cobalt text-white" : "bg-gold/10 text-gold"
+                      className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
+                        activo ? "bg-cobalt text-white" : "text-gold"
                       }`}
                     >
-                      <Icon size={16} strokeWidth={2.2} />
+                      <Icon size={22} strokeWidth={2.1} />
                     </span>
                     <span
                       className={`text-xs font-semibold ${
