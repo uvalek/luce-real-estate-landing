@@ -201,11 +201,15 @@ const AdminDashboard = () => {
   // Display name — read from the user's Supabase Auth metadata
   // (full_name / name / display_name), falling back to the email handle.
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-  const displayName =
+  const fullName =
     (meta.full_name as string) ||
     (meta.name as string) ||
     (meta.display_name as string) ||
     (user.email ? user.email.split("@")[0] : "Admin");
+  // Show only the first name in the greeting.
+  const displayName = fullName.trim().split(/\s+/)[0];
+  // Only an "owner" may create new users.
+  const isOwner = meta.role === "owner";
 
   // Greeting
   const hour = new Date().getHours();
@@ -326,13 +330,15 @@ const AdminDashboard = () => {
 
         {/* Bottom */}
         <div className="relative border-t border-white/10 px-4 py-4 space-y-2.5">
-          <button
-            onClick={() => setShowUserForm(true)}
-            className="group w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-white/70 hover:text-white transition-all duration-200"
-          >
-            <UserPlus size={15} className="text-gold/80 group-hover:text-gold transition-colors" />
-            Crear nuevo usuario
-          </button>
+          {isOwner && (
+            <button
+              onClick={() => setShowUserForm(true)}
+              className="group w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-white/70 hover:text-white transition-all duration-200"
+            >
+              <UserPlus size={15} className="text-gold/80 group-hover:text-gold transition-colors" />
+              Crear nuevo usuario
+            </button>
+          )}
           <span className="block px-1 text-[10px] text-white/30 truncate">{user.email}</span>
           <div className="flex items-stretch gap-2">
             <a
