@@ -11,6 +11,7 @@ import {
   Send,
   ArrowUpRight,
   CheckCircle2,
+  type LucideIcon,
 } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
 import { getTelegramLink } from "@/lib/telegramLink";
@@ -242,7 +243,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
 };
 
 interface InfoTileProps {
-  icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  icon: LucideIcon;
   label: string;
   value: string;
 }

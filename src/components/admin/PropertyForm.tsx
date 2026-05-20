@@ -17,6 +17,7 @@ import {
   Minus,
   Plus,
   AlertCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { uploadImage } from "@/lib/uploadImage";
 import GalleryUpload from "@/components/admin/GalleryUpload";
@@ -81,6 +82,15 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
   const [uploadingMain, setUploadingMain] = useState(false);
   const mainFileRef = useRef<HTMLInputElement>(null);
 
+  // Required-field validation. `errors` holds the keys still missing.
+  const [errors, setErrors] = useState<string[]>([]);
+  const nombreRef = useRef<HTMLDivElement>(null);
+  const zonaRef = useRef<HTMLDivElement>(null);
+  const direccionRef = useRef<HTMLDivElement>(null);
+  const precioRef = useRef<HTMLDivElement>(null);
+  const superficieRef = useRef<HTMLDivElement>(null);
+  const descripcionRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (initial) {
       const { id, fecha_publicacion, ...rest } = initial;
@@ -121,8 +131,48 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields, top-to-bottom.
+    const missing: string[] = [];
+    if (!form.nombre.trim()) missing.push("nombre");
+    if (!form.zona.trim()) missing.push("zona");
+    if (!(form.direccion || "").trim()) missing.push("direccion");
+    if (!form.precio || form.precio <= 0) missing.push("precio");
+    if (!form.metros_cuadrados || form.metros_cuadrados <= 0)
+      missing.push("superficie");
+    if (!(form.descripcion || "").trim()) missing.push("descripcion");
+
+    if (missing.length > 0) {
+      setErrors(missing);
+      // Scroll to the first missing field (document order).
+      const refs: Record<string, React.RefObject<HTMLDivElement>> = {
+        nombre: nombreRef,
+        zona: zonaRef,
+        direccion: direccionRef,
+        precio: precioRef,
+        superficie: superficieRef,
+        descripcion: descripcionRef,
+      };
+      const order = ["nombre", "zona", "direccion", "precio", "superficie", "descripcion"];
+      const first = order.find((f) => missing.includes(f));
+      if (first) {
+        refs[first]?.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+      return;
+    }
+
+    setErrors([]);
     onSubmit(form);
   };
+
+  // Clear a field's error as soon as the admin starts fixing it.
+  const clearError = (field: string) =>
+    setErrors((prev) => prev.filter((f) => f !== field));
+
+  const hasError = (field: string) => errors.includes(field);
 
   // Legacy plain input (still used by Descripción / Asesor / Observaciones).
   const inputClass =
@@ -136,6 +186,11 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
   const bareInput =
     "flex-1 min-w-0 bg-transparent py-3 text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/50 placeholder:font-normal";
 
+  // Red highlight applied to the field shell when it's missing on submit.
+  const errorBoxClass =
+    "border-red-400 ring-4 ring-red-500/10 focus-within:border-red-400 focus-within:ring-red-500/15";
+  const RequiredMark = () => <span className="text-red-500">*</span>;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Section: Info básica */}
@@ -147,18 +202,22 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
           {/* Nombre */}
-          <div className="sm:col-span-2">
-            <label className={fieldLabel}>Nombre de la propiedad *</label>
-            <div className={fieldBox}>
-              <Home size={16} className="text-gold flex-shrink-0" />
+          <div className="sm:col-span-2" ref={nombreRef}>
+            <label className={fieldLabel}>
+              Nombre de la propiedad <RequiredMark />
+            </label>
+            <div className={`${fieldBox} ${hasError("nombre") ? errorBoxClass : ""}`}>
+              <Home size={16} className={hasError("nombre") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
               <input
-                required
                 value={form.nombre}
-                onChange={(e) => set("nombre", e.target.value)}
+                onChange={(e) => { set("nombre", e.target.value); clearError("nombre"); }}
                 placeholder="Casa Residencial Los Pinos"
                 className={bareInput}
               />
             </div>
+            {hasError("nombre") && (
+              <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Este campo es obligatorio.</p>
+            )}
           </div>
 
           {/* Tipo — segmented selector with icons */}
@@ -224,32 +283,41 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
           </div>
 
           {/* Zona */}
-          <div>
-            <label className={fieldLabel}>Zona *</label>
-            <div className={fieldBox}>
-              <MapPin size={16} className="text-gold flex-shrink-0" />
+          <div ref={zonaRef}>
+            <label className={fieldLabel}>
+              Zona <RequiredMark />
+            </label>
+            <div className={`${fieldBox} ${hasError("zona") ? errorBoxClass : ""}`}>
+              <MapPin size={16} className={hasError("zona") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
               <input
-                required
                 value={form.zona}
-                onChange={(e) => set("zona", e.target.value)}
+                onChange={(e) => { set("zona", e.target.value); clearError("zona"); }}
                 placeholder="Tlaxcala Centro"
                 className={bareInput}
               />
             </div>
+            {hasError("zona") && (
+              <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Este campo es obligatorio.</p>
+            )}
           </div>
 
           {/* Dirección */}
-          <div>
-            <label className={fieldLabel}>Dirección</label>
-            <div className={fieldBox}>
-              <Navigation size={16} className="text-gold flex-shrink-0" />
+          <div ref={direccionRef}>
+            <label className={fieldLabel}>
+              Dirección <RequiredMark />
+            </label>
+            <div className={`${fieldBox} ${hasError("direccion") ? errorBoxClass : ""}`}>
+              <Navigation size={16} className={hasError("direccion") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
               <input
                 value={form.direccion || ""}
-                onChange={(e) => set("direccion", e.target.value)}
+                onChange={(e) => { set("direccion", e.target.value); clearError("direccion"); }}
                 placeholder="Av. Juárez 145, Col. Centro"
                 className={bareInput}
               />
             </div>
+            {hasError("direccion") && (
+              <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Este campo es obligatorio.</p>
+            )}
           </div>
         </div>
       </div>
@@ -263,18 +331,19 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
           {/* Precio — formatted display, raw number stored */}
-          <div className="sm:col-span-2">
-            <label className={fieldLabel}>Precio (MXN) *</label>
-            <div className={fieldBox}>
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/10 text-gold font-heading text-base font-bold flex-shrink-0">
+          <div className="sm:col-span-2" ref={precioRef}>
+            <label className={fieldLabel}>
+              Precio (MXN) <RequiredMark />
+            </label>
+            <div className={`${fieldBox} ${hasError("precio") ? errorBoxClass : ""}`}>
+              <span className={`flex h-8 w-8 items-center justify-center rounded-lg font-heading text-base font-bold flex-shrink-0 ${hasError("precio") ? "bg-red-500/10 text-red-400" : "bg-gold/10 text-gold"}`}>
                 $
               </span>
               <input
-                required
                 type="text"
                 inputMode="numeric"
                 value={precioDisplay}
-                onChange={(e) => handlePrecioChange(e.target.value)}
+                onChange={(e) => { handlePrecioChange(e.target.value); clearError("precio"); }}
                 placeholder="1,500,000"
                 className={`${bareInput} tabular-nums text-base font-semibold`}
               />
@@ -284,6 +353,9 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
                 </span>
               )}
             </div>
+            {hasError("precio") && (
+              <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Ingresa un precio válido.</p>
+            )}
           </div>
 
           {/* Recámaras — stepper */}
@@ -303,17 +375,20 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
           />
 
           {/* Metros² */}
-          <div className="sm:col-span-2">
-            <label className={fieldLabel}>Superficie</label>
-            <div className={fieldBox}>
-              <Ruler size={16} className="text-gold flex-shrink-0" />
+          <div className="sm:col-span-2" ref={superficieRef}>
+            <label className={fieldLabel}>
+              Superficie <RequiredMark />
+            </label>
+            <div className={`${fieldBox} ${hasError("superficie") ? errorBoxClass : ""}`}>
+              <Ruler size={16} className={hasError("superficie") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
               <input
                 type="text"
                 inputMode="numeric"
                 value={form.metros_cuadrados || ""}
-                onChange={(e) =>
-                  set("metros_cuadrados", parseNum(e.target.value))
-                }
+                onChange={(e) => {
+                  set("metros_cuadrados", parseNum(e.target.value));
+                  clearError("superficie");
+                }}
                 placeholder="120"
                 className={`${bareInput} tabular-nums`}
               />
@@ -321,6 +396,9 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
                 m²
               </span>
             </div>
+            {hasError("superficie") && (
+              <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Ingresa la superficie en m².</p>
+            )}
           </div>
         </div>
 
@@ -486,14 +564,24 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
           <div className="h-px flex-1 bg-border/60" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2" ref={descripcionRef}>
+            <label className={fieldLabel}>
+              Descripción <RequiredMark />
+            </label>
             <textarea
               rows={3}
               value={form.descripcion || ""}
-              onChange={(e) => set("descripcion", e.target.value)}
+              onChange={(e) => { set("descripcion", e.target.value); clearError("descripcion"); }}
               placeholder="Describe la propiedad..."
-              className={inputClass + " resize-none"}
+              className={`${inputClass} resize-none rounded-2xl ${
+                hasError("descripcion")
+                  ? "border-red-400 ring-4 ring-red-500/10 focus:ring-red-500/15 focus:border-red-400"
+                  : ""
+              }`}
             />
+            {hasError("descripcion") && (
+              <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Este campo es obligatorio.</p>
+            )}
           </div>
           <div>
             <label className={labelClass}>Asesor asignado</label>
@@ -534,7 +622,18 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 pt-4 border-t border-border/60">
+      <div className="pt-4 border-t border-border/60">
+        {/* Missing-fields legend */}
+        {errors.length > 0 && (
+          <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-red-300/70 bg-red-50 px-4 py-3">
+            <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-px" />
+            <p className="text-xs text-red-700/90 leading-relaxed">
+              Faltan campos obligatorios por llenar. Revisa los campos marcados
+              en rojo antes de {initial ? "guardar los cambios" : "crear la propiedad"}.
+            </p>
+          </div>
+        )}
+        <div className="flex gap-3">
         <button
           type="submit"
           disabled={loading}
@@ -550,6 +649,7 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
         >
           Cancelar
         </button>
+        </div>
       </div>
     </form>
   );
@@ -558,7 +658,7 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
 /* ── Stepper — friendly +/- control for integer counts ── */
 interface StepperProps {
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+  icon: LucideIcon;
   value: number;
   onChange: (v: number) => void;
 }

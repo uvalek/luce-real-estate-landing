@@ -9,6 +9,7 @@ import {
   Filter as FilterIcon,
   RotateCcw,
   ArrowUpRight,
+  type LucideIcon,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -330,7 +331,7 @@ const Section = ({
 );
 
 interface SelectFieldProps {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
