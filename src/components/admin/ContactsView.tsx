@@ -66,7 +66,7 @@ interface ColumnDef {
 }
 
 const COLUMNS: ColumnDef[] = [
-  { key: "select",     label: "",            defaultWidth: 40,  minWidth: 40,  resizable: false },
+  { key: "select",     label: "",            defaultWidth: 56,  minWidth: 56,  resizable: false },
   { key: "nombre",     label: "Nombre",      defaultWidth: 180, minWidth: 100, resizable: true },
   { key: "correo",     label: "Correo",      defaultWidth: 220, minWidth: 120, resizable: true },
   { key: "etapa",      label: "Etapa",       defaultWidth: 180, minWidth: 120, resizable: true },
@@ -385,7 +385,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   const inputClass =
     "w-full border border-border/80 rounded-lg px-3 py-2.5 text-base sm:text-sm bg-white text-foreground outline-none focus:ring-2 focus:ring-cobalt/20 focus:border-cobalt/40 placeholder:text-muted-foreground/50 transition-all";
 
-  const thClass = "relative text-left text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-4 py-3 select-none";
+  const thClass = "relative text-left text-[10px] font-bold text-cobalt/70 uppercase tracking-wider px-4 py-3.5 select-none";
   const tdBase = "align-middle border-b border-border/30 overflow-hidden";
 
   // Inline input classes (compact, fills cell)
@@ -443,20 +443,52 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     : [];
 
   return (
-    <div>
-      {/* Stats row */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 shadow-sm border border-black/[0.04]">
-          <Users size={14} className="text-cobalt" />
-          <span className="text-xs font-bold text-foreground">{totalContacts}</span>
-          <span className="text-[10px] text-muted-foreground">contactos</span>
+    <div
+      className="relative -mx-4 -my-4 px-4 py-6 sm:px-6 sm:py-7 rounded-3xl"
+      style={{
+        backgroundColor: "hsl(220 28% 96%)",
+        backgroundImage:
+          "radial-gradient(circle, rgba(28,55,140,0.08) 1px, transparent 1.4px)",
+        backgroundSize: "22px 22px",
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cobalt to-cobalt-light text-white shadow-[0_10px_24px_-10px_rgba(28,55,140,0.6)]">
+          <Users size={20} strokeWidth={2.1} />
+        </span>
+        <div>
+          <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-gold">
+            CRM
+          </p>
+          <h2 className="font-heading text-xl md:text-2xl font-bold text-cobalt leading-tight">
+            Gestión de Contactos
+          </h2>
         </div>
-        {etapaCounts.filter((e) => e.count > 0).map((e) => (
-          <div key={e.valor} className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[11px] font-semibold ${e.color || "bg-gray-100 text-gray-700"}`}>
-            {e.count} {e.etiqueta}
-          </div>
-        ))}
+        <div className="ml-auto flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 shadow-[0_6px_20px_-12px_rgba(15,23,42,0.25)] border border-cobalt/10">
+          <span className="font-heading text-xl font-extrabold text-cobalt tabular-nums leading-none">
+            {totalContacts}
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-tight">
+            contactos<br />totales
+          </span>
+        </div>
       </div>
+
+      {/* Stage stat chips */}
+      {etapaCounts.some((e) => e.count > 0) && (
+        <div className="flex flex-wrap gap-2 mb-5">
+          {etapaCounts.filter((e) => e.count > 0).map((e) => (
+            <div
+              key={e.valor}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold shadow-sm ${e.color || "bg-gray-100 text-gray-700"}`}
+            >
+              <span className="tabular-nums">{e.count}</span>
+              {e.etiqueta}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Header + search */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
@@ -634,7 +666,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
           <p className="text-xs text-muted-foreground/50 mt-1">{search ? "Intenta con otro término" : "Agrega tu primer contacto"}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-black/[0.04] overflow-x-auto">
+        <div className="bg-white rounded-2xl shadow-[0_12px_40px_-18px_rgba(15,23,42,0.28)] border border-cobalt/10 overflow-x-auto">
           <table
             className="text-sm border-separate border-spacing-0"
             style={{ width: totalTableWidth, tableLayout: "fixed" }}
@@ -645,31 +677,31 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
               ))}
             </colgroup>
             <thead>
-              <tr className="bg-muted/30">
+              <tr className="bg-cobalt/[0.05]">
                 {COLUMNS.map((col) => {
                   const isSelect = col.key === "select";
                   const isResizable = col.resizable !== false;
                   return (
                     <th
                       key={col.key}
-                      className={`${thClass} border-b border-border/50 ${isSelect ? "px-3" : ""}`}
+                      className={`${thClass} border-b border-border/50`}
                     >
-                      <div className="flex items-center gap-1 truncate">
-                        {isSelect ? (
+                      {isSelect ? (
+                        <div className="flex items-center justify-center">
                           <input
                             type="checkbox"
                             checked={allSelected}
                             ref={(el) => { if (el) el.indeterminate = !allSelected && someSelected; }}
                             onChange={toggleAll}
-                            className="w-3.5 h-3.5 accent-cobalt cursor-pointer"
+                            className="w-4 h-4 accent-cobalt cursor-pointer"
                             aria-label="Seleccionar todos"
                           />
-                        ) : col.key === "acciones" ? (
-                          <span className="ml-auto">{col.label}</span>
-                        ) : (
-                          <span className="truncate">{col.label}</span>
-                        )}
-                      </div>
+                        </div>
+                      ) : col.key === "acciones" ? (
+                        <div className="flex items-center"><span className="ml-auto">{col.label}</span></div>
+                      ) : (
+                        <div className="flex items-center truncate"><span className="truncate">{col.label}</span></div>
+                      )}
                       {isResizable && (
                         <div
                           onMouseDown={(e) => handleResizeStart(e, col.key)}
@@ -728,14 +760,16 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                 return (
                   <tr key={c.id} className={`transition-colors ${rowBg}`}>
                     {/* Checkbox */}
-                    <td className={`${tdBase} px-3 py-3`}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleOne(c.id)}
-                        className="w-3.5 h-3.5 accent-cobalt cursor-pointer"
-                        aria-label={`Seleccionar ${c.nombre}`}
-                      />
+                    <td className={`${tdBase} py-3`}>
+                      <div className="flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleOne(c.id)}
+                          className="w-4 h-4 accent-cobalt cursor-pointer"
+                          aria-label={`Seleccionar ${c.nombre}`}
+                        />
+                      </div>
                     </td>
 
                     {/* Nombre */}
