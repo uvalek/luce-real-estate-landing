@@ -437,6 +437,11 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     setConfirmInput("");
   };
 
+  // Decorative background — repeating architectural arch motif (curved
+  // "doorway/window" figures with generous breathing room between each).
+  const archSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="170" height="170" viewBox="0 0 170 170"><g fill="none" stroke="hsl(220 30% 84%)" stroke-width="1.6" stroke-linecap="round"><path d="M52 130 L52 84 A33 33 0 0 1 118 84 L118 130"/><path d="M68 130 L68 92 A17 17 0 0 1 102 92 L102 130"/></g></svg>`;
+  const archPattern = `url("data:image/svg+xml,${encodeURIComponent(archSvg)}")`;
+
   const pendingDeleteCount = confirmDeleteIds?.length ?? 0;
   const pendingContacts = confirmDeleteIds
     ? contacts.filter((c) => confirmDeleteIds.includes(c.id))
@@ -444,14 +449,13 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
 
   return (
     <div
-      className="relative -mx-4 -my-4 px-4 py-6 sm:px-6 sm:py-7 rounded-3xl"
+      className="relative -mx-4 lg:-mx-8 -mt-6 lg:-mt-8 -mb-6 lg:-mb-8 px-4 lg:px-8 pt-6 lg:pt-8 pb-10 min-h-screen"
       style={{
         backgroundColor: "hsl(220 26% 95%)",
-        // Elegant architectural cross-hatch: two sets of fine diagonal
-        // lines form a diamond grid, in a tone noticeably darker than
-        // the surface so the texture actually reads.
-        backgroundImage:
-          "repeating-linear-gradient(45deg, hsl(220 34% 87%) 0, hsl(220 34% 87%) 1px, transparent 1px, transparent 17px), repeating-linear-gradient(-45deg, hsl(220 34% 87%) 0, hsl(220 34% 87%) 1px, transparent 1px, transparent 17px)",
+        // Repeating architectural arch motif — curved figures with
+        // breathing room, in a cobalt tone darker than the surface.
+        backgroundImage: archPattern,
+        backgroundSize: "170px 170px",
       }}
     >
       {/* Header */}
