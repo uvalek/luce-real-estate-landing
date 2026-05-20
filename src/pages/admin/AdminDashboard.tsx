@@ -23,6 +23,7 @@ import {
   Sun,
   Sunset,
   Moon,
+  UserPlus,
   Activity,
   MapPin,
   Calendar,
@@ -35,6 +36,7 @@ import { useAuth } from "@/hooks/useAuth";
 import PropertyForm from "@/components/admin/PropertyForm";
 import ContactsView from "@/components/admin/ContactsView";
 import ConversationsView from "@/components/admin/ConversationsView";
+import CreateUserModal from "@/components/admin/CreateUserModal";
 import type { Propiedad } from "@/types";
 
 type AdminView = "propiedades" | "contactos" | "conversaciones";
@@ -53,6 +55,7 @@ const AdminDashboard = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Propiedad | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showUserForm, setShowUserForm] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -323,6 +326,13 @@ const AdminDashboard = () => {
 
         {/* Bottom */}
         <div className="relative border-t border-white/10 px-4 py-4 space-y-2.5">
+          <button
+            onClick={() => setShowUserForm(true)}
+            className="group w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-white/[0.06] hover:bg-white/[0.12] text-xs font-semibold text-white/70 hover:text-white transition-all duration-200"
+          >
+            <UserPlus size={15} className="text-gold/80 group-hover:text-gold transition-colors" />
+            Crear nuevo usuario
+          </button>
           <span className="block px-1 text-[10px] text-white/30 truncate">{user.email}</span>
           <div className="flex items-stretch gap-2">
             <a
@@ -758,6 +768,9 @@ const AdminDashboard = () => {
 
         </main>
       </div>
+
+      {/* ──────── CREATE USER — MODAL ──────── */}
+      {showUserForm && <CreateUserModal onClose={() => setShowUserForm(false)} />}
 
       {/* ──────── PROPERTY FORM — MODAL ──────── */}
       {showForm && (
