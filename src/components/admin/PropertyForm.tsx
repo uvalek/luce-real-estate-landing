@@ -17,6 +17,7 @@ import {
   Minus,
   Plus,
   AlertCircle,
+  Lock,
   type LucideIcon,
 } from "lucide-react";
 import { uploadImage } from "@/lib/uploadImage";
@@ -74,9 +75,11 @@ interface PropertyFormProps {
   onSubmit: (data: PropiedadForm) => Promise<void>;
   onCancel: () => void;
   loading: boolean;
+  /** Full name of the signed-in admin — auto-assigned as asesor on new properties. */
+  advisorName?: string;
 }
 
-const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProps) => {
+const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: PropertyFormProps) => {
   const [form, setForm] = useState<PropiedadForm>(emptyForm);
   const [precioDisplay, setPrecioDisplay] = useState("");
   const [uploadingMain, setUploadingMain] = useState(false);
@@ -97,10 +100,11 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
       setForm({ ...rest, galeria: rest.galeria || [] });
       setPrecioDisplay(formatNum(rest.precio));
     } else {
-      setForm(emptyForm);
+      // New property: the asesor is auto-assigned to the creator.
+      setForm({ ...emptyForm, asesor_asignado: advisorName || "" });
       setPrecioDisplay("");
     }
-  }, [initial]);
+  }, [initial, advisorName]);
 
   const set = (field: keyof PropiedadForm, value: unknown) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -585,12 +589,15 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
           </div>
           <div>
             <label className={labelClass}>Asesor asignado</label>
-            <input
-              value={form.asesor_asignado || ""}
-              onChange={(e) => set("asesor_asignado", e.target.value)}
-              placeholder="Manuel Díaz"
-              className={inputClass}
-            />
+            <div className="flex items-center gap-2 w-full border border-border/60 rounded-lg px-4 py-2.5 bg-muted/40">
+              <Lock size={13} className="text-muted-foreground/50 flex-shrink-0" />
+              <span className="text-sm font-medium text-foreground/80 truncate">
+                {form.asesor_asignado || advisorName || "—"}
+              </span>
+              <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/50 flex-shrink-0">
+                Automático
+              </span>
+            </div>
           </div>
           <div>
             <label className={labelClass}>Observaciones</label>

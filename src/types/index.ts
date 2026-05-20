@@ -50,6 +50,7 @@ export interface Contacto {
   presupuesto_max: number;
   fecha_visita: string | null;
   propiedad_interesada: number | null;
+  asesor_asignado: string | null;
   created_at: string;
 }
 

@@ -754,6 +754,7 @@ const AdminDashboard = () => {
           {/* ──────── CONTACTOS VIEW ──────── */}
           {activeView === "contactos" && (
             <ContactsView
+              advisorName={fullName}
               onOpenProperty={(prop) => {
                 const full = properties.find((p) => p.id === prop.id);
                 if (full) {
@@ -809,6 +810,7 @@ const AdminDashboard = () => {
               </div>
               <PropertyForm
                 initial={editing}
+                advisorName={fullName}
                 onSubmit={editing ? handleUpdate : handleCreate}
                 onCancel={() => { setShowForm(false); setEditing(null); }}
                 loading={saving}

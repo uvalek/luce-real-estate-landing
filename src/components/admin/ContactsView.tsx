@@ -11,6 +11,7 @@ import {
   Building2,
   AlertTriangle,
   CheckSquare,
+  Lock,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Contacto, Propiedad } from "@/types";
@@ -45,6 +46,7 @@ const emptyForm: ContactoForm = {
   presupuesto_max: 0,
   fecha_visita: null,
   propiedad_interesada: null,
+  asesor_asignado: "",
 };
 
 const formatBudget = (n: number) => {
@@ -94,6 +96,8 @@ const loadSavedWidths = (): Record<string, number> => {
 
 interface ContactsViewProps {
   onOpenProperty?: (prop: Propiedad) => void;
+  /** Full name of the signed-in admin — auto-assigned as asesor on new contacts. */
+  advisorName?: string;
 }
 
 type EditableField =
@@ -107,7 +111,7 @@ type EditableField =
   | "presupuesto_max"
   | "fecha_visita";
 
-const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
+const ContactsView = ({ onOpenProperty, advisorName }: ContactsViewProps = {}) => {
   const [contacts, setContacts] = useState<Contacto[]>([]);
   const [propiedades, setPropiedades] = useState<Propiedad[]>([]);
   const [allPropiedades, setAllPropiedades] = useState<Propiedad[]>([]);
@@ -228,7 +232,8 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   }, [fetchContacts, fetchPropiedades, fetchOpciones]);
 
   const openNew = () => {
-    setForm(emptyForm);
+    // The asesor is auto-assigned to whoever is creating the contact.
+    setForm({ ...emptyForm, asesor_asignado: advisorName || "" });
     setPresupuestoDisplay("");
     setShowForm(true);
   };
@@ -657,6 +662,18 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                   onChange={(e) => set("fecha_visita", e.target.value ? new Date(e.target.value).toISOString() : null)}
                   className={inputClass}
                 />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Asesor asignado</label>
+                <div className="flex items-center gap-2 w-full border border-border/60 rounded-lg px-3 py-2.5 bg-muted/40">
+                  <Lock size={12} className="text-muted-foreground/50 flex-shrink-0" />
+                  <span className="text-sm text-foreground/80 truncate">
+                    {form.asesor_asignado || advisorName || "—"}
+                  </span>
+                  <span className="ml-auto text-[9px] font-bold uppercase tracking-wide text-muted-foreground/50 flex-shrink-0">
+                    Auto
+                  </span>
+                </div>
               </div>
             </div>
             <div className="flex gap-2 pt-2">
