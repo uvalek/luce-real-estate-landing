@@ -150,7 +150,7 @@ function BotToggle({ on, busy, onChange }: { on: boolean; busy?: boolean; onChan
     <button
       onClick={() => !busy && onChange(!on)}
       disabled={busy}
-      className={`group relative flex items-center gap-3 pl-2.5 pr-5 py-2.5 rounded-2xl border transition-all duration-200 disabled:opacity-60
+      className={`group relative flex items-center gap-3 pl-2.5 pr-3 sm:pr-5 py-2.5 rounded-2xl border transition-all duration-200 disabled:opacity-60
         ${on
           ? 'bg-emerald-500/10 border-emerald-500/40 hover:bg-emerald-500/15'
           : 'bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/15'}`}
@@ -163,12 +163,12 @@ function BotToggle({ on, busy, onChange }: { on: boolean; busy?: boolean; onChan
                  <User size={13} className="text-amber-600" strokeWidth={2.5} />}
         </span>
       </span>
-      <span className="flex flex-col items-start leading-tight gap-0.5">
+      <span className="hidden sm:flex flex-col items-start leading-tight gap-0.5 min-w-0">
         <span className={`text-[11px] font-semibold tracking-wide ${on ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
           Bot automático
         </span>
-        <span className="text-sm font-semibold text-zinc-900 dark:text-white whitespace-nowrap">
-          {on ? 'Activo · respondiendo' : 'Desactivado · tú controlas'}
+        <span className="text-[13px] font-semibold text-zinc-900 dark:text-white whitespace-nowrap">
+          {on ? 'Activo' : 'Modo manual'}
         </span>
       </span>
     </button>
@@ -278,15 +278,15 @@ function ConversationList({
               <Avatar name={c.name} chatId={c.chat_id} channel={c.channel} size={44} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className={`text-sm font-semibold truncate ${isActive ? 'text-white' : 'text-zinc-900 dark:text-zinc-100'}`}>
+                  <span className={`flex-1 min-w-0 text-sm font-semibold truncate ${isActive ? 'text-white' : 'text-zinc-900 dark:text-zinc-100'}`}>
                     {c.name}
                   </span>
-                  <span className={`text-[11px] font-mono shrink-0 ${isActive ? 'text-zinc-300' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                  <span className={`text-[11px] shrink-0 tabular-nums ${isActive ? 'text-zinc-300' : 'text-zinc-500 dark:text-zinc-400'}`}>
                     {fmtTime(c.last_at)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2 mt-1">
-                  <span className={`text-[13px] truncate ${isActive ? 'text-zinc-300' : 'text-zinc-600 dark:text-zinc-400'} ${c.unread_count > 0 && !isActive ? 'font-medium text-zinc-800 dark:text-zinc-200' : ''}`}>
+                  <span className={`flex-1 min-w-0 text-[13px] truncate ${isActive ? 'text-zinc-300' : 'text-zinc-600 dark:text-zinc-400'} ${c.unread_count > 0 && !isActive ? 'font-medium text-zinc-800 dark:text-zinc-200' : ''}`}>
                     {c.last_sender === 'advisor' ? '👤 ' : c.last_sender === 'bot' ? '🤖 ' : ''}{c.last_message}
                   </span>
                   <div className="flex items-center gap-1.5 shrink-0">
