@@ -437,10 +437,11 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
     setConfirmInput("");
   };
 
-  // Decorative background — repeating architectural arch motif (curved
-  // "doorway/window" figures with generous breathing room between each).
-  const archSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="170" height="170" viewBox="0 0 170 170"><g fill="none" stroke="hsl(220 30% 84%)" stroke-width="1.6" stroke-linecap="round"><path d="M52 130 L52 84 A33 33 0 0 1 118 84 L118 130"/><path d="M68 130 L68 92 A17 17 0 0 1 102 92 L102 130"/></g></svg>`;
-  const archPattern = `url("data:image/svg+xml,${encodeURIComponent(archSvg)}")`;
+  // Decorative background — a scattered mix of small real-estate motifs
+  // (houses, arches, keys, windows, diamonds), rotated on diagonals with
+  // breathing room. Drawn in a cobalt tone darker than the surface.
+  const motifSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360"><g fill="none" stroke="hsl(220 30% 82%)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(30 38) rotate(-13)"><path d="M0 16 L20 0 L40 16"/><path d="M5 16 V36 H35 V16"/></g><g transform="translate(208 30) rotate(9)"><path d="M0 34 L0 16 A16 16 0 0 1 32 16 L32 34"/></g><g transform="translate(300 108) rotate(-37)"><circle cx="8" cy="8" r="7"/><path d="M15 8 H42 M34 8 V14 M42 8 V16"/></g><g transform="translate(86 152) rotate(12)"><rect x="0" y="0" width="30" height="30" rx="2"/><path d="M15 0 V30 M0 15 H30"/></g><g transform="translate(228 168) rotate(-6)"><path d="M11 0 L22 11 L11 22 L0 11 Z"/></g><g transform="translate(306 256) rotate(-20)"><path d="M0 28 L0 14 A14 14 0 0 1 28 14 L28 28"/></g><g transform="translate(150 268) rotate(16)"><path d="M0 13 L16 0 L32 13"/><path d="M4 13 V30 H28 V13"/></g><g transform="translate(36 260) rotate(22)"><path d="M9 0 L18 9 L9 18 L0 9 Z"/></g><circle cx="332" cy="44" r="3.5"/><circle cx="44" cy="150" r="3"/><circle cx="270" cy="332" r="3.5"/></g></svg>`;
+  const archPattern = `url("data:image/svg+xml,${encodeURIComponent(motifSvg)}")`;
 
   const pendingDeleteCount = confirmDeleteIds?.length ?? 0;
   const pendingContacts = confirmDeleteIds
@@ -455,7 +456,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
         // Repeating architectural arch motif — curved figures with
         // breathing room, in a cobalt tone darker than the surface.
         backgroundImage: archPattern,
-        backgroundSize: "170px 170px",
+        backgroundSize: "360px 360px",
       }}
     >
       {/* Header */}
