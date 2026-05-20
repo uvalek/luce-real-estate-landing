@@ -8,19 +8,32 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // getSession() reads the cached JWT, whose user_metadata can be stale
+    // (name/role are baked in at login time). getUser() hits the server
+    // and returns the LIVE user record, so the dashboard always sees the
+    // up-to-date metadata without forcing a re-login.
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        const { data } = await supabase.auth.getUser();
+        setUser(data.user ?? session.user);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        const { data } = await supabase.auth.getUser();
+        setUser(data.user ?? session.user);
+      } else {
+        setUser(null);
+      }
     });
 
     return () => subscription.unsubscribe();
