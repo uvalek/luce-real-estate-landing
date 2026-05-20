@@ -16,6 +16,7 @@ import {
   Tag,
   Minus,
   Plus,
+  AlertCircle,
 } from "lucide-react";
 import { uploadImage } from "@/lib/uploadImage";
 import GalleryUpload from "@/components/admin/GalleryUpload";
@@ -329,7 +330,15 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
               type="checkbox"
               id="acepta_credito"
               checked={form.acepta_credito}
-              onChange={(e) => set("acepta_credito", e.target.checked)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setForm((prev) => ({
+                  ...prev,
+                  acepta_credito: checked,
+                  // Without credit the property is cash-only — force "contado".
+                  tipos_credito: checked ? prev.tipos_credito : "contado",
+                }));
+              }}
               className="w-4 h-4 accent-cobalt rounded"
             />
             <label htmlFor="acepta_credito" className="text-sm text-foreground">
@@ -355,19 +364,23 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
           <div className="flex flex-wrap gap-2 mt-1">
             {["bancario", "infonavit", "fovissste"].map((tipo) => {
               const selected = (form.tipos_credito || "").split(",").map((s) => s.trim().toLowerCase()).includes(tipo);
+              const disabled = !form.acepta_credito;
               return (
                 <button
                   key={tipo}
                   type="button"
+                  disabled={disabled}
                   onClick={() => {
                     const current = (form.tipos_credito || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
                     const next = selected ? current.filter((t) => t !== tipo) : [...current, tipo];
                     set("tipos_credito", next.join(", "));
                   }}
                   className={`px-4 py-2 rounded-lg text-xs font-semibold border transition-all duration-200 ${
-                    selected
-                      ? "bg-cobalt/10 text-cobalt border-cobalt/30"
-                      : "bg-white text-muted-foreground border-border/60 hover:bg-muted/50"
+                    disabled
+                      ? "bg-muted/40 text-muted-foreground/40 border-border/40 cursor-not-allowed"
+                      : selected
+                        ? "bg-cobalt/10 text-cobalt border-cobalt/30"
+                        : "bg-white text-muted-foreground border-border/60 hover:bg-muted/50"
                   }`}
                 >
                   {tipo}
@@ -376,9 +389,12 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
             })}
             {(() => {
               const isContado = (form.tipos_credito || "").split(",").map((s) => s.trim().toLowerCase()).includes("contado");
+              const cashOnly = !form.acepta_credito;
               return (
                 <button
                   type="button"
+                  // When credit is off "contado" is locked on — it can't be toggled.
+                  disabled={cashOnly}
                   onClick={() => {
                     const current = (form.tipos_credito || "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
                     const next = isContado ? current.filter((t) => t !== "contado") : [...current, "contado"];
@@ -388,13 +404,25 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading }: PropertyFormProp
                     isContado
                       ? "bg-emerald-500/10 text-emerald-700 border-emerald-400"
                       : "bg-white text-emerald-700 border-emerald-300/50 hover:bg-emerald-50"
-                  }`}
+                  } ${cashOnly ? "cursor-not-allowed" : ""}`}
                 >
                   contado
                 </button>
               );
             })()}
           </div>
+
+          {/* Cash-only notice — shown when "Acepta crédito" is unchecked */}
+          {!form.acepta_credito && (
+            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-amber-300/60 bg-amber-50 px-3.5 py-3">
+              <AlertCircle size={16} className="text-amber-600 flex-shrink-0 mt-px" />
+              <p className="text-xs text-amber-900/80 leading-relaxed">
+                Esta propiedad estará disponible <strong className="font-bold">solo al contado</strong>.
+                Las opciones de crédito (bancario, Infonavit, Fovissste) quedan deshabilitadas
+                hasta que actives <strong className="font-bold">"Acepta crédito"</strong>.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
