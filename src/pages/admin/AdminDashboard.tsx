@@ -25,6 +25,7 @@ import {
   MapPin,
   Calendar,
   MessageCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatPrice } from "@/lib/formatPrice";
@@ -209,88 +210,98 @@ const AdminDashboard = () => {
       )}
 
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 lg:z-auto h-screen w-60 bg-cobalt flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed lg:sticky top-0 left-0 z-50 lg:z-auto h-screen w-64 flex flex-col overflow-hidden bg-gradient-to-b from-[hsl(220,52%,17%)] via-cobalt to-[hsl(220,66%,8%)] transition-transform duration-300 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
+        {/* Decorative gold glow + faint grid for depth */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-20 -left-16 h-60 w-60 rounded-full bg-gold/20 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-24 -right-16 h-56 w-56 rounded-full bg-cobalt-light/40 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+            backgroundSize: "2.5rem 2.5rem",
+          }}
+        />
+
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
-          <svg width="24" height="24" viewBox="0 0 36 36" fill="none" className="text-white flex-shrink-0">
-            <rect x="4" y="8" width="12" height="20" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
-            <rect x="20" y="4" width="12" height="24" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
-            <line x1="10" y1="14" x2="10" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
-            <line x1="26" y1="10" x2="26" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span className="font-heading text-xs font-bold tracking-widest text-white/80 uppercase">LUCE Admin</span>
+        <div className="relative flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15 flex-shrink-0">
+            <svg width="22" height="22" viewBox="0 0 36 36" fill="none" className="text-white">
+              <rect x="4" y="8" width="12" height="20" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
+              <rect x="20" y="4" width="12" height="24" rx="1" stroke="currentColor" strokeWidth="2" fill="none" />
+              <line x1="10" y1="14" x2="10" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
+              <line x1="26" y1="10" x2="26" y2="22" stroke="hsl(38 65% 50%)" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="font-heading text-sm font-bold tracking-[0.2em] text-white uppercase">LUCE</span>
+          <span className="font-heading text-[10px] font-semibold tracking-[0.2em] text-gold uppercase">Admin</span>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto p-1 text-white/50 hover:text-white">
             <ChevronLeft size={18} />
           </button>
         </div>
 
         {/* Nav sections */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+        <nav className="relative flex-1 overflow-y-auto py-5 px-3 space-y-6">
           {/* Propiedades */}
           <div>
-            <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em] px-2 mb-2">
+            <p className="text-[10px] font-bold text-gold/70 uppercase tracking-[0.18em] px-3 mb-2.5">
               Propiedades
             </p>
-            <button
+            <NavItem
+              active={activeView === "propiedades"}
+              icon={Building2}
+              label="Gestión de Propiedades"
               onClick={() => switchView("propiedades")}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                activeView === "propiedades"
-                  ? "bg-white/15 text-white"
-                  : "text-white/50 hover:text-white/80 hover:bg-white/5"
-              }`}
-            >
-              <Building2 size={15} />
-              Gestión de Propiedades
-            </button>
+            />
           </div>
 
           {/* CRM */}
           <div>
-            <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em] px-2 mb-2">
+            <p className="text-[10px] font-bold text-gold/70 uppercase tracking-[0.18em] px-3 mb-2.5">
               CRM
             </p>
-            <button
-              onClick={() => switchView("contactos")}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                activeView === "contactos"
-                  ? "bg-white/15 text-white"
-                  : "text-white/50 hover:text-white/80 hover:bg-white/5"
-              }`}
-            >
-              <Users size={15} />
-              Contactos
-            </button>
-            <button
-              onClick={() => switchView("conversaciones")}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all duration-200 mt-1 ${
-                activeView === "conversaciones"
-                  ? "bg-white/15 text-white"
-                  : "text-white/50 hover:text-white/80 hover:bg-white/5"
-              }`}
-            >
-              <MessageCircle size={15} />
-              Conversaciones
-            </button>
+            <div className="space-y-1.5">
+              <NavItem
+                active={activeView === "contactos"}
+                icon={Users}
+                label="Contactos"
+                onClick={() => switchView("contactos")}
+              />
+              <NavItem
+                active={activeView === "conversaciones"}
+                icon={MessageCircle}
+                label="Conversaciones"
+                onClick={() => switchView("conversaciones")}
+              />
+            </div>
           </div>
         </nav>
 
         {/* Bottom */}
-        <div className="border-t border-white/10 px-4 py-4 space-y-2">
+        <div className="relative border-t border-white/10 px-4 py-4 space-y-3">
           <a
             href="/"
             target="_blank"
-            className="flex items-center gap-2 text-[11px] text-white/40 hover:text-white/70 transition-colors"
+            className="group flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-white/[0.04] hover:bg-white/[0.09] text-[11px] font-medium text-white/55 hover:text-white transition-all duration-200"
           >
-            <Home size={13} /> Ver sitio web
+            <Home size={14} className="text-gold/80 group-hover:text-gold transition-colors" />
+            Ver sitio web
           </a>
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-white/25 truncate max-w-[120px]">{user.email}</span>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] text-white/30 truncate max-w-[120px]">{user.email}</span>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1 text-[10px] font-medium text-white/40 hover:text-red-300 transition-colors"
+              className="flex items-center gap-1 text-[10px] font-semibold text-white/45 hover:text-red-300 transition-colors"
             >
               <LogOut size={11} /> Salir
             </button>
@@ -426,7 +437,7 @@ const AdminDashboard = () => {
                               <span className="text-[12px] font-semibold text-foreground/85">{o.label}</span>
                               <span className="font-heading text-base font-bold tabular-nums text-foreground">{o.count}</span>
                             </div>
-                            <div className="h-2 rounded-full bg-muted/70 overflow-hidden">
+                            <div className="h-3.5 rounded-full bg-muted/70 overflow-hidden">
                               <div className={`h-full bg-gradient-to-r ${o.gradient} rounded-full transition-all duration-700`} style={{ width: `${percent}%` }} />
                             </div>
                           </div>
@@ -732,5 +743,38 @@ const AdminDashboard = () => {
     </div>
   );
 };
+
+/* ── Sidebar navigation item ── */
+interface NavItemProps {
+  active: boolean;
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+}
+
+const NavItem = ({ active, icon: Icon, label, onClick }: NavItemProps) => (
+  <button
+    onClick={onClick}
+    className={`group relative w-full flex items-center gap-3 pl-4 pr-3 py-3 rounded-xl text-xs font-semibold transition-all duration-200 ${
+      active
+        ? "bg-white/[0.13] text-white shadow-[0_6px_18px_-8px_rgba(0,0,0,0.6)]"
+        : "text-white/55 hover:text-white hover:bg-white/[0.06]"
+    }`}
+  >
+    {/* Gold left-accent bar */}
+    <span
+      aria-hidden="true"
+      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-full bg-gold transition-all duration-300 ${
+        active ? "h-7 opacity-100" : "h-0 opacity-0"
+      }`}
+    />
+    <Icon
+      size={16}
+      strokeWidth={2.1}
+      className={`transition-colors ${active ? "text-gold" : "text-white/55 group-hover:text-white"}`}
+    />
+    {label}
+  </button>
+);
 
 export default AdminDashboard;
