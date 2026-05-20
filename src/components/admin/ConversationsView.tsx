@@ -285,10 +285,7 @@ function ConversationList({
                     {fmtTime(c.last_at)}
                   </span>
                 </div>
-                <div className={`text-[11px] font-mono truncate ${isActive ? 'text-zinc-400' : 'text-zinc-500 dark:text-zinc-500'}`}>
-                  {c.telefono || c.chat_id}
-                </div>
-                <div className="flex items-center justify-between gap-2 mt-0.5">
+                <div className="flex items-center justify-between gap-2 mt-1">
                   <span className={`text-[13px] truncate ${isActive ? 'text-zinc-300' : 'text-zinc-600 dark:text-zinc-400'} ${c.unread_count > 0 && !isActive ? 'font-medium text-zinc-800 dark:text-zinc-200' : ''}`}>
                     {c.last_sender === 'advisor' ? '👤 ' : c.last_sender === 'bot' ? '🤖 ' : ''}{c.last_message}
                   </span>
@@ -512,27 +509,29 @@ function ConversationPane({
   return (
     <section className="h-full flex flex-col bg-white dark:bg-zinc-950">
       <header className={`px-4 md:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300 ${botOn ? '' : 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06]'}`}>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <Avatar name={conversation.name} chatId={conversation.chat_id} channel={conversation.channel} size={46} />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 min-w-0">
               <h2 className="font-heading text-base font-bold text-zinc-900 dark:text-white truncate">{conversation.name}</h2>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
+              <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: CHANNELS[conversation.channel].color }} />
                 {CHANNELS[conversation.channel].label}
               </span>
             </div>
-            <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 truncate">
               <span className="tabular-nums">{conversation.telefono || conversation.chat_id}</span>
               {conversation.etapa_seguimiento && (
-                <span className="text-zinc-300 dark:text-zinc-600"> · </span>
+                <>
+                  <span className="text-zinc-300 dark:text-zinc-600"> · </span>
+                  {STAGE_LABEL[conversation.etapa_seguimiento] || conversation.etapa_seguimiento}
+                </>
               )}
-              {conversation.etapa_seguimiento && (STAGE_LABEL[conversation.etapa_seguimiento] || conversation.etapa_seguimiento)}
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 shrink-0">
             <BotToggle on={botOn} busy={togglingBot} onChange={onToggleBot} />
-            <button onClick={onOpenPanel} title={panelOpen ? 'Ocultar perfil' : 'Mostrar perfil'} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:shadow-sm text-zinc-500 transition-all">
+            <button onClick={onOpenPanel} title={panelOpen ? 'Ocultar perfil' : 'Mostrar perfil'} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:shadow-sm text-zinc-500 transition-all shrink-0">
               {panelOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
             </button>
           </div>
