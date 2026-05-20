@@ -111,11 +111,23 @@ const AdminDashboard = () => {
   };
 
   const handleToggleDisponible = async (prop: Propiedad) => {
-    await supabase
+    const next = !prop.disponible;
+    // Optimistic update — flip just this card in local state. Avoids the
+    // full refetch (which toggled `loading`, collapsed the grid to a
+    // spinner, and snapped the scroll back to the top of the page).
+    setProperties((prev) =>
+      prev.map((p) => (p.id === prop.id ? { ...p, disponible: next } : p)),
+    );
+    const { error } = await supabase
       .from("propiedades")
-      .update({ disponible: !prop.disponible })
+      .update({ disponible: next })
       .eq("id", prop.id);
-    await fetchProperties();
+    if (error) {
+      // Revert on failure so the UI stays truthful.
+      setProperties((prev) =>
+        prev.map((p) => (p.id === prop.id ? { ...p, disponible: prop.disponible } : p)),
+      );
+    }
   };
 
   const handleLogout = async () => {
