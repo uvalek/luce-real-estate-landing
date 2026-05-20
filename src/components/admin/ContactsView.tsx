@@ -443,6 +443,25 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
   const motifSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360"><g fill="none" stroke="hsl(220 30% 82%)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(30 38) rotate(-13)"><path d="M0 16 L20 0 L40 16"/><path d="M5 16 V36 H35 V16"/></g><g transform="translate(208 30) rotate(9)"><path d="M0 34 L0 16 A16 16 0 0 1 32 16 L32 34"/></g><g transform="translate(300 108) rotate(-37)"><circle cx="8" cy="8" r="7"/><path d="M15 8 H42 M34 8 V14 M42 8 V16"/></g><g transform="translate(86 152) rotate(12)"><rect x="0" y="0" width="30" height="30" rx="2"/><path d="M15 0 V30 M0 15 H30"/></g><g transform="translate(228 168) rotate(-6)"><path d="M11 0 L22 11 L11 22 L0 11 Z"/></g><g transform="translate(306 256) rotate(-20)"><path d="M0 28 L0 14 A14 14 0 0 1 28 14 L28 28"/></g><g transform="translate(150 268) rotate(16)"><path d="M0 13 L16 0 L32 13"/><path d="M4 13 V30 H28 V13"/></g><g transform="translate(36 260) rotate(22)"><path d="M9 0 L18 9 L9 18 L0 9 Z"/></g><circle cx="332" cy="44" r="3.5"/><circle cx="44" cy="150" r="3"/><circle cx="270" cy="332" r="3.5"/></g></svg>`;
   const archPattern = `url("data:image/svg+xml,${encodeURIComponent(motifSvg)}")`;
 
+  // Wrap the matched portion of a cell value in a highlight mark so the
+  // admin sees exactly what the live search caught.
+  const highlight = (text: string | null): React.ReactNode => {
+    if (!text) return text;
+    const q = search.trim();
+    if (!q) return text;
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark className="rounded-[3px] bg-gold/35 px-0.5 font-semibold text-cobalt">
+          {text.slice(idx, idx + q.length)}
+        </mark>
+        {text.slice(idx + q.length)}
+      </>
+    );
+  };
+
   const pendingDeleteCount = confirmDeleteIds?.length ?? 0;
   const pendingContacts = confirmDeleteIds
     ? contacts.filter((c) => confirmDeleteIds.includes(c.id))
@@ -756,7 +775,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                       title={value || "Click para editar"}
                     >
                       {value ? (
-                        <span className="truncate">{value}</span>
+                        <span className="truncate">{highlight(value)}</span>
                       ) : (
                         <span className="text-muted-foreground/40 italic">{placeholder}</span>
                       )}
@@ -797,7 +816,7 @@ const ContactsView = ({ onOpenProperty }: ContactsViewProps = {}) => {
                           className="cursor-text hover:bg-cobalt/5 -mx-1 px-1 py-1 rounded font-medium text-foreground truncate"
                           title="Click para editar"
                         >
-                          {c.nombre}
+                          {highlight(c.nombre)}
                         </div>
                       )}
                     </td>
