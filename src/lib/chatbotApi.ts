@@ -29,7 +29,7 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   return r.json() as Promise<T>;
 }
 
-export type Channel = 'whatsapp' | 'instagram' | 'messenger' | 'telegram';
+export type Channel = 'whatsapp' | 'instagram' | 'messenger' | 'telegram' | 'webchat';
 export type Sender = 'user' | 'bot' | 'advisor';
 
 export type Conversation = {

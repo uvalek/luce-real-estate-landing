@@ -26,7 +26,12 @@ const CHANNELS: Record<Channel, { label: string; color: string }> = {
   instagram: { label: 'Instagram', color: '#E1306C' },
   messenger: { label: 'Messenger', color: '#0084FF' },
   telegram:  { label: 'Telegram',  color: '#27A7E7' },
+  webchat:   { label: 'Chat web',  color: '#7C3AED' },
 };
+
+// Fallback seguro: si llega un canal no mapeado, no rompe el render.
+const CHANNEL_INFO = (ch: string) =>
+  CHANNELS[ch as Channel] ?? { label: ch || 'Desconocido', color: '#71717a' };
 
 const STAGES = ['nuevo', 'calificado', 'visita_agendada', 'visito', 'cerrado'];
 
@@ -103,6 +108,13 @@ function ChannelBadge({ channel, size = 16 }: { channel: Channel; size?: number 
         <svg viewBox="0 0 24 24" width={size * 0.62} height={size * 0.62} fill="#fff">
           <path d="M12 2C6.5 2 2 6.1 2 11.6c0 3.1 1.5 5.9 3.9 7.7V22l3.6-2c1 .3 2 .4 2.5.4 5.5 0 10-4.1 10-9.6S17.5 2 12 2zm1 12.8l-2.5-2.7-4.9 2.7 5.4-5.7 2.6 2.7 4.8-2.7-5.4 5.7z" />
         </svg>
+      </span>
+    );
+  }
+  if (channel === 'webchat') {
+    return (
+      <span className={common} style={{ width: size, height: size, background: '#7C3AED' }}>
+        <MessageCircle size={size * 0.58} color="#fff" strokeWidth={2.4} />
       </span>
     );
   }
@@ -183,6 +195,7 @@ const FILTERS = [
   { id: 'instagram', label: 'Instagram', dot: '#E1306C' },
   { id: 'messenger', label: 'Messenger', dot: '#0084FF' },
   { id: 'telegram',  label: 'Telegram',  dot: '#27A7E7' },
+  { id: 'webchat',   label: 'Chat web',  dot: '#7C3AED' },
   { id: 'unread',    label: 'No leídas', dot: '#D49120' },
 ] as const;
 
@@ -526,8 +539,8 @@ function ConversationPane({
             <div className="flex items-center gap-2 min-w-0">
               <h2 className="font-heading text-base font-bold text-zinc-900 dark:text-white truncate">{conversation.name}</h2>
               <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: CHANNELS[conversation.channel].color }} />
-                {CHANNELS[conversation.channel].label}
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: CHANNEL_INFO(conversation.channel).color }} />
+                {CHANNEL_INFO(conversation.channel).label}
               </span>
             </div>
             <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 truncate">
@@ -700,7 +713,7 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
           onSave={v => onUpdateField({ telefono: v })} placeholder="Sin teléfono" />
         <EditableRow icon={Mail} label="Correo electrónico" value={c.correo} type="email"
           onSave={v => onUpdateField({ correo: v })} placeholder="Sin correo" />
-        <Row icon={MessageCircle} label="Canal de origen" value={CHANNELS[c.channel].label} />
+        <Row icon={MessageCircle} label="Canal de origen" value={CHANNEL_INFO(c.channel).label} />
         <Row icon={Calendar} label="Última actividad" value={fmtTime(c.last_at)} />
       </Section>
       <Section title="Información de prospecto">
