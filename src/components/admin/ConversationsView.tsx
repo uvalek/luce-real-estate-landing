@@ -7,7 +7,7 @@ import {
   Instagram, Send, Search, Phone, Mail, MapPin, Calendar,
   Smile, Pause, Bot, User, CheckCheck,
   Home, Sparkles, PanelRightClose, PanelRightOpen, AlertTriangle,
-  MessageCircle, Loader2,
+  MessageCircle, Loader2, Trash2, X,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -516,7 +516,7 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
 }
 
 function ConversationPane({
-  conversation, messages, loadingMessages, onToggleBot, onSend, sending, onOpenPanel, panelOpen, togglingBot, advisorName,
+  conversation, messages, loadingMessages, onToggleBot, onSend, sending, onOpenPanel, panelOpen, togglingBot, advisorName, onDelete,
 }: {
   conversation: Conversation;
   messages: Message[];
@@ -528,6 +528,7 @@ function ConversationPane({
   panelOpen: boolean;
   togglingBot: boolean;
   advisorName?: string;
+  onDelete: () => void;
 }) {
   const botOn = conversation.bot_enabled;
   return (
@@ -557,6 +558,14 @@ function ConversationPane({
             <BotToggle on={botOn} busy={togglingBot} onChange={onToggleBot} />
             <button onClick={onOpenPanel} title={panelOpen ? 'Ocultar perfil' : 'Mostrar perfil'} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:shadow-sm text-zinc-500 transition-all shrink-0">
               {panelOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+            </button>
+            <button
+              onClick={onDelete}
+              title="Eliminar conversación"
+              aria-label="Eliminar conversación"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 hover:bg-red-500/10 hover:text-red-500 transition-all shrink-0"
+            >
+              <Trash2 size={17} />
             </button>
           </div>
         </div>
@@ -897,6 +906,39 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
     }
   };
 
+  // ── Delete a whole conversation ──────────────────────────────────
+  const [confirmDelete, setConfirmDelete] = useState<Conversation | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteConversation = async () => {
+    if (!confirmDelete) return;
+    const chatId = confirmDelete.chat_id;
+    setDeleting(true);
+    try {
+      // A conversation = its chat-history rows + its bot_settings row.
+      // The contacto (CRM record) is intentionally kept.
+      const r1 = await supabase
+        .from('n8n_chat_histories')
+        .delete()
+        .eq('session_id', chatId);
+      if (r1.error) throw r1.error;
+      await supabase.from('bot_settings').delete().eq('chat_id', chatId);
+
+      setConversations(cs => cs.filter(c => c.chat_id !== chatId));
+      if (selectedId === chatId) {
+        setSelectedId(null);
+        setMessages([]);
+        setDetail(null);
+      }
+      setConfirmDelete(null);
+    } catch (e) {
+      console.error(e);
+      alert(`No se pudo eliminar la conversación: ${(e as Error).message}`);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-64px)] flex bg-zinc-50 dark:bg-zinc-900">
       {/* Izquierda */}
@@ -926,6 +968,7 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
             panelOpen={panelOpen}
             togglingBot={togglingBot}
             advisorName={advisorName}
+            onDelete={() => setConfirmDelete(selected)}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-zinc-500">
@@ -937,6 +980,61 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
       {panelOpen && selected && (
         <div className="w-[340px] shrink-0 hidden lg:block">
           <ContactPanel conversation={selected} detail={detail} onUpdateField={handleUpdateField} />
+        </div>
+      )}
+
+      {/* Confirmación de eliminar conversación */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => !deleting && setConfirmDelete(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
+          >
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-11 h-11 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                <Trash2 size={20} className="text-red-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-heading text-base font-bold text-zinc-900 dark:text-white mb-1">
+                  Eliminar conversación
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Se borrará todo el historial de mensajes de{" "}
+                  <span className="font-semibold text-zinc-700 dark:text-zinc-200">
+                    {confirmDelete.name}
+                  </span>
+                  . El contacto en el CRM se conserva. Esta acción no se puede deshacer.
+                </p>
+              </div>
+              <button
+                onClick={() => !deleting && setConfirmDelete(null)}
+                disabled={deleting}
+                className="p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 flex-shrink-0 disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleDeleteConversation}
+                disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white font-semibold text-xs px-5 py-3 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {deleting ? "Eliminando…" : "Eliminar conversación"}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(null)}
+                disabled={deleting}
+                className="px-5 py-3 text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
