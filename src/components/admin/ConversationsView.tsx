@@ -329,12 +329,13 @@ function MessageBubble({ m, prevSender }: { m: Message; prevSender: string | nul
         {showLabel && !isIn && (
           <div className="flex items-center gap-1.5 mb-1.5 justify-end">
             {isBot ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
                 <Bot size={11} strokeWidth={2.5} /> Bot
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
-                <User size={11} strokeWidth={2.5} /> Asesor · {m.advisor_name || 'Tú'}
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                <User size={11} strokeWidth={2.5} />
+                {m.advisor_name || 'Asesor'}
               </span>
             )}
           </div>
@@ -749,9 +750,6 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
           rows={4}
           className="w-full resize-none rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-900 outline-none p-2.5 text-[12px] text-zinc-900 dark:text-zinc-100"
         />
-        <div className="text-xs text-zinc-400 mt-2">
-          Asesor asignado: <span className="font-medium text-zinc-600 dark:text-zinc-300">{c.asesor_asignado || '—'}</span>
-        </div>
       </Section>
     </aside>
   );

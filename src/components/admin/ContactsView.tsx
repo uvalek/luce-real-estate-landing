@@ -78,6 +78,7 @@ const COLUMNS: ColumnDef[] = [
   { key: "propiedad",  label: "Propiedad",   defaultWidth: 240, minWidth: 140, resizable: true },
   { key: "presupuesto",label: "Presupuesto", defaultWidth: 150, minWidth: 100, resizable: true },
   { key: "visita",     label: "Fecha visita",defaultWidth: 180, minWidth: 130, resizable: true },
+  { key: "asesor",     label: "Asesor",      defaultWidth: 170, minWidth: 110, resizable: true },
   { key: "creacion",   label: "Creación",    defaultWidth: 150, minWidth: 110, resizable: true },
   { key: "acciones",   label: "Acciones",    defaultWidth: 80,  minWidth: 70,  resizable: false },
 ];
@@ -1040,6 +1041,17 @@ const ContactsView = ({ onOpenProperty, advisorName }: ContactsViewProps = {}) =
                           {c.fecha_visita ? formatDateTime(c.fecha_visita) : <span className="text-muted-foreground/40 italic">Sin fecha</span>}
                         </div>
                       )}
+                    </td>
+
+                    {/* Asesor asignado (read-only) */}
+                    <td className={`${tdBase} px-4 py-2 text-xs`}>
+                      <div className="truncate" title={c.asesor_asignado || "Sin asignar"}>
+                        {c.asesor_asignado ? (
+                          <span className="font-medium text-cobalt">{c.asesor_asignado}</span>
+                        ) : (
+                          <span className="text-muted-foreground/40 italic">Sin asignar</span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Creación (read-only) */}
