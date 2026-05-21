@@ -771,7 +771,7 @@ const AdminDashboard = () => {
           )}
 
           {/* ──────── CONVERSACIONES VIEW ──────── */}
-          {activeView === "conversaciones" && <ConversationsView advisorName={displayName} />}
+          {activeView === "conversaciones" && <ConversationsView advisorName={fullName} />}
 
         </main>
       </div>

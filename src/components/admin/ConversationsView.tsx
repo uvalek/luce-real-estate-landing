@@ -313,7 +313,7 @@ function ConversationList({
 
 // ---------- Centro: mensajes ----------
 
-function MessageBubble({ m, prevSender }: { m: Message; prevSender: string | null }) {
+function MessageBubble({ m, prevSender, advisorName }: { m: Message; prevSender: string | null; advisorName?: string }) {
   const isIn = m.sender === 'user';
   const isBot = m.sender === 'bot';
   const bubbleClass = isIn
@@ -335,7 +335,7 @@ function MessageBubble({ m, prevSender }: { m: Message; prevSender: string | nul
             ) : (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                 <User size={11} strokeWidth={2.5} />
-                {m.advisor_name || 'Asesor'}
+                {m.advisor_name || advisorName || 'Asesor'}
               </span>
             )}
           </div>
@@ -352,7 +352,7 @@ function MessageBubble({ m, prevSender }: { m: Message; prevSender: string | nul
   );
 }
 
-function MessagesPane({ messages, loading }: { messages: Message[]; loading: boolean }) {
+function MessagesPane({ messages, loading, advisorName }: { messages: Message[]; loading: boolean; advisorName?: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -369,7 +369,7 @@ function MessagesPane({ messages, loading }: { messages: Message[]; loading: boo
         <div className="text-center text-sm text-zinc-500 py-8">No hay mensajes en esta conversación.</div>
       )}
       {messages.map((m, i) => (
-        <MessageBubble key={m.id} m={m} prevSender={i > 0 ? messages[i - 1].sender : null} />
+        <MessageBubble key={m.id} m={m} prevSender={i > 0 ? messages[i - 1].sender : null} advisorName={advisorName} />
       ))}
     </div>
   );
@@ -494,7 +494,7 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
 }
 
 function ConversationPane({
-  conversation, messages, loadingMessages, onToggleBot, onSend, sending, onOpenPanel, panelOpen, togglingBot,
+  conversation, messages, loadingMessages, onToggleBot, onSend, sending, onOpenPanel, panelOpen, togglingBot, advisorName,
 }: {
   conversation: Conversation;
   messages: Message[];
@@ -505,6 +505,7 @@ function ConversationPane({
   onOpenPanel: () => void;
   panelOpen: boolean;
   togglingBot: boolean;
+  advisorName?: string;
 }) {
   const botOn = conversation.bot_enabled;
   return (
@@ -538,7 +539,7 @@ function ConversationPane({
           </div>
         </div>
       </header>
-      <MessagesPane messages={messages} loading={loadingMessages} />
+      <MessagesPane messages={messages} loading={loadingMessages} advisorName={advisorName} />
       <Composer botOn={botOn} onSend={onSend} sending={sending} />
     </section>
   );
@@ -902,6 +903,7 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
             onOpenPanel={() => setPanelOpen(o => !o)}
             panelOpen={panelOpen}
             togglingBot={togglingBot}
+            advisorName={advisorName}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-zinc-500">
