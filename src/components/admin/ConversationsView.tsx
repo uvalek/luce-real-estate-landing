@@ -322,6 +322,9 @@ function MessageBubble({ m, prevSender, advisorName }: { m: Message; prevSender:
       ? 'bg-zinc-100 dark:bg-zinc-800/60 text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-700/60 rounded-tl-2xl rounded-bl-2xl rounded-br-md rounded-tr-2xl'
       : 'bg-emerald-600 text-white rounded-tl-2xl rounded-bl-2xl rounded-br-md rounded-tr-2xl';
   const showLabel = prevSender !== m.sender;
+  // Name of the advisor who sent this message; falls back to the
+  // signed-in advisor when the message carries no stored name.
+  const asesorName = m.advisor_name || advisorName || "";
 
   return (
     <div className={`flex ${isIn ? 'justify-start' : 'justify-end'} mb-2`}>
@@ -335,7 +338,13 @@ function MessageBubble({ m, prevSender, advisorName }: { m: Message; prevSender:
             ) : (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                 <User size={11} strokeWidth={2.5} />
-                {m.advisor_name || advisorName || 'Asesor'}
+                Asesor
+                {asesorName && (
+                  <>
+                    <span className="text-emerald-600/40 dark:text-emerald-400/40">·</span>
+                    {asesorName}
+                  </>
+                )}
               </span>
             )}
           </div>
