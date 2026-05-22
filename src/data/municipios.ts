@@ -281,6 +281,36 @@ export const MUNICIPIOS_PUEBLA: string[] = [
   "Zoquitlán",
 ];
 
+// Municipios principales de Puebla — los más poblados / relevantes.
+// Se muestran primero; el resto queda tras "ver todos".
+export const MUNICIPIOS_PUEBLA_PRINCIPALES: string[] = [
+  "Puebla",
+  "Tehuacán",
+  "San Martín Texmelucan",
+  "Atlixco",
+  "San Pedro Cholula",
+  "San Andrés Cholula",
+  "Amozoc",
+  "Cuautlancingo",
+  "Coronango",
+  "Huejotzingo",
+  "Huauchinango",
+  "Teziutlán",
+  "Xicotepec",
+  "Izúcar de Matamoros",
+  "Zacatlán",
+  "Chignahuapan",
+  "Acatlán",
+  "Tepeaca",
+  "Tecamachalco",
+  "Acatzingo",
+  "Libres",
+  "Zacapoaxtla",
+  "Cuetzalan del Progreso",
+  "Tlatlauquitepec",
+  "Chalchicomula de Sesma",
+];
+
 /** Municipios agrupados por estado, para el selector dependiente. */
 export const MUNICIPIOS_POR_ESTADO: Record<string, string[]> = {
   Tlaxcala: MUNICIPIOS_TLAXCALA,

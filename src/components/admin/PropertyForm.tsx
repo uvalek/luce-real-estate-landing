@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { uploadImage } from "@/lib/uploadImage";
 import GalleryUpload from "@/components/admin/GalleryUpload";
-import { MUNICIPIOS_POR_ESTADO } from "@/data/municipios";
+import { MUNICIPIOS_POR_ESTADO, MUNICIPIOS_PUEBLA_PRINCIPALES } from "@/data/municipios";
 import type { Propiedad, GaleriaFoto } from "@/types";
 
 const TIPO_OPTIONS = [
@@ -90,6 +90,8 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
 
   // Required-field validation. `errors` holds the keys still missing.
   const [errors, setErrors] = useState<string[]>([]);
+  // Puebla has 217 municipios — show only the main ones until expanded.
+  const [showAllMunicipios, setShowAllMunicipios] = useState(false);
   const nombreRef = useRef<HTMLDivElement>(null);
   const estadoRef = useRef<HTMLDivElement>(null);
   const municipioRef = useRef<HTMLDivElement>(null);
@@ -185,10 +187,15 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
 
   const hasError = (field: string) => errors.includes(field);
 
-  // Municipios for the chosen estado. If an existing property has a
-  // municipio that isn't in the official list (legacy data), keep it as
-  // an option so editing doesn't silently drop it.
-  const municipioList = MUNICIPIOS_POR_ESTADO[form.estado] || [];
+  // Municipios for the chosen estado. Puebla (217) shows only its main
+  // municipios until the admin expands the full list.
+  const isPuebla = form.estado === "Puebla";
+  const fullMunicipioList = MUNICIPIOS_POR_ESTADO[form.estado] || [];
+  const municipioList =
+    isPuebla && !showAllMunicipios ? MUNICIPIOS_PUEBLA_PRINCIPALES : fullMunicipioList;
+  // If an existing property has a municipio outside the shown list
+  // (legacy data, or a non-main Puebla municipio), keep it as an option
+  // so editing never drops it.
   const municipioOptions =
     form.municipio && !municipioList.includes(form.municipio)
       ? [form.municipio, ...municipioList]
@@ -314,6 +321,7 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
                 onChange={(e) => {
                   // Changing the state resets the municipio (it no longer belongs).
                   setForm((prev) => ({ ...prev, estado: e.target.value, municipio: "" }));
+                  setShowAllMunicipios(false);
                   clearError("estado");
                 }}
                 className={`${bareInput} cursor-pointer appearance-none pr-5 ${form.estado ? "" : "text-muted-foreground/50"}`}
@@ -351,6 +359,18 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
             </div>
             {hasError("municipio") && (
               <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Selecciona un municipio.</p>
+            )}
+            {/* Puebla: toggle between main municipios and the full 217 list */}
+            {isPuebla && (
+              <button
+                type="button"
+                onClick={() => setShowAllMunicipios((v) => !v)}
+                className="mt-2 ml-1 text-xs font-semibold text-cobalt hover:text-cobalt-light underline underline-offset-2 transition-colors"
+              >
+                {showAllMunicipios
+                  ? "Ver solo los municipios principales"
+                  : `Ver todos los municipios (${fullMunicipioList.length})`}
+              </button>
             )}
           </div>
 
