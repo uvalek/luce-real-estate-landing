@@ -207,7 +207,7 @@ const ContactsView = ({ onOpenProperty, advisorName }: ContactsViewProps = {}) =
   const fetchPropiedades = useCallback(async () => {
     const { data } = await supabase
       .from("propiedades")
-      .select("id, nombre, tipo, zona, disponible")
+      .select("id, nombre, tipo, zona, estado, municipio, disponible")
       .order("nombre", { ascending: true });
     const all = (data as Propiedad[]) || [];
     setAllPropiedades(all);
@@ -631,7 +631,7 @@ const ContactsView = ({ onOpenProperty, advisorName }: ContactsViewProps = {}) =
                     <option value="">Sin especificar</option>
                     {propiedades.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.nombre} — {p.zona} ({p.tipo})
+                        {p.nombre} — {p.municipio || p.zona} ({p.tipo})
                       </option>
                     ))}
                   </select>
@@ -947,7 +947,7 @@ const ContactsView = ({ onOpenProperty, advisorName }: ContactsViewProps = {}) =
                           <option value="">— Sin especificar —</option>
                           {propiedades.map((p) => (
                             <option key={p.id} value={p.id}>
-                              {p.nombre} — {p.zona}
+                              {p.nombre} — {p.municipio || p.zona}
                             </option>
                           ))}
                         </select>

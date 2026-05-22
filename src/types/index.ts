@@ -3,6 +3,9 @@ export interface Propiedad {
   id: number;
   nombre: string;
   tipo: "casa" | "departamento" | "terreno" | "local";
+  estado: string;
+  municipio: string;
+  /** Legacy: kept synced to `municipio` for /resultados search & external readers. */
   zona: string;
   direccion: string | null;
   precio: number;

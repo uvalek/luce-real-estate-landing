@@ -184,10 +184,11 @@ const AdminDashboard = () => {
     { key: "local",        label: "Locales",        count: properties.filter((p) => p.tipo === "local").length,        color: "bg-orange-500",   icon: Activity },
   ];
 
-  // Top zones
+  // Top zones (by municipio)
   const zonaMap = new Map<string, number>();
   properties.forEach((p) => {
-    if (p.zona) zonaMap.set(p.zona, (zonaMap.get(p.zona) || 0) + 1);
+    const m = p.municipio || p.zona;
+    if (m) zonaMap.set(m, (zonaMap.get(m) || 0) + 1);
   });
   const topZonas = Array.from(zonaMap.entries())
     .sort((a, b) => b[1] - a[1])
@@ -693,7 +694,9 @@ const AdminDashboard = () => {
                           <h3 className="font-heading text-sm font-semibold text-foreground mb-2 capitalize line-clamp-1">{prop.nombre}</h3>
                           <div className="flex items-center gap-1.5 text-gold mb-3">
                             <MapPin size={14} />
-                            <span className="text-sm font-medium">{prop.zona}</span>
+                            <span className="text-sm font-medium">
+                              {[prop.municipio, prop.estado].filter(Boolean).join(", ") || prop.zona}
+                            </span>
                           </div>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
                             {prop.recamaras > 0 && (

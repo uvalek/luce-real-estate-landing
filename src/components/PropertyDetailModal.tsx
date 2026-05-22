@@ -76,7 +76,7 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
           <p className="text-sm font-bold tracking-[0.14em] text-gold uppercase mb-3">
             <span>{property.tipo}</span>
             <span className="mx-2 text-foreground/30">·</span>
-            {property.zona}
+            {[property.municipio, property.estado].filter(Boolean).join(", ") || property.zona}
           </p>
 
           {/* Title */}
@@ -176,7 +176,8 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
 
           {/* Info grid — bare, no backgrounds */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 mb-8">
-            <InfoTile icon={MapPin} label="Zona" value={property.zona} />
+            <InfoTile icon={MapPin} label="Estado" value={property.estado || "—"} />
+            <InfoTile icon={MapPin} label="Municipio" value={property.municipio || property.zona || "—"} />
             {property.tipos_credito && (
               <InfoTile
                 icon={CreditCard}

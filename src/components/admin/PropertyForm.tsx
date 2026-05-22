@@ -42,6 +42,8 @@ type PropiedadForm = Omit<Propiedad, "id" | "fecha_publicacion">;
 const emptyForm: PropiedadForm = {
   nombre: "",
   tipo: "casa",
+  estado: "",
+  municipio: "",
   zona: "",
   direccion: "",
   precio: 0,
@@ -88,7 +90,8 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
   // Required-field validation. `errors` holds the keys still missing.
   const [errors, setErrors] = useState<string[]>([]);
   const nombreRef = useRef<HTMLDivElement>(null);
-  const zonaRef = useRef<HTMLDivElement>(null);
+  const estadoRef = useRef<HTMLDivElement>(null);
+  const municipioRef = useRef<HTMLDivElement>(null);
   const direccionRef = useRef<HTMLDivElement>(null);
   const precioRef = useRef<HTMLDivElement>(null);
   const superficieRef = useRef<HTMLDivElement>(null);
@@ -139,7 +142,8 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
     // Validate required fields, top-to-bottom.
     const missing: string[] = [];
     if (!form.nombre.trim()) missing.push("nombre");
-    if (!form.zona.trim()) missing.push("zona");
+    if (!form.estado.trim()) missing.push("estado");
+    if (!form.municipio.trim()) missing.push("municipio");
     if (!(form.direccion || "").trim()) missing.push("direccion");
     if (!form.precio || form.precio <= 0) missing.push("precio");
     if (!form.metros_cuadrados || form.metros_cuadrados <= 0)
@@ -151,13 +155,14 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
       // Scroll to the first missing field (document order).
       const refs: Record<string, React.RefObject<HTMLDivElement>> = {
         nombre: nombreRef,
-        zona: zonaRef,
+        estado: estadoRef,
+        municipio: municipioRef,
         direccion: direccionRef,
         precio: precioRef,
         superficie: superficieRef,
         descripcion: descripcionRef,
       };
-      const order = ["nombre", "zona", "direccion", "precio", "superficie", "descripcion"];
+      const order = ["nombre", "estado", "municipio", "direccion", "precio", "superficie", "descripcion"];
       const first = order.find((f) => missing.includes(f));
       if (first) {
         refs[first]?.current?.scrollIntoView({
@@ -169,7 +174,8 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
     }
 
     setErrors([]);
-    onSubmit(form);
+    // `zona` stays synced to `municipio` for /resultados search & legacy readers.
+    onSubmit({ ...form, zona: form.municipio.trim() });
   };
 
   // Clear a field's error as soon as the admin starts fixing it.
@@ -286,21 +292,43 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
             </div>
           </div>
 
-          {/* Zona */}
-          <div ref={zonaRef}>
+          {/* Estado */}
+          <div ref={estadoRef}>
             <label className={fieldLabel}>
-              Zona <RequiredMark />
+              Estado <RequiredMark />
             </label>
-            <div className={`${fieldBox} ${hasError("zona") ? errorBoxClass : ""}`}>
-              <MapPin size={16} className={hasError("zona") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
+            <div className={`${fieldBox} ${hasError("estado") ? errorBoxClass : ""}`}>
+              <MapPin size={16} className={hasError("estado") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
+              <select
+                value={form.estado}
+                onChange={(e) => { set("estado", e.target.value); clearError("estado"); }}
+                className={`${bareInput} cursor-pointer appearance-none pr-5 ${form.estado ? "" : "text-muted-foreground/50"}`}
+              >
+                <option value="">Selecciona un estado</option>
+                <option value="Tlaxcala">Tlaxcala</option>
+                <option value="Puebla">Puebla</option>
+              </select>
+            </div>
+            {hasError("estado") && (
+              <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Selecciona un estado.</p>
+            )}
+          </div>
+
+          {/* Municipio */}
+          <div ref={municipioRef}>
+            <label className={fieldLabel}>
+              Municipio <RequiredMark />
+            </label>
+            <div className={`${fieldBox} ${hasError("municipio") ? errorBoxClass : ""}`}>
+              <MapPin size={16} className={hasError("municipio") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
               <input
-                value={form.zona}
-                onChange={(e) => { set("zona", e.target.value); clearError("zona"); }}
-                placeholder="Tlaxcala Centro"
+                value={form.municipio}
+                onChange={(e) => { set("municipio", e.target.value); clearError("municipio"); }}
+                placeholder="Apizaco"
                 className={bareInput}
               />
             </div>
-            {hasError("zona") && (
+            {hasError("municipio") && (
               <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Este campo es obligatorio.</p>
             )}
           </div>

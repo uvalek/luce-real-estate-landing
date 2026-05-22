@@ -9,7 +9,8 @@ interface PropertyCardProps {
 }
 
 const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
-  const { galeria, nombre, zona, recamaras, banos, metros_cuadrados, precio, tipo, tipo_oferta } = property;
+  const { galeria, nombre, estado, municipio, zona, recamaras, banos, metros_cuadrados, precio, tipo, tipo_oferta } = property;
+  const ubicacion = [municipio, estado].filter(Boolean).join(", ") || zona;
   const portada = galeria?.find((f) => f.categoria === "portada")?.url || galeria?.[0]?.url || null;
 
   return (
@@ -65,7 +66,7 @@ const PropertyCard = ({ property, onClick }: PropertyCardProps) => {
         </h3>
         <div className="flex items-center gap-1.5 text-gold mb-3">
           <MapPin size={14} />
-          <span className="text-sm font-medium">{zona}</span>
+          <span className="text-sm font-medium">{ubicacion}</span>
         </div>
         <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
           {recamaras > 0 && (

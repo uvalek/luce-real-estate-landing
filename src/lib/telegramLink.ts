@@ -18,7 +18,8 @@ export function getTelegramLink(property: Propiedad): string {
   const tipoTexto = tipoLabel[property.tipo] || property.tipo;
   const precio = formatPrice(property.precio);
 
-  let mensaje = `Hola! Me interesó ${tipoTexto} en ${property.zona}`;
+  const ubicacion = [property.municipio, property.estado].filter(Boolean).join(", ") || property.zona;
+  let mensaje = `Hola! Me interesó ${tipoTexto} en ${ubicacion}`;
 
   // Add price
   mensaje += ` de ${precio}`;
