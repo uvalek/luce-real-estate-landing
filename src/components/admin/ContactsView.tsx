@@ -16,6 +16,9 @@ import {
 import { supabase } from "@/lib/supabase";
 import type { Contacto, Propiedad } from "@/types";
 import type { OpcionAtributo } from "@/lib/atributos";
+import { MUNICIPIOS_POR_ESTADO } from "@/data/municipios";
+
+const ESTADOS_OPTIONS = Object.keys(MUNICIPIOS_POR_ESTADO);
 
 // Fallback defaults in case the config table is empty
 const DEFAULT_ETAPAS: OpcionAtributo[] = [
@@ -47,6 +50,8 @@ const emptyForm: ContactoForm = {
   fecha_visita: null,
   propiedad_interesada: null,
   asesor_asignado: "",
+  estado: "",
+  municipio: "",
 };
 
 const formatBudget = (n: number) => {
@@ -75,6 +80,8 @@ const COLUMNS: ColumnDef[] = [
   { key: "telefono",   label: "Teléfono",    defaultWidth: 150, minWidth: 100, resizable: true },
   { key: "credito",    label: "Crédito",     defaultWidth: 120, minWidth: 80,  resizable: true },
   { key: "zona",       label: "Zona",        defaultWidth: 160, minWidth: 100, resizable: true },
+  { key: "estado",     label: "Estado",      defaultWidth: 140, minWidth: 100, resizable: true },
+  { key: "municipio",  label: "Municipio",   defaultWidth: 170, minWidth: 110, resizable: true },
   { key: "propiedad",  label: "Propiedad",   defaultWidth: 240, minWidth: 140, resizable: true },
   { key: "presupuesto",label: "Presupuesto", defaultWidth: 150, minWidth: 100, resizable: true },
   { key: "visita",     label: "Fecha visita",defaultWidth: 180, minWidth: 130, resizable: true },
@@ -108,6 +115,8 @@ type EditableField =
   | "etapa_seguimiento"
   | "tipo_credito"
   | "zona_interes"
+  | "estado"
+  | "municipio"
   | "propiedad_interesada"
   | "presupuesto_max"
   | "fecha_visita";
@@ -300,15 +309,29 @@ const ContactsView = ({ onOpenProperty, advisorName }: ContactsViewProps = {}) =
       return;
     }
 
+    // When estado changes, also clear the row's municipio (state-specific list).
+    const alsoClearMunicipio = field === "estado";
+
     // Optimistic UI
     setContacts((prev) =>
-      prev.map((c) => (c.id === id ? ({ ...c, [field]: newValue } as Contacto) : c)),
+      prev.map((c) =>
+        c.id === id
+          ? ({
+              ...c,
+              [field]: newValue,
+              ...(alsoClearMunicipio ? { municipio: null } : {}),
+            } as Contacto)
+          : c,
+      ),
     );
     cancelEdit();
 
+    const updatePayload: Record<string, unknown> = { [field]: newValue };
+    if (alsoClearMunicipio) updatePayload.municipio = null;
+
     const { error } = await supabase
       .from("contactos")
-      .update({ [field]: newValue })
+      .update(updatePayload)
       .eq("id", id);
     if (error) {
       alert("Error al guardar: " + error.message);
@@ -617,7 +640,37 @@ const ContactsView = ({ onOpenProperty, advisorName }: ContactsViewProps = {}) =
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Zona de interés</label>
-                <input value={form.zona_interes || ""} onChange={(e) => set("zona_interes", e.target.value)} placeholder="Apizaco, Tlaxcala" className={inputClass} />
+                <input value={form.zona_interes || ""} onChange={(e) => set("zona_interes", e.target.value)} placeholder="Colonia / comunidad" className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Estado</label>
+                <select
+                  value={form.estado || ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setForm((prev) => ({ ...prev, estado: v, municipio: "" }));
+                  }}
+                  className={inputClass + " appearance-none cursor-pointer"}
+                >
+                  <option value="">Sin definir</option>
+                  {ESTADOS_OPTIONS.map((est) => (
+                    <option key={est} value={est}>{est}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Municipio</label>
+                <select
+                  value={form.municipio || ""}
+                  onChange={(e) => set("municipio", e.target.value)}
+                  disabled={!form.estado}
+                  className={inputClass + " appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"}
+                >
+                  <option value="">{form.estado ? "Sin definir" : "Elige estado primero"}</option>
+                  {(form.estado ? MUNICIPIOS_POR_ESTADO[form.estado] || [] : []).map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-foreground/60 uppercase tracking-wide mb-1">Propiedad interesada</label>
@@ -927,6 +980,92 @@ const ContactsView = ({ onOpenProperty, advisorName }: ContactsViewProps = {}) =
                     {/* Zona */}
                     <td className={`${tdBase} px-4 py-2 text-xs text-muted-foreground`}>
                       {textCell("zona_interes", c.zona_interes, "Zona...")}
+                    </td>
+
+                    {/* Estado */}
+                    <td className={`${tdBase} px-4 py-2 text-xs text-muted-foreground`}>
+                      {isEditing("estado") ? (
+                        <select
+                          autoFocus
+                          value={cellDraft}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setCellDraft(v);
+                            saveCell(v);
+                          }}
+                          onBlur={() => saveCell()}
+                          onKeyDown={(e) => handleCellKey(e)}
+                          className={cellInputClass + " cursor-pointer"}
+                        >
+                          <option value="">— sin definir —</option>
+                          {ESTADOS_OPTIONS.map((est) => (
+                            <option key={est} value={est}>{est}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div
+                          onClick={() => startEdit(c.id, "estado", c.estado || "")}
+                          className="cursor-pointer -mx-1 px-1 py-1 rounded min-h-[28px] flex items-center hover:bg-cobalt/5 transition-colors truncate"
+                          title="Click para cambiar"
+                        >
+                          {c.estado ? (
+                            <span className="truncate">{c.estado}</span>
+                          ) : (
+                            <span className="text-muted-foreground/40 italic">Sin definir</span>
+                          )}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Municipio */}
+                    <td className={`${tdBase} px-4 py-2 text-xs text-muted-foreground`}>
+                      {isEditing("municipio") ? (
+                        (() => {
+                          const opts = c.estado ? MUNICIPIOS_POR_ESTADO[c.estado] || [] : [];
+                          const list = c.municipio && !opts.includes(c.municipio)
+                            ? [c.municipio, ...opts]
+                            : opts;
+                          return (
+                            <select
+                              autoFocus
+                              value={cellDraft}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setCellDraft(v);
+                                saveCell(v);
+                              }}
+                              onBlur={() => saveCell()}
+                              onKeyDown={(e) => handleCellKey(e)}
+                              className={cellInputClass + " cursor-pointer"}
+                              disabled={!c.estado}
+                            >
+                              <option value="">— sin definir —</option>
+                              {list.map((m) => (
+                                <option key={m} value={m}>{m}</option>
+                              ))}
+                            </select>
+                          );
+                        })()
+                      ) : (
+                        <div
+                          onClick={() => {
+                            if (!c.estado) return;
+                            startEdit(c.id, "municipio", c.municipio || "");
+                          }}
+                          className={`-mx-1 px-1 py-1 rounded min-h-[28px] flex items-center transition-colors truncate ${
+                            c.estado ? "cursor-pointer hover:bg-cobalt/5" : "cursor-not-allowed opacity-60"
+                          }`}
+                          title={c.estado ? "Click para cambiar" : "Define primero un estado"}
+                        >
+                          {c.municipio ? (
+                            <span className="truncate">{c.municipio}</span>
+                          ) : (
+                            <span className="text-muted-foreground/40 italic">
+                              {c.estado ? "Sin definir" : "Define estado"}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
 
                     {/* Propiedad */}

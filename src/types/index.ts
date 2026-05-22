@@ -55,6 +55,8 @@ export interface Contacto {
   fecha_visita: string | null;
   propiedad_interesada: number | null;
   asesor_asignado: string | null;
+  estado: string | null;
+  municipio: string | null;
   created_at: string;
 }
 
