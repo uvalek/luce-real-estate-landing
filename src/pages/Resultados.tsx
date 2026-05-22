@@ -32,13 +32,6 @@ type FallbackLevel =
   | "all"
   | "none";
 
-const STATE_ZONES: Record<string, string> = {
-  tlaxcala:
-    "zona.ilike.%Tlaxcala%,zona.ilike.%Apizaco%,zona.ilike.%Huamantla%,zona.ilike.%Chiautempan%,zona.ilike.%Zacatelco%,zona.ilike.%Calpulalpan%,zona.ilike.%Xaloztoc%,zona.ilike.%Tlaxco%,zona.ilike.%Contla%",
-  puebla:
-    "zona.ilike.%Puebla%,zona.ilike.%Cholula%,zona.ilike.%Atlixco%,zona.ilike.%Tehuacán%,zona.ilike.%Zacatlán%,zona.ilike.%Cuetzalan%,zona.ilike.%Huejotzingo%,zona.ilike.%Amozoc%,zona.ilike.%San Andrés%,zona.ilike.%Angelópolis%,zona.ilike.%Sonterra%,zona.ilike.%La Vista%,zona.ilike.%Lomas%",
-};
-
 const inferStateFromMunicipality = (municipio: string): string => {
   if (!municipio) return "";
   const m = municipio.toLowerCase();
@@ -89,13 +82,15 @@ const Resultados = () => {
       return q;
     };
 
+    // Filter by the dedicated estado / municipio columns.
+    const applyZona = (q: ReturnType<typeof baseQuery>) => {
+      if (municipality) return q.ilike("municipio", `%${municipality}%`);
+      if (state) return q.ilike("estado", state);
+      return q;
+    };
+
     const queryExact = async () => {
-      let q = baseQuery();
-      if (municipality) {
-        q = q.ilike("zona", `%${municipality}%`);
-      } else if (state && STATE_ZONES[state]) {
-        q = q.or(STATE_ZONES[state]);
-      }
+      let q = applyZona(baseQuery());
       q = applyTipos(q);
       if (numericBudget > 0) q = q.lte("precio", numericBudget);
       q = applyListing(q);
@@ -105,12 +100,7 @@ const Resultados = () => {
 
     const querySameZone = async () => {
       if (!municipality && !state) return [];
-      let q = baseQuery();
-      if (municipality) {
-        q = q.ilike("zona", `%${municipality}%`);
-      } else if (state && STATE_ZONES[state]) {
-        q = q.or(STATE_ZONES[state]);
-      }
+      let q = applyZona(baseQuery());
       q = applyListing(q);
       const { data } = await q;
       return (data as Propiedad[]) || [];
@@ -118,8 +108,8 @@ const Resultados = () => {
 
     const querySameState = async () => {
       const target = inferredState;
-      if (!target || !STATE_ZONES[target]) return [];
-      let q = baseQuery().or(STATE_ZONES[target]);
+      if (!target) return [];
+      let q = baseQuery().ilike("estado", target);
       q = applyListing(q);
       const { data } = await q;
       return (data as Propiedad[]) || [];

@@ -46,6 +46,7 @@ const emptyForm: PropiedadForm = {
   estado: "",
   municipio: "",
   zona: "",
+  codigo_postal: "",
   direccion: "",
   precio: 0,
   recamaras: 0,
@@ -177,8 +178,7 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
     }
 
     setErrors([]);
-    // `zona` stays synced to `municipio` for /resultados search & legacy readers.
-    onSubmit({ ...form, zona: form.municipio.trim() });
+    onSubmit(form);
   };
 
   // Clear a field's error as soon as the admin starts fixing it.
@@ -372,6 +372,39 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
                   : `Ver todos los municipios (${fullMunicipioList.length})`}
               </button>
             )}
+          </div>
+
+          {/* Zona / Comunidad */}
+          <div>
+            <label className={fieldLabel}>Zona o comunidad</label>
+            <div className={fieldBox}>
+              <MapPin size={16} className="text-gold flex-shrink-0" />
+              <input
+                value={form.zona}
+                onChange={(e) => set("zona", e.target.value)}
+                placeholder="Col. Centro, Barrio San José…"
+                className={bareInput}
+              />
+            </div>
+          </div>
+
+          {/* Código postal */}
+          <div>
+            <label className={fieldLabel}>Código postal</label>
+            <div className={fieldBox}>
+              <MapPin size={16} className="text-gold flex-shrink-0" />
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={5}
+                value={form.codigo_postal || ""}
+                onChange={(e) =>
+                  set("codigo_postal", e.target.value.replace(/[^0-9]/g, ""))
+                }
+                placeholder="90000"
+                className={`${bareInput} tabular-nums`}
+              />
+            </div>
           </div>
 
           {/* Dirección */}

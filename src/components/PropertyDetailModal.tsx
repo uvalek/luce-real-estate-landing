@@ -177,7 +177,13 @@ const PropertyDetailModal = ({ property, onClose }: PropertyDetailModalProps) =>
           {/* Info grid — bare, no backgrounds */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 mb-8">
             <InfoTile icon={MapPin} label="Estado" value={property.estado || "—"} />
-            <InfoTile icon={MapPin} label="Municipio" value={property.municipio || property.zona || "—"} />
+            <InfoTile icon={MapPin} label="Municipio" value={property.municipio || "—"} />
+            {property.zona && (
+              <InfoTile icon={MapPin} label="Zona o comunidad" value={property.zona} />
+            )}
+            {property.codigo_postal && (
+              <InfoTile icon={MapPin} label="Código postal" value={property.codigo_postal} />
+            )}
             {property.tipos_credito && (
               <InfoTile
                 icon={CreditCard}

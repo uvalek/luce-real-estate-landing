@@ -5,8 +5,9 @@ export interface Propiedad {
   tipo: "casa" | "departamento" | "terreno" | "local";
   estado: string;
   municipio: string;
-  /** Legacy: kept synced to `municipio` for /resultados search & external readers. */
+  /** Comunidad / colonia / zona específica dentro del municipio. */
   zona: string;
+  codigo_postal: string | null;
   direccion: string | null;
   precio: number;
   recamaras: number;
