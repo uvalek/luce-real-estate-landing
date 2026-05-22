@@ -176,7 +176,7 @@ export const MUNICIPIOS_PUEBLA: string[] = [
   "Pantepec",
   "Petlalcingo",
   "Piaxtla",
-  "Puebla",
+  "Heroica Puebla de Zaragoza",
   "Quecholac",
   "Quimixtlán",
   "Rafael Lara Grajales",
@@ -284,7 +284,7 @@ export const MUNICIPIOS_PUEBLA: string[] = [
 // Municipios principales de Puebla — los más poblados / relevantes.
 // Se muestran primero; el resto queda tras "ver todos".
 export const MUNICIPIOS_PUEBLA_PRINCIPALES: string[] = [
-  "Puebla",
+  "Heroica Puebla de Zaragoza",
   "Tehuacán",
   "San Martín Texmelucan",
   "Atlixco",
