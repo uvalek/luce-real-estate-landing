@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { uploadImage } from "@/lib/uploadImage";
 import GalleryUpload from "@/components/admin/GalleryUpload";
+import { MUNICIPIOS_POR_ESTADO } from "@/data/municipios";
 import type { Propiedad, GaleriaFoto } from "@/types";
 
 const TIPO_OPTIONS = [
@@ -184,6 +185,15 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
 
   const hasError = (field: string) => errors.includes(field);
 
+  // Municipios for the chosen estado. If an existing property has a
+  // municipio that isn't in the official list (legacy data), keep it as
+  // an option so editing doesn't silently drop it.
+  const municipioList = MUNICIPIOS_POR_ESTADO[form.estado] || [];
+  const municipioOptions =
+    form.municipio && !municipioList.includes(form.municipio)
+      ? [form.municipio, ...municipioList]
+      : municipioList;
+
   // Legacy plain input (still used by Descripción / Asesor / Observaciones).
   const inputClass =
     "w-full border border-border/80 rounded-lg px-4 py-2.5 text-base sm:text-sm bg-white text-foreground outline-none focus:ring-2 focus:ring-cobalt/20 focus:border-cobalt/40 placeholder:text-muted-foreground/50 transition-all";
@@ -301,7 +311,11 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
               <MapPin size={16} className={hasError("estado") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
               <select
                 value={form.estado}
-                onChange={(e) => { set("estado", e.target.value); clearError("estado"); }}
+                onChange={(e) => {
+                  // Changing the state resets the municipio (it no longer belongs).
+                  setForm((prev) => ({ ...prev, estado: e.target.value, municipio: "" }));
+                  clearError("estado");
+                }}
                 className={`${bareInput} cursor-pointer appearance-none pr-5 ${form.estado ? "" : "text-muted-foreground/50"}`}
               >
                 <option value="">Selecciona un estado</option>
@@ -314,22 +328,29 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
             )}
           </div>
 
-          {/* Municipio */}
+          {/* Municipio — selector dependiente del estado */}
           <div ref={municipioRef}>
             <label className={fieldLabel}>
               Municipio <RequiredMark />
             </label>
-            <div className={`${fieldBox} ${hasError("municipio") ? errorBoxClass : ""}`}>
+            <div className={`${fieldBox} ${hasError("municipio") ? errorBoxClass : ""} ${!form.estado ? "opacity-60" : ""}`}>
               <MapPin size={16} className={hasError("municipio") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
-              <input
+              <select
                 value={form.municipio}
+                disabled={!form.estado}
                 onChange={(e) => { set("municipio", e.target.value); clearError("municipio"); }}
-                placeholder="Apizaco"
-                className={bareInput}
-              />
+                className={`${bareInput} cursor-pointer appearance-none pr-5 disabled:cursor-not-allowed ${form.municipio ? "" : "text-muted-foreground/50"}`}
+              >
+                <option value="">
+                  {form.estado ? "Selecciona un municipio" : "Elige un estado primero"}
+                </option>
+                {municipioOptions.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
             </div>
             {hasError("municipio") && (
-              <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Este campo es obligatorio.</p>
+              <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Selecciona un municipio.</p>
             )}
           </div>
 
