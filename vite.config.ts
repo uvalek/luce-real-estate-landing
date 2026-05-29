@@ -13,6 +13,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  build: {
+    // Never ship readable source maps to production — they would expose the
+    // original source code in the browser's devtools. Keep them only in dev.
+    sourcemap: mode === "development",
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

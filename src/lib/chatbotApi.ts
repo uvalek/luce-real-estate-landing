@@ -1,24 +1,39 @@
 // src/lib/chatbotApi.ts
 // Cliente para la API REST del chatbot (FastAPI en EasyPanel).
-// Todas las llamadas usan el header X-API-Key. Las URLs y la key vienen de
-// VITE_CHATBOT_API_URL / VITE_CHATBOT_API_KEY (configuradas en Vercel y .env.local).
+//
+// SEGURIDAD (ver SECURITY_AUDIT.md, hallazgo CRITICO #1):
+// Ya NO llamamos directo a la FastAPI con una X-API-Key incrustada en el
+// bundle. En su lugar llamamos a la Edge Function `chatbot-proxy` enviando el
+// JWT de la sesion del admin (Authorization: Bearer ...). El proxy verifica el
+// JWT en el servidor y solo entonces reenvia la peticion a la FastAPI con la
+// X-API-Key del lado servidor. Asi la key del chatbot nunca llega al navegador.
 
-const BASE = import.meta.env.VITE_CHATBOT_API_URL as string;
-const KEY = import.meta.env.VITE_CHATBOT_API_KEY as string;
+import { supabase } from '@/lib/supabase';
 
-if (!BASE || !KEY) {
-  // eslint-disable-next-line no-console
-  console.warn(
-    'chatbotApi: VITE_CHATBOT_API_URL o VITE_CHATBOT_API_KEY no estan configurados.',
-  );
-}
+const SUPABASE_URL =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ??
+  'https://lrxwvyilfobwyndikqpq.supabase.co';
+const SUPABASE_ANON_KEY =
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? '';
+
+// El proxy vive en /functions/v1/chatbot-proxy y reenvia todo lo que venga
+// despues (ej. /api/conversations) tal cual a la FastAPI.
+const PROXY = `${SUPABASE_URL}/functions/v1/chatbot-proxy`;
 
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const r = await fetch(`${BASE}${path}`, {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const token = session?.access_token ?? '';
+
+  const r = await fetch(`${PROXY}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': KEY,
+      // El gateway de Supabase (verify_jwt) acepta el JWT del usuario; el proxy
+      // tambien lo re-verifica. apikey satisface al gateway en el preflight.
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${token}`,
       ...(init.headers || {}),
     },
   });
