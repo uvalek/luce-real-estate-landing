@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogIn, Loader2, AlertCircle } from "lucide-react";
+import { LogIn, Loader2, AlertCircle, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { getAalStatus, getVerifiedTotpFactor, verifyLoginCode } from "@/lib/mfa";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -10,6 +12,12 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Segundo paso (2FA): cuando el usuario tiene un factor verificado, tras la
+  // contraseña pedimos el código del autenticador antes de entrar.
+  const [mfaStep, setMfaStep] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [code, setCode] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,9 +29,54 @@ const AdminLogin = () => {
     if (authError) {
       setError("Credenciales incorrectas. Verifica tu email y contraseña.");
       setLoading(false);
-    } else {
-      navigate("/admin");
+      return;
     }
+
+    // ¿La cuenta exige 2FA? Si la sesión necesita subir a aal2, mostramos el
+    // paso del código en vez de entrar directo.
+    const aal = await getAalStatus();
+    if (aal.needsCode) {
+      const factor = await getVerifiedTotpFactor();
+      if (factor) {
+        setMfaFactorId(factor.id);
+        setMfaStep(true);
+        setLoading(false);
+        return;
+      }
+    }
+
+    setLoading(false);
+    navigate("/admin");
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaFactorId) return;
+    setError("");
+    setLoading(true);
+    try {
+      await verifyLoginCode(mfaFactorId, code);
+      setLoading(false);
+      navigate("/admin");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Código incorrecto. Inténtalo de nuevo.",
+      );
+      setLoading(false);
+    }
+  };
+
+  const cancelMfa = async () => {
+    // El usuario quiere volver: cerramos la sesión a medias (aal1) para no
+    // dejar un estado raro y regresamos al formulario de contraseña.
+    await supabase.auth.signOut();
+    setMfaStep(false);
+    setMfaFactorId(null);
+    setCode("");
+    setPassword("");
+    setError("");
   };
 
   return (
@@ -42,10 +95,12 @@ const AdminLogin = () => {
 
         <div className="bg-card rounded-lg shadow-xl p-6 md:p-8">
           <h1 className="font-heading text-xl font-bold text-foreground text-center mb-1">
-            Panel de Administración
+            {mfaStep ? "Verificación en dos pasos" : "Panel de Administración"}
           </h1>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            Inicia sesión para gestionar propiedades
+            {mfaStep
+              ? "Escribe el código de tu app de autenticación"
+              : "Inicia sesión para gestionar propiedades"}
           </p>
 
           {error && (
@@ -55,6 +110,46 @@ const AdminLogin = () => {
             </div>
           )}
 
+          {mfaStep ? (
+            /* ── Paso 2: código de 6 dígitos ── */
+            <form onSubmit={handleVerifyCode} className="space-y-4">
+              <div className="flex justify-center mb-1">
+                <div className="w-12 h-12 rounded-2xl bg-cobalt/10 flex items-center justify-center">
+                  <ShieldCheck size={22} className="text-cobalt" />
+                </div>
+              </div>
+              <input
+                autoFocus
+                value={code}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="000000"
+                className="w-full text-center tracking-[0.5em] font-mono text-2xl border border-border rounded px-4 py-3 bg-transparent text-foreground outline-none focus:ring-2 focus:ring-cobalt/30 placeholder:text-muted-foreground/40"
+              />
+              <button
+                type="submit"
+                disabled={loading || code.length !== 6}
+                className="w-full flex items-center justify-center gap-2 bg-cobalt text-primary-foreground font-semibold text-sm px-7 py-3.5 rounded hover:bg-cobalt-light transition-colors disabled:opacity-50"
+              >
+                {loading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <ShieldCheck size={16} />
+                )}
+                {loading ? "Verificando..." : "Verificar y entrar"}
+              </button>
+              <button
+                type="button"
+                onClick={cancelMfa}
+                className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+              >
+                ← Volver
+              </button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1.5">
@@ -99,6 +194,7 @@ const AdminLogin = () => {
               {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </button>
           </form>
+          )}
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
