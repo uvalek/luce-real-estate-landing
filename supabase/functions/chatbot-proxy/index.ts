@@ -27,9 +27,15 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const CHATBOT_API_URL = Deno.env.get("CHATBOT_API_URL") ?? "";
+// CHATBOT_API_URL y ALLOWED_ORIGIN tienen defaults seguros (no son secretos),
+// así el owner SOLO tiene que registrar UN secreto en el dashboard: CHATBOT_API_KEY.
+const CHATBOT_API_URL =
+  Deno.env.get("CHATBOT_API_URL") ??
+  "https://megachatbot-chatbotmain.aslx54.easypanel.host";
 const CHATBOT_API_KEY = Deno.env.get("CHATBOT_API_KEY") ?? "";
-const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") ?? "*";
+const ALLOWED_ORIGIN =
+  Deno.env.get("ALLOWED_ORIGIN") ??
+  "https://luce-real-estate-landing.vercel.app";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
@@ -76,7 +82,7 @@ Deno.serve(async (req) => {
   const marker = "/chatbot-proxy";
   const idx = url.pathname.indexOf(marker);
   const forwardPath =
-    idx >= 0 ? url.pathname.slice(idx + marker.length) : "";
+    idx >= 0 ? url.pathname.slice(idx + marker.length) : url.pathname;
   const target = `${CHATBOT_API_URL}${forwardPath}${url.search}`;
 
   // 3) Reenviar con la key del lado servidor.
