@@ -1,7 +1,12 @@
 import { supabase } from "@/lib/supabase";
 
 const BUCKET = "fotospropiedades";
-const BASE_URL = `https://lrxwvyilfobwyndikqpq.supabase.co/storage/v1/object/public/${BUCKET}`;
+// Derive the storage URL from the same env var the client uses, so the project
+// reference lives in one place only (no duplicated hardcoded subdomain).
+const SUPABASE_URL =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ??
+  "https://lrxwvyilfobwyndikqpq.supabase.co";
+const BASE_URL = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}`;
 
 /**
  * Uploads a file to Supabase Storage and returns the public URL.
