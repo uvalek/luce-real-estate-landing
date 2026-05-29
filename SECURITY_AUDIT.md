@@ -20,7 +20,7 @@
 | Severidad | Cantidad | Estado |
 |-----------|----------|--------|
 | 🔴 Crítica | 1 | Mitigación entregada — requiere acción tuya (rotar key + desplegar proxy) |
-| 🟠 Alta | 2 | 1 arreglada en código · 1 acción manual (Vercel headers, pendiente dominio) |
+| 🟠 Alta | 2 | Ambas arregladas en código (headers de Vercel + dependencias) |
 | 🟡 Media | 4 | Arregladas en código / SQL listo para aplicar |
 | 🟢 Baja | 5 | Arregladas / documentadas |
 
@@ -71,12 +71,16 @@
 - **Qué pasaba:** `vercel.json` solo tenía el rewrite de SPA. Sin
   `Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options`,
   etc., el sitio es más vulnerable a clickjacking, sniffing de tipo MIME y XSS.
-- **Qué hice / haré:** reforcé `vercel.json` con HSTS, X-Frame-Options DENY,
+- **Qué hice:** reforcé `vercel.json` con HSTS, X-Frame-Options DENY,
   X-Content-Type-Options, Referrer-Policy y Permissions-Policy restrictivo, más
-  un CSP a la medida (Supabase + Google Fonts + imágenes).
-  > ⏳ **Pendiente:** el CSP necesita el dominio de tu API del chatbot en
-  > `connect-src` o el CRM dejará de cargar. En cuanto me lo pases, cierro este
-  > punto. (Ver el commit de `vercel.json`.)
+  un CSP a la medida. El `connect-src` permite exactamente: tu Supabase
+  (`https://` y `wss://` para realtime) y tu API del chatbot
+  (`https://megachatbot-chatbotmain.aslx54.easypanel.host`). `style-src` y
+  `font-src` permiten Google Fonts; `img-src` permite imágenes https (Unsplash,
+  placehold, Supabase Storage). **CSP enforzado** (no solo reporte).
+  > Si en el futuro cambias el dominio del chatbot o agregas otro servicio
+  > externo, actualiza `connect-src` en `vercel.json` o esas llamadas se
+  > bloquearán.
 
 ### 🟠 ALTO #2 — Vulnerabilidades de dependencias (resuelto)
 - **Qué pasaba:** `npm audit` reportaba 18 vulnerabilidades (9 altas).
@@ -217,8 +221,8 @@ recomendados (search_path, listado de bucket, endurecer borrado) están en
 - [ ] Volver a correr **Advisors → Security** y confirmar que bajaron los WARN.
 
 ### C. Vercel Dashboard
-- [ ] Pasarme el **dominio del chatbot** para cerrar el CSP de `vercel.json`.
 - [ ] Confirmar **HTTPS forzado** en el dominio.
+- [ ] Tras desplegar, verificar los headers en https://securityheaders.com (meta: A/A+).
 - [ ] Variables de entorno: dejar solo las `VITE_*` realmente públicas
       (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). Quitar
       `VITE_CHATBOT_API_KEY` tras el cutover.
@@ -254,5 +258,5 @@ recomendados (search_path, listado de bucket, endurecer borrado) están en
 | `src/App.tsx` | `/admin` envuelto en `<ProtectedRoute>` |
 | `supabase/functions/chatbot-proxy/index.ts` | Nuevo — proxy JWT para la API del chatbot |
 | `supabase/security-policies.sql` | Nuevo — hardening SQL basado en el advisor real |
-| `vercel.json` | Headers de seguridad + CSP (pendiente dominio chatbot) |
+| `vercel.json` | Headers de seguridad + CSP enforzado (Supabase + chatbot) |
 | `SECURITY_AUDIT.md` | Este informe |
