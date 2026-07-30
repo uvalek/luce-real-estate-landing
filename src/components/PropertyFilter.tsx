@@ -47,6 +47,7 @@ const municipiosTlaxcala = [
 const propertyTypes = [
   { value: "casa", label: "Casa", icon: Home },
   { value: "departamento", label: "Departamento", icon: Building2 },
+  { value: "penthouse", label: "Penthouse", icon: Building2 },
   { value: "local", label: "Local", icon: Store },
   { value: "terreno", label: "Terreno", icon: Trees },
 ] as const;

@@ -18,16 +18,24 @@ import {
   Plus,
   AlertCircle,
   Lock,
+  Hotel,
+  Car,
+  LandPlot,
+  Phone,
+  Mail,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { uploadImage } from "@/lib/uploadImage";
 import GalleryUpload from "@/components/admin/GalleryUpload";
 import { MUNICIPIOS_POR_ESTADO, MUNICIPIOS_PUEBLA_PRINCIPALES } from "@/data/municipios";
+import { AMENIDADES } from "@/data/amenidades";
 import type { Propiedad, GaleriaFoto } from "@/types";
 
 const TIPO_OPTIONS = [
   { value: "casa", label: "Casa", icon: Home },
   { value: "departamento", label: "Depto.", icon: Building2 },
+  { value: "penthouse", label: "Penthouse", icon: Hotel },
   { value: "local", label: "Local", icon: Store },
   { value: "terreno", label: "Terreno", icon: Trees },
 ] as const;
@@ -52,11 +60,16 @@ const emptyForm: PropiedadForm = {
   recamaras: 0,
   banos: 0,
   metros_cuadrados: 0,
+  metros_terreno: 0,
+  estacionamientos: 0,
+  amenidades: [],
   acepta_credito: true,
   tipos_credito: "",
   descripcion: "",
   disponible: true,
   asesor_asignado: "",
+  asesor_telefono: "",
+  asesor_email: "",
   observaciones: "",
   tipo_oferta: "VENTA",
   galeria: [],
@@ -81,9 +94,11 @@ interface PropertyFormProps {
   loading: boolean;
   /** Full name of the signed-in admin — auto-assigned as asesor on new properties. */
   advisorName?: string;
+  /** Email of the signed-in admin — prefilled as contact email on new properties. */
+  advisorEmail?: string;
 }
 
-const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: PropertyFormProps) => {
+const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName, advisorEmail }: PropertyFormProps) => {
   const [form, setForm] = useState<PropiedadForm>(emptyForm);
   const [precioDisplay, setPrecioDisplay] = useState("");
   const [uploadingMain, setUploadingMain] = useState(false);
@@ -104,14 +119,28 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
   useEffect(() => {
     if (initial) {
       const { id, fecha_publicacion, ...rest } = initial;
-      setForm({ ...rest, galeria: rest.galeria || [] });
+      // Properties created before these columns existed come back as null —
+      // normalize so the inputs stay controlled and the update writes valid values.
+      setForm({
+        ...rest,
+        galeria: rest.galeria || [],
+        amenidades: rest.amenidades || [],
+        metros_terreno: rest.metros_terreno || 0,
+        estacionamientos: rest.estacionamientos || 0,
+        asesor_telefono: rest.asesor_telefono || "",
+        asesor_email: rest.asesor_email || "",
+      });
       setPrecioDisplay(formatNum(rest.precio));
     } else {
-      // New property: the asesor is auto-assigned to the creator.
-      setForm({ ...emptyForm, asesor_asignado: advisorName || "" });
+      // New property: the asesor and their email are auto-assigned to the creator.
+      setForm({
+        ...emptyForm,
+        asesor_asignado: advisorName || "",
+        asesor_email: advisorEmail || "",
+      });
       setPrecioDisplay("");
     }
-  }, [initial, advisorName]);
+  }, [initial, advisorName, advisorEmail]);
 
   const set = (field: keyof PropiedadForm, value: unknown) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -250,7 +279,7 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
           {/* Tipo — segmented selector with icons */}
           <div className="sm:col-span-2">
             <label className={fieldLabel}>Tipo de propiedad *</label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
               {TIPO_OPTIONS.map(({ value, label, icon: Icon }) => {
                 const activo = form.tipo === value;
                 return (
@@ -480,10 +509,18 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
             onChange={(v) => set("banos", v)}
           />
 
-          {/* Metros² */}
+          {/* Estacionamientos — stepper */}
+          <Stepper
+            label="Estacionamientos"
+            icon={Car}
+            value={form.estacionamientos}
+            onChange={(v) => set("estacionamientos", v)}
+          />
+
+          {/* Metros² construidos */}
           <div className="sm:col-span-2" ref={superficieRef}>
             <label className={fieldLabel}>
-              Superficie <RequiredMark />
+              Superficie construida <RequiredMark />
             </label>
             <div className={`${fieldBox} ${hasError("superficie") ? errorBoxClass : ""}`}>
               <Ruler size={16} className={hasError("superficie") ? "text-red-400 flex-shrink-0" : "text-gold flex-shrink-0"} />
@@ -505,6 +542,28 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
             {hasError("superficie") && (
               <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Ingresa la superficie en m².</p>
             )}
+          </div>
+
+          {/* Metros² de terreno — opcional (los departamentos no tienen) */}
+          <div className="sm:col-span-2">
+            <label className={fieldLabel}>Superficie de terreno</label>
+            <div className={fieldBox}>
+              <LandPlot size={16} className="text-gold flex-shrink-0" />
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.metros_terreno || ""}
+                onChange={(e) => set("metros_terreno", parseNum(e.target.value))}
+                placeholder="200"
+                className={`${bareInput} tabular-nums`}
+              />
+              <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/50 flex-shrink-0">
+                m²
+              </span>
+            </div>
+            <p className="mt-1.5 ml-1 text-[11px] text-muted-foreground/60">
+              Déjalo vacío si no aplica (por ejemplo, en departamentos).
+            </p>
           </div>
         </div>
 
@@ -608,6 +667,40 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
             </div>
           )}
         </div>
+
+        {/* Amenidades — se guardan como array de slugs en la columna jsonb */}
+        <div className="mt-5">
+          <label className={labelClass}>Amenidades</label>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {AMENIDADES.map(({ value, label }) => {
+              const selected = (form.amenidades || []).includes(value);
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => {
+                    const current = form.amenidades || [];
+                    set(
+                      "amenidades",
+                      selected ? current.filter((a) => a !== value) : [...current, value],
+                    );
+                  }}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                    selected
+                      ? "bg-gold/15 text-cobalt border-gold/50"
+                      : "bg-white text-muted-foreground border-border/60 hover:bg-muted/50"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 ml-1 text-[11px] text-muted-foreground/60">
+            Marca lo que tenga la propiedad. Se usan para generar el contenido de redes.
+          </p>
+        </div>
       </div>
 
       {/* Section: Foto principal */}
@@ -672,21 +765,26 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2" ref={descripcionRef}>
             <label className={fieldLabel}>
-              Descripción <RequiredMark />
+              Qué destaca de la propiedad <RequiredMark />
             </label>
             <textarea
               rows={3}
               value={form.descripcion || ""}
               onChange={(e) => { set("descripcion", e.target.value); clearError("descripcion"); }}
-              placeholder="Describe la propiedad..."
+              placeholder="2 o 3 líneas con lo mejor: acabados, entorno, cercanías, por qué destaca..."
               className={`${inputClass} resize-none rounded-2xl ${
                 hasError("descripcion")
                   ? "border-red-400 ring-4 ring-red-500/10 focus:ring-red-500/15 focus:border-red-400"
                   : ""
               }`}
             />
-            {hasError("descripcion") && (
+            {hasError("descripcion") ? (
               <p className="mt-1.5 ml-1 text-xs font-medium text-red-500">Este campo es obligatorio.</p>
+            ) : (
+              <p className="mt-1.5 ml-1 flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
+                <Sparkles size={12} className="text-gold flex-shrink-0" />
+                Este texto es la materia prima del generador de contenido para redes.
+              </p>
             )}
           </div>
           <div>
@@ -710,6 +808,37 @@ const PropertyForm = ({ initial, onSubmit, onCancel, loading, advisorName }: Pro
               className={inputClass}
             />
           </div>
+          {/* Contacto del asesor — sale publicado en el contenido generado */}
+          <div>
+            <label className={labelClass}>Teléfono del asesor</label>
+            <div className={fieldBox}>
+              <Phone size={15} className="text-gold flex-shrink-0" />
+              <input
+                type="tel"
+                inputMode="tel"
+                value={form.asesor_telefono || ""}
+                onChange={(e) => set("asesor_telefono", e.target.value)}
+                placeholder="241 123 4567"
+                className={bareInput}
+              />
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Email del asesor</label>
+            <div className={fieldBox}>
+              <Mail size={15} className="text-gold flex-shrink-0" />
+              <input
+                type="email"
+                value={form.asesor_email || ""}
+                onChange={(e) => set("asesor_email", e.target.value)}
+                placeholder="asesor@luce.mx"
+                className={bareInput}
+              />
+            </div>
+          </div>
+          <p className="sm:col-span-2 -mt-1 ml-1 text-[11px] text-muted-foreground/60">
+            Estos datos de contacto aparecen en la descripción y el copy que genera la IA.
+          </p>
         </div>
       </div>
 

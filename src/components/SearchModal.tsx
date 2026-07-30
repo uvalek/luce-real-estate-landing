@@ -234,6 +234,7 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
                   <option value="">Tipo de Propiedad</option>
                   <option value="casa">Casa</option>
                   <option value="departamento">Departamento</option>
+                  <option value="penthouse">Penthouse</option>
                   <option value="local">Local</option>
                   <option value="terreno">Terreno</option>
                 </select>

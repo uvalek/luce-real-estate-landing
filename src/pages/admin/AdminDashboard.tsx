@@ -29,6 +29,8 @@ import {
   Calendar,
   MessageCircle,
   ShieldCheck,
+  Sparkles,
+  Hotel,
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -39,9 +41,10 @@ import ContactsView from "@/components/admin/ContactsView";
 import ConversationsView from "@/components/admin/ConversationsView";
 import CreateUserModal from "@/components/admin/CreateUserModal";
 import MfaSetupModal from "@/components/admin/MfaSetupModal";
+import ContenidoView from "@/components/admin/ContenidoView";
 import type { Propiedad } from "@/types";
 
-type AdminView = "propiedades" | "contactos" | "conversaciones";
+type AdminView = "propiedades" | "contactos" | "conversaciones" | "contenido";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -183,6 +186,7 @@ const AdminDashboard = () => {
   const tipoDist = [
     { key: "casa",         label: "Casas",          count: properties.filter((p) => p.tipo === "casa").length,         color: "bg-cobalt",       icon: Home },
     { key: "departamento", label: "Departamentos",  count: properties.filter((p) => p.tipo === "departamento").length, color: "bg-purple-500",   icon: Building2 },
+    { key: "penthouse",    label: "Penthouses",     count: properties.filter((p) => p.tipo === "penthouse").length,    color: "bg-rose-500",     icon: Hotel },
     { key: "terreno",      label: "Terrenos",       count: properties.filter((p) => p.tipo === "terreno").length,      color: "bg-emerald-500",  icon: MapPin },
     { key: "local",        label: "Locales",        count: properties.filter((p) => p.tipo === "local").length,        color: "bg-orange-500",   icon: Activity },
   ];
@@ -329,6 +333,19 @@ const AdminDashboard = () => {
                 onClick={() => switchView("conversaciones")}
               />
             </div>
+          </div>
+
+          {/* Marketing */}
+          <div>
+            <p className="text-[10px] font-bold text-gold/70 uppercase tracking-[0.18em] px-3 mb-2.5">
+              Marketing
+            </p>
+            <NavItem
+              active={activeView === "contenido"}
+              icon={Sparkles}
+              label="Contenido para Redes"
+              onClick={() => switchView("contenido")}
+            />
           </div>
         </nav>
 
@@ -546,7 +563,7 @@ const AdminDashboard = () => {
                       <Activity size={16} className="text-cobalt" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     {tipoDist.map((t) => {
                       const Icon = t.icon;
                       const percent = pct(t.count);
@@ -554,6 +571,7 @@ const AdminDashboard = () => {
                       const tints: Record<string, string> = {
                         casa:         "from-blue-50/80 to-white border-blue-200/50",
                         departamento: "from-purple-50/80 to-white border-purple-200/50",
+                        penthouse:    "from-rose-50/80 to-white border-rose-200/50",
                         terreno:      "from-emerald-50/80 to-white border-emerald-200/50",
                         local:        "from-orange-50/80 to-white border-orange-200/50",
                       };
@@ -786,6 +804,19 @@ const AdminDashboard = () => {
           {/* ──────── CONVERSACIONES VIEW ──────── */}
           {activeView === "conversaciones" && <ConversationsView advisorName={fullName} />}
 
+          {/* ──────── CONTENIDO PARA REDES VIEW ──────── */}
+          {activeView === "contenido" && (
+            <ContenidoView
+              properties={properties}
+              advisorName={fullName}
+              onEditProperty={(p) => {
+                setEditing(p);
+                setShowForm(true);
+                setActiveView("propiedades");
+              }}
+            />
+          )}
+
         </main>
       </div>
 
@@ -825,6 +856,7 @@ const AdminDashboard = () => {
               <PropertyForm
                 initial={editing}
                 advisorName={fullName}
+                advisorEmail={user.email ?? ""}
                 onSubmit={editing ? handleUpdate : handleCreate}
                 onCancel={() => { setShowForm(false); setEditing(null); }}
                 loading={saving}

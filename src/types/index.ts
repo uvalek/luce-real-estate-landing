@@ -2,7 +2,7 @@
 export interface Propiedad {
   id: number;
   nombre: string;
-  tipo: "casa" | "departamento" | "terreno" | "local";
+  tipo: "casa" | "departamento" | "terreno" | "local" | "penthouse";
   estado: string;
   municipio: string;
   /** Comunidad / colonia / zona específica dentro del municipio. */
@@ -12,13 +12,23 @@ export interface Propiedad {
   precio: number;
   recamaras: number;
   banos: number;
+  /** Superficie construida en m². */
   metros_cuadrados: number;
+  /** Superficie de terreno en m². 0 cuando no aplica (p. ej. departamentos). */
+  metros_terreno: number;
+  estacionamientos: number;
+  /** Slugs del catálogo en `src/data/amenidades.ts`. Columna jsonb. */
+  amenidades: string[] | null;
   acepta_credito: boolean;
   tipos_credito: string | null;
   descripcion: string | null;
   disponible: boolean;
   fecha_publicacion: string | null;
   asesor_asignado: string | null;
+  /** Teléfono de contacto del asesor — se publica en el contenido generado. */
+  asesor_telefono: string | null;
+  /** Email de contacto del asesor — se publica en el contenido generado. */
+  asesor_email: string | null;
   observaciones: string | null;
   tipo_oferta: string | null;
   galeria: GaleriaFoto[] | null;
@@ -27,6 +37,27 @@ export interface Propiedad {
 export interface GaleriaFoto {
   url: string;
   categoria: string;
+}
+
+/** Matches the "publicaciones_generadas" table in Supabase */
+export interface PublicacionGenerada {
+  id: number;
+  propiedad_id: number;
+  descripcion_generada: string | null;
+  copy_instagram: string | null;
+  hashtags: string[] | null;
+  asesor: string | null;
+  creado_por: string | null;
+  modelo: string | null;
+  created_at: string;
+}
+
+/** Respuesta de la Edge Function `generar-contenido-propiedad`. */
+export interface ContenidoGenerado {
+  descripcion: string;
+  copy_instagram: string;
+  hashtags: string[];
+  modelo: string;
 }
 
 /** Legacy interface kept for backward compatibility with mockData */

@@ -6,6 +6,7 @@ const TELEGRAM_BOT = "https://t.me/alekagency2bot";
 const tipoLabel: Record<string, string> = {
   casa: "la casa",
   departamento: "el departamento",
+  penthouse: "el penthouse",
   terreno: "el terreno",
   local: "el local",
 };
