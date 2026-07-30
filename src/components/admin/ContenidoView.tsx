@@ -16,6 +16,7 @@ import {
   Pencil,
   Trash2,
   MapPin,
+  FileDown,
 } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
 import { amenidadesLabels } from "@/data/amenidades";
@@ -24,6 +25,7 @@ import {
   listarPublicaciones,
   borrarPublicacion,
 } from "@/lib/contenidoApi";
+import { descargarFichaPdf } from "@/lib/propiedadPdf";
 import type { Propiedad, ContenidoGenerado, PublicacionGenerada } from "@/types";
 
 interface ContenidoViewProps {
@@ -55,6 +57,50 @@ const fechaCorta = (iso: string): string =>
     hour: "2-digit",
     minute: "2-digit",
   });
+
+/* ── Botón de descarga de la ficha PDF ───────────────────────────────────── */
+const PdfButton = ({
+  propiedad,
+  descripcion,
+  variant = "solid",
+}: {
+  propiedad: Propiedad;
+  descripcion: string;
+  variant?: "solid" | "ghost";
+}) => {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const descargar = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await descargarFichaPdf(propiedad, { descripcion });
+    } catch (err) {
+      setError((err as Error).message || "No se pudo crear el PDF.");
+    }
+    setBusy(false);
+  };
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={descargar}
+        disabled={busy}
+        className={
+          variant === "solid"
+            ? "flex items-center gap-2 rounded-xl bg-gold px-5 py-2.5 text-xs font-bold text-cobalt shadow-sm transition-all duration-200 hover:brightness-105 disabled:opacity-70"
+            : "flex items-center gap-2 rounded-xl border border-border/70 bg-white px-3.5 py-2 text-xs font-bold text-cobalt transition-colors hover:bg-muted/60 disabled:opacity-70"
+        }
+      >
+        {busy ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} strokeWidth={2.4} />}
+        {busy ? "Armando PDF..." : "Descargar PDF"}
+      </button>
+      {error && <span className="text-[11px] font-medium text-red-500">{error}</span>}
+    </div>
+  );
+};
 
 /* ── Botón de copiar al portapapeles ─────────────────────────────────────── */
 const CopyButton = ({ text, label = "Copiar" }: { text: string; label?: string }) => {
@@ -396,6 +442,24 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
 
       {/* ── Paso 3: resultados ───────────────────────────────────────────── */}
       {contenido && selected && (
+        <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border border-gold/40 bg-gradient-to-r from-cobalt to-cobalt-light p-4 sm:p-5 shadow-[0_10px_28px_-18px_rgba(15,31,61,0.7)]">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gold/20 text-gold flex-shrink-0">
+            <FileDown size={19} strokeWidth={2.2} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-white">Tu ficha PDF está lista</p>
+            <p className="text-xs text-white/65 leading-relaxed mt-0.5">
+              Una hoja con las fotos, la descripción generada, los datos clave, las
+              amenidades y tus datos de contacto. Lista para mandar por WhatsApp o correo.
+            </p>
+          </div>
+          <div className="flex-shrink-0">
+            <PdfButton propiedad={selected} descripcion={contenido.descripcion} />
+          </div>
+        </div>
+      )}
+
+      {contenido && selected && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
           {/* Descripción */}
           <div className="rounded-2xl border border-border/70 bg-white p-4 sm:p-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]">
@@ -522,6 +586,15 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                     </div>
                     {abierto && (
                       <div className="space-y-4 p-4">
+                        {h.descripcion_generada && (
+                          <div className="flex justify-end">
+                            <PdfButton
+                              propiedad={selected}
+                              descripcion={h.descripcion_generada}
+                              variant="ghost"
+                            />
+                          </div>
+                        )}
                         {h.descripcion_generada && (
                           <div>
                             <div className="flex items-center gap-2 mb-1.5">
