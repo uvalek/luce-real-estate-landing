@@ -91,13 +91,24 @@ const AdminDashboard = () => {
     };
   }, [showForm]);
 
+  /**
+   * Cierra el formulario. No cambia de vista a propósito: el formulario es un
+   * modal que se sobrepone, así que al cerrarlo el usuario se queda donde
+   * estaba (Contenido para Redes, Contactos o Propiedades) sin perder nada de
+   * lo que tuviera en pantalla.
+   */
+  const closeForm = () => {
+    setShowForm(false);
+    setEditing(null);
+  };
+
   const handleCreate = async (formData: Omit<Propiedad, "id" | "fecha_publicacion">) => {
     setSaving(true);
     const { error } = await supabase.from("propiedades").insert(formData);
     if (error) {
       alert("Error al crear: " + error.message);
     } else {
-      setShowForm(false);
+      closeForm();
       await fetchProperties();
     }
     setSaving(false);
@@ -113,8 +124,7 @@ const AdminDashboard = () => {
     if (error) {
       alert("Error al actualizar: " + error.message);
     } else {
-      setEditing(null);
-      setShowForm(false);
+      closeForm();
       await fetchProperties();
     }
     setSaving(false);
@@ -791,11 +801,9 @@ const AdminDashboard = () => {
                 if (full) {
                   setEditing(full);
                   setShowForm(true);
-                  setActiveView("propiedades");
-                 
                 } else {
+                  // La propiedad ya no existe: mandamos al listado.
                   setActiveView("propiedades");
-                 
                 }
               }}
             />
@@ -812,7 +820,6 @@ const AdminDashboard = () => {
               onEditProperty={(p) => {
                 setEditing(p);
                 setShowForm(true);
-                setActiveView("propiedades");
               }}
             />
           )}
@@ -828,14 +835,14 @@ const AdminDashboard = () => {
       {showForm && (
         <div
           className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-cobalt/70 backdrop-blur-md p-3 sm:p-6 overflow-y-auto"
-          onClick={() => { setShowForm(false); setEditing(null); }}
+          onClick={() => closeForm()}
         >
           <div
             className="relative w-full max-w-3xl my-auto bg-white rounded-3xl shadow-[0_40px_80px_-20px_rgba(15,23,42,0.55)] border border-border/40"
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => { setShowForm(false); setEditing(null); }}
+              onClick={() => closeForm()}
               className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground"
               aria-label="Cerrar"
             >
@@ -858,7 +865,7 @@ const AdminDashboard = () => {
                 advisorName={fullName}
                 advisorEmail={user.email ?? ""}
                 onSubmit={editing ? handleUpdate : handleCreate}
-                onCancel={() => { setShowForm(false); setEditing(null); }}
+                onCancel={() => closeForm()}
                 loading={saving}
               />
             </div>
