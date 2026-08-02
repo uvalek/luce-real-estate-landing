@@ -28,7 +28,7 @@ import {
   borrarPublicacion,
 } from "@/lib/contenidoApi";
 import { descargarFichaPdf } from "@/lib/propiedadPdf";
-import { descargarImagenInstagram } from "@/lib/propiedadImagen";
+import { descargarCarruselInstagram } from "@/lib/propiedadImagen";
 import type { Propiedad, ContenidoGenerado, PublicacionGenerada } from "@/types";
 
 interface ContenidoViewProps {
@@ -214,6 +214,15 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
   };
 
   const faltantes = selected ? datosFaltantes(selected) : [];
+
+  // Portada + una lámina por foto extra + la de cierre (tope de 10, como en
+  // `crearCarruselInstagram`). Solo sirve para el texto del botón.
+  const laminasEstimadas = selected
+    ? Math.min(
+        2 + (selected.galeria ?? []).filter((f) => f.categoria !== "portada").length,
+        10,
+      )
+    : 0;
 
   return (
     <div className="pb-10">
@@ -462,9 +471,10 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
             <p className="text-sm font-bold text-white">Tus archivos están listos</p>
             <p className="text-xs text-white/65 leading-relaxed mt-0.5">
               La <strong className="font-semibold text-white/85">ficha PDF</strong> para
-              mandar por WhatsApp o correo, y la{" "}
-              <strong className="font-semibold text-white/85">imagen cuadrada</strong> de
-              1080 × 1080 lista para subir a Instagram.
+              mandar por WhatsApp o correo, y el{" "}
+              <strong className="font-semibold text-white/85">carrusel de Instagram</strong>{" "}
+              de {laminasEstimadas} imágenes de 1080 × 1080, numeradas en el orden en
+              que se suben.
             </p>
           </div>
           <div className="flex flex-wrap items-start gap-2.5 flex-shrink-0">
@@ -477,11 +487,11 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
               }
             />
             <DescargaButton
-              label="Imagen para Instagram"
-              labelBusy="Creando imagen..."
+              label="Carrusel para Instagram"
+              labelBusy="Creando imágenes..."
               icon={ImageDown}
               variant="outline"
-              onDownload={() => descargarImagenInstagram(selected)}
+              onDownload={() => descargarCarruselInstagram(selected)}
             />
           </div>
         </div>

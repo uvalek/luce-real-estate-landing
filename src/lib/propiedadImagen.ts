@@ -1,21 +1,28 @@
+import { amenidadesLabels } from "@/data/amenidades";
 import type { Propiedad } from "@/types";
 
 /**
- * Imagen cuadrada de 1080x1080 lista para publicar en Instagram.
+ * Carrusel de imágenes cuadradas (1080x1080) para publicar en Instagram.
  *
- * Se compone en un <canvas> del navegador: la foto de portada al fondo con un
- * degradado oscuro encima para que el texto se lea, el badge de la operación,
- * el precio, la ubicación y los datos principales con iconos.
+ *   1. Portada  — foto principal, badge de operación, precio, ubicación y los
+ *                 datos clave con iconos.
+ *   2..N.       — una lámina por cada foto extra, con el nombre del espacio y
+ *                 el dato de la propiedad que le corresponde.
+ *   Última      — cierre con las amenidades y los datos del asesor.
  *
- * Los iconos se dibujan como vectores (los mismos trazos de lucide que usa el
- * dashboard) en lugar de depender de una fuente de iconos, que en canvas no
- * está garantizada.
+ * Se compone en un <canvas> del navegador. Los iconos se dibujan como vectores
+ * (los mismos trazos de lucide que usa el dashboard) porque dentro del canvas
+ * no se puede depender de una fuente de iconos.
  */
 
 const SIZE = 1080;
 const PAD = 72;
 
+/** Instagram acepta hasta 20, pero un carrusel largo se abandona a media vista. */
+const MAX_SLIDES = 10;
+
 const GOLD = "#d2962d";
+const GOLD_CLARO = "#e5b463";
 const COBALT = "#0f1f3d";
 
 /* ── Iconos (viewBox 24x24, trazos de lucide) ────────────────────────────── */
@@ -40,43 +47,44 @@ const ICONOS = {
   ],
 } as const;
 
+/**
+ * Nombres de los espacios de la galería.
+ * Espejo de las categorías de `src/components/admin/GalleryUpload.tsx`; si se
+ * agregan allá, agrégalas aquí (si falta una se usa el slug tal cual).
+ */
+const CATEGORIA_LABELS: Record<string, string> = {
+  fachada: "Fachada",
+  sala: "Sala",
+  cocina: "Cocina",
+  recamara: "Recámara",
+  bano: "Baño",
+  comedor: "Comedor",
+  jardin: "Jardín",
+  cochera: "Cochera",
+  terraza: "Terraza",
+  patio: "Patio",
+  otro: "Un vistazo más",
+};
+
+/* ── Utilidades de dibujo ────────────────────────────────────────────────── */
+
 function dibujarIcono(
   ctx: CanvasRenderingContext2D,
   paths: readonly string[],
   x: number,
   y: number,
   tam: number,
+  color = GOLD,
 ) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(tam / 24, tam / 24);
-  ctx.strokeStyle = GOLD;
+  ctx.strokeStyle = color;
   ctx.lineWidth = 2;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   paths.forEach((d) => ctx.stroke(new Path2D(d)));
   ctx.restore();
-}
-
-/* ── Utilidades ──────────────────────────────────────────────────────────── */
-
-const numero = (n: number): string => Math.round(n).toLocaleString("es-MX");
-
-const slug = (s: string): string =>
-  s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60) || "propiedad";
-
-/** "VENTA" → "En Venta", "RENTA Y VENTA" → "En Renta y Venta". */
-function textoOperacion(tipoOferta: string | null): string {
-  const v = (tipoOferta || "").trim().toUpperCase();
-  if (v === "VENTA") return "En Venta";
-  if (v === "RENTA") return "En Renta";
-  if (v === "RENTA Y VENTA") return "En Renta y Venta";
-  return "Disponible";
 }
 
 /** Texto con espaciado entre letras — canvas no tiene letter-spacing fiable. */
@@ -86,13 +94,12 @@ function textoEspaciado(
   x: number,
   y: number,
   espacio: number,
-): number {
+) {
   let cursor = x;
   for (const ch of texto) {
     ctx.fillText(ch, cursor, y);
     cursor += ctx.measureText(ch).width + espacio;
   }
-  return cursor - espacio - x;
 }
 
 function anchoEspaciado(
@@ -120,6 +127,25 @@ function rectRedondeado(
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
+}
+
+const numero = (n: number): string => Math.round(n).toLocaleString("es-MX");
+
+const slug = (s: string): string =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || "propiedad";
+
+/** "VENTA" → "En Venta", "RENTA Y VENTA" → "En Renta y Venta". */
+function textoOperacion(tipoOferta: string | null): string {
+  const v = (tipoOferta || "").trim().toUpperCase();
+  if (v === "VENTA") return "En Venta";
+  if (v === "RENTA") return "En Renta";
+  if (v === "RENTA Y VENTA") return "En Renta y Venta";
+  return "Disponible";
 }
 
 /** Descarga la foto y la devuelve como <img> ya cargada (sin ensuciar el canvas). */
@@ -159,61 +185,157 @@ async function esperarFuentes(): Promise<void> {
   }
 }
 
-/* ── Composición ─────────────────────────────────────────────────────────── */
-
-export async function crearImagenInstagram(
-  propiedad: Propiedad,
-): Promise<{ blob: Blob; nombre: string }> {
-  await esperarFuentes();
-
+function nuevoLienzo(): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
   const canvas = document.createElement("canvas");
   canvas.width = SIZE;
   canvas.height = SIZE;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Tu navegador no permite generar la imagen.");
+  if (!ctx) throw new Error("Tu navegador no permite generar las imágenes.");
+  ctx.textBaseline = "alphabetic";
+  return { canvas, ctx };
+}
 
-  /* Fondo: foto de portada recortada tipo "cover". */
-  const portadaUrl = propiedad.galeria?.find((f) => f.categoria === "portada")?.url ?? null;
-  const foto = portadaUrl ? await cargarFoto(portadaUrl) : null;
-
+/** Foto de fondo recortada tipo "cover", o degradado de marca si no hay foto. */
+function dibujarFondo(ctx: CanvasRenderingContext2D, foto: HTMLImageElement | null) {
   if (foto) {
     const ratio = Math.max(SIZE / foto.width, SIZE / foto.height);
     const w = foto.width * ratio;
     const h = foto.height * ratio;
     ctx.drawImage(foto, (SIZE - w) / 2, (SIZE - h) / 2, w, h);
   } else {
-    // Sin foto: fondo de marca en vez de un cuadro vacío.
     const fondo = ctx.createLinearGradient(0, 0, SIZE, SIZE);
     fondo.addColorStop(0, "#16294f");
     fondo.addColorStop(1, COBALT);
     ctx.fillStyle = fondo;
     ctx.fillRect(0, 0, SIZE, SIZE);
   }
+}
 
-  /* Degradados: uno arriba para el badge y el logo, otro abajo para el texto. */
-  // El de arriba llega con cuerpo hasta y≈200: el logo cae ahí y muchas fotos
-  // tienen cielo claro justo en esa esquina.
-  const arriba = ctx.createLinearGradient(0, 0, 0, 380);
-  arriba.addColorStop(0, "rgba(10,18,36,0.8)");
-  arriba.addColorStop(0.45, "rgba(10,18,36,0.42)");
-  arriba.addColorStop(1, "rgba(10,18,36,0)");
-  ctx.fillStyle = arriba;
+/**
+ * Degradado superior: el logo cae ahí y muchas fotos tienen cielo claro justo
+ * en esa esquina.
+ */
+function dibujarVeloSuperior(ctx: CanvasRenderingContext2D) {
+  const g = ctx.createLinearGradient(0, 0, 0, 380);
+  g.addColorStop(0, "rgba(10,18,36,0.8)");
+  g.addColorStop(0.45, "rgba(10,18,36,0.42)");
+  g.addColorStop(1, "rgba(10,18,36,0)");
+  ctx.fillStyle = g;
   ctx.fillRect(0, 0, SIZE, 380);
+}
 
-  const abajo = ctx.createLinearGradient(0, 380, 0, SIZE);
-  abajo.addColorStop(0, "rgba(10,18,36,0)");
-  abajo.addColorStop(0.45, "rgba(10,18,36,0.72)");
-  abajo.addColorStop(1, "rgba(8,14,28,0.96)");
-  ctx.fillStyle = abajo;
-  ctx.fillRect(0, 380, SIZE, SIZE - 380);
+function dibujarVeloInferior(ctx: CanvasRenderingContext2D, desde = 380) {
+  const g = ctx.createLinearGradient(0, desde, 0, SIZE);
+  g.addColorStop(0, "rgba(10,18,36,0)");
+  g.addColorStop(0.45, "rgba(10,18,36,0.72)");
+  g.addColorStop(1, "rgba(8,14,28,0.96)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, desde, SIZE, SIZE - desde);
+}
 
-  ctx.textBaseline = "alphabetic";
+function dibujarMarca(ctx: CanvasRenderingContext2D) {
+  ctx.font = "800 34px Montserrat, sans-serif";
+  ctx.fillStyle = "#ffffff";
+  const marcaW = anchoEspaciado(ctx, "LUCE", 8);
+  textoEspaciado(ctx, "LUCE", SIZE - PAD - marcaW, PAD + 36, 8);
+  ctx.font = "700 18px Montserrat, sans-serif";
+  ctx.fillStyle = GOLD_CLARO;
+  const subW = anchoEspaciado(ctx, "REAL ESTATE", 5);
+  textoEspaciado(ctx, "REAL ESTATE", SIZE - PAD - subW, PAD + 66, 5);
+}
 
-  /* ── Badge de operación (arriba a la izquierda) ─────────────────────────── */
+/** Chip translúcido con icono y valor. Devuelve el ancho ocupado. */
+function dibujarChip(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  alto: number,
+  icono: readonly string[],
+  valor: string,
+): number {
+  ctx.font = "700 34px Montserrat, sans-serif";
+  const w = 44 + 44 + 18 + ctx.measureText(valor).width;
+
+  ctx.fillStyle = "rgba(255,255,255,0.13)";
+  rectRedondeado(ctx, x, y, w, alto, 22);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.22)";
+  ctx.lineWidth = 2;
+  rectRedondeado(ctx, x, y, w, alto, 22);
+  ctx.stroke();
+
+  dibujarIcono(ctx, icono, x + 22, y + (alto - 44) / 2, 44);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "700 34px Montserrat, sans-serif";
+  ctx.fillText(valor, x + 22 + 44 + 18, y + alto / 2 + 12);
+  return w;
+}
+
+/**
+ * JPEG en calidad alta y no PNG: las láminas son fotografías, Instagram las
+ * recomprime a JPEG de todas formas, y el carrusel completo baja de ~4 MB a
+ * poco más de 1 MB.
+ */
+const lienzoABlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
+  new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("No se pudo crear la imagen."))),
+      "image/jpeg",
+      0.92,
+    );
+  });
+
+/* ── Datos clave ─────────────────────────────────────────────────────────── */
+
+function datosClave(p: Propiedad): { icono: readonly string[]; valor: string }[] {
+  const datos: { icono: readonly string[]; valor: string }[] = [];
+  if (p.recamaras > 0) datos.push({ icono: ICONOS.recamaras, valor: `${numero(p.recamaras)} rec` });
+  if (p.banos > 0) datos.push({ icono: ICONOS.banos, valor: `${numero(p.banos)} baños` });
+  if (p.metros_cuadrados > 0)
+    datos.push({ icono: ICONOS.metros, valor: `${numero(p.metros_cuadrados)} m²` });
+  return datos;
+}
+
+const ubicacionDe = (p: Propiedad): string =>
+  [p.municipio, p.estado].filter(Boolean).join(", ") || p.zona || p.direccion || "";
+
+/**
+ * El dato que mejor acompaña a la foto de cada espacio: la recámara habla de
+ * recámaras, la cochera de estacionamientos, el jardín del terreno.
+ */
+function datoDeCategoria(categoria: string, p: Propiedad): string | null {
+  switch (categoria) {
+    case "recamara":
+      return p.recamaras > 0 ? `${numero(p.recamaras)} recámaras en total` : null;
+    case "bano":
+      return p.banos > 0 ? `${numero(p.banos)} baños completos` : null;
+    case "cochera":
+      return p.estacionamientos > 0
+        ? `${numero(p.estacionamientos)} lugares de estacionamiento`
+        : null;
+    case "jardin":
+    case "patio":
+    case "terraza":
+      return p.metros_terreno > 0 ? `${numero(p.metros_terreno)} m² de terreno` : null;
+    default:
+      return p.metros_cuadrados > 0 ? `${numero(p.metros_cuadrados)} m² de construcción` : null;
+  }
+}
+
+/* ── Láminas ─────────────────────────────────────────────────────────────── */
+
+/** Lámina 1: el gancho. */
+function laminaPortada(propiedad: Propiedad, foto: HTMLImageElement | null): HTMLCanvasElement {
+  const { canvas, ctx } = nuevoLienzo();
+  dibujarFondo(ctx, foto);
+  dibujarVeloSuperior(ctx);
+  dibujarVeloInferior(ctx);
+
+  // Badge de operación
   const badge = textoOperacion(propiedad.tipo_oferta).toUpperCase();
   ctx.font = "800 28px Montserrat, sans-serif";
-  const badgeTexto = anchoEspaciado(ctx, badge, 3.2);
-  const badgeW = badgeTexto + 56;
+  const badgeW = anchoEspaciado(ctx, badge, 3.2) + 56;
   const badgeH = 64;
   ctx.fillStyle = GOLD;
   rectRedondeado(ctx, PAD, PAD, badgeW, badgeH, badgeH / 2);
@@ -221,29 +343,13 @@ export async function crearImagenInstagram(
   ctx.fillStyle = COBALT;
   textoEspaciado(ctx, badge, PAD + 28, PAD + 42, 3.2);
 
-  /* ── Marca (arriba a la derecha) ────────────────────────────────────────── */
-  ctx.font = "800 34px Montserrat, sans-serif";
-  ctx.fillStyle = "#ffffff";
-  const marcaW = anchoEspaciado(ctx, "LUCE", 8);
-  textoEspaciado(ctx, "LUCE", SIZE - PAD - marcaW, PAD + 36, 8);
-  ctx.font = "700 18px Montserrat, sans-serif";
-  ctx.fillStyle = "#e5b463";
-  const subW = anchoEspaciado(ctx, "REAL ESTATE", 5);
-  textoEspaciado(ctx, "REAL ESTATE", SIZE - PAD - subW, PAD + 66, 5);
+  dibujarMarca(ctx);
 
-  /* ── Bloque inferior ────────────────────────────────────────────────────── */
-  const datos: { icono: readonly string[]; valor: string }[] = [];
-  if (propiedad.recamaras > 0)
-    datos.push({ icono: ICONOS.recamaras, valor: `${numero(propiedad.recamaras)} rec` });
-  if (propiedad.banos > 0)
-    datos.push({ icono: ICONOS.banos, valor: `${numero(propiedad.banos)} baños` });
-  if (propiedad.metros_cuadrados > 0)
-    datos.push({ icono: ICONOS.metros, valor: `${numero(propiedad.metros_cuadrados)} m²` });
-
+  const datos = datosClave(propiedad);
   const chipH = 84;
   const baseY = SIZE - PAD - (datos.length > 0 ? chipH : 0);
 
-  /* Precio */
+  // Precio
   ctx.font = "800 104px Montserrat, sans-serif";
   ctx.fillStyle = "#ffffff";
   const precioTexto = `$${numero(propiedad.precio)}`;
@@ -254,63 +360,200 @@ export async function crearImagenInstagram(
   ctx.fillStyle = GOLD;
   ctx.fillText("MXN", PAD + precioW + 18, precioY);
 
-  /* Ubicación */
-  const ubicacion =
-    [propiedad.municipio, propiedad.estado].filter(Boolean).join(", ") ||
-    propiedad.zona ||
-    propiedad.direccion ||
-    "";
+  // Ubicación
+  const ubicacion = ubicacionDe(propiedad);
   if (ubicacion) {
     ctx.font = "600 30px Montserrat, sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.88)";
     textoEspaciado(ctx, ubicacion.toUpperCase(), PAD, precioY - 138, 3);
   }
 
-  /* Línea dorada de remate — separada del precio, que sube ~75 px sobre su base. */
+  // Línea dorada, separada del precio (que sube ~75 px sobre su base).
   ctx.fillStyle = GOLD;
   ctx.fillRect(PAD, precioY - 114, 88, 5);
 
-  /* Chips con iconos */
-  if (datos.length > 0) {
-    let x = PAD;
-    const y = SIZE - PAD - chipH;
-    ctx.font = "700 34px Montserrat, sans-serif";
-
-    datos.forEach(({ icono, valor }) => {
-      const textoW = ctx.measureText(valor).width;
-      const w = 44 + 44 + 18 + textoW;
-
-      ctx.fillStyle = "rgba(255,255,255,0.13)";
-      rectRedondeado(ctx, x, y, w, chipH, 22);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.22)";
-      ctx.lineWidth = 2;
-      rectRedondeado(ctx, x, y, w, chipH, 22);
-      ctx.stroke();
-
-      dibujarIcono(ctx, icono, x + 22, y + (chipH - 44) / 2, 44);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "700 34px Montserrat, sans-serif";
-      ctx.fillText(valor, x + 22 + 44 + 18, y + chipH / 2 + 12);
-
-      x += w + 18;
-    });
-  }
-
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error("No se pudo crear la imagen."))),
-      "image/png",
-    );
+  // Chips
+  let x = PAD;
+  datos.forEach(({ icono, valor }) => {
+    x += dibujarChip(ctx, x, SIZE - PAD - chipH, chipH, icono, valor) + 18;
   });
 
-  return { blob, nombre: `LUCE-${slug(propiedad.nombre)}-instagram.png` };
+  return canvas;
 }
 
-/** Genera la imagen y la descarga. Devuelve el nombre del archivo. */
-export async function descargarImagenInstagram(propiedad: Propiedad): Promise<string> {
-  const { blob, nombre } = await crearImagenInstagram(propiedad);
+/** Láminas intermedias: una foto, el espacio que muestra y un dato. */
+function laminaEspacio(
+  propiedad: Propiedad,
+  foto: HTMLImageElement,
+  categoria: string,
+): HTMLCanvasElement {
+  const { canvas, ctx } = nuevoLienzo();
+  dibujarFondo(ctx, foto);
+  dibujarVeloSuperior(ctx);
+  dibujarVeloInferior(ctx, 620);
+  dibujarMarca(ctx);
+
+  const titulo = (CATEGORIA_LABELS[categoria] ?? categoria.replace(/_/g, " ")).toUpperCase();
+  const dato = datoDeCategoria(categoria, propiedad);
+
+  const baseY = SIZE - PAD - (dato ? 56 : 0);
+
+  ctx.font = "800 62px Montserrat, sans-serif";
+  ctx.fillStyle = "#ffffff";
+  textoEspaciado(ctx, titulo, PAD, baseY, 4);
+
+  ctx.fillStyle = GOLD;
+  ctx.fillRect(PAD, baseY - 96, 88, 5);
+
+  if (dato) {
+    ctx.font = "600 34px Montserrat, sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.86)";
+    ctx.fillText(dato, PAD, SIZE - PAD);
+  }
+
+  return canvas;
+}
+
+/** Última lámina: amenidades y cómo contactar al asesor. */
+function laminaCierre(propiedad: Propiedad, foto: HTMLImageElement | null): HTMLCanvasElement {
+  const { canvas, ctx } = nuevoLienzo();
+  dibujarFondo(ctx, foto);
+
+  // Velo casi opaco: aquí manda el texto, la foto solo da textura.
+  ctx.fillStyle = "rgba(9,16,32,0.9)";
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  dibujarMarca(ctx);
+
+  let y = 250;
+  const amenidades = amenidadesLabels(propiedad.amenidades).slice(0, 10);
+
+  const etiqueta = (texto: string) => {
+    ctx.font = "700 22px Montserrat, sans-serif";
+    ctx.fillStyle = GOLD;
+    textoEspaciado(ctx, texto.toUpperCase(), PAD, y, 4);
+    ctx.fillStyle = GOLD;
+    ctx.fillRect(PAD, y + 22, 88, 4);
+    y += 74;
+  };
+
+  if (amenidades.length > 0) {
+    etiqueta("Amenidades");
+
+    const colW = (SIZE - PAD * 2) / 2;
+    const filas = Math.ceil(amenidades.length / 2);
+    ctx.font = "600 34px Montserrat, sans-serif";
+    amenidades.forEach((a, i) => {
+      const col = Math.floor(i / filas);
+      const fila = i % filas;
+      const x = PAD + col * colW;
+      const filaY = y + fila * 56;
+      ctx.fillStyle = GOLD;
+      ctx.beginPath();
+      ctx.arc(x + 8, filaY - 10, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = "600 34px Montserrat, sans-serif";
+      ctx.fillText(a, x + 32, filaY);
+    });
+    y += filas * 56 + 40;
+  } else {
+    // Sin amenidades capturadas, el cierre muestra los datos clave.
+    etiqueta("La propiedad");
+    const chipH = 84;
+    let x = PAD;
+    datosClave(propiedad).forEach(({ icono, valor }) => {
+      x += dibujarChip(ctx, x, y - 56, chipH, icono, valor) + 18;
+    });
+    y += 84;
+  }
+
+  // Separador
+  ctx.fillStyle = "rgba(255,255,255,0.16)";
+  ctx.fillRect(PAD, y, SIZE - PAD * 2, 2);
+  y += 76;
+
+  etiqueta("Agenda tu visita");
+
+  ctx.font = "800 54px Montserrat, sans-serif";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(propiedad.asesor_asignado || "LUCE Real Estate", PAD, y);
+  y += 60;
+
+  const contacto = [propiedad.asesor_telefono, propiedad.asesor_email]
+    .map((c) => (c || "").trim())
+    .filter(Boolean);
+  ctx.font = "600 36px Montserrat, sans-serif";
+  ctx.fillStyle = GOLD_CLARO;
+  if (contacto.length > 0) {
+    contacto.forEach((linea) => {
+      ctx.fillText(linea, PAD, y);
+      y += 50;
+    });
+  } else {
+    ctx.fillText("Mándanos un mensaje directo", PAD, y);
+    y += 50;
+  }
+
+  // Precio abajo, como recordatorio de cierre.
+  ctx.font = "800 76px Montserrat, sans-serif";
+  ctx.fillStyle = "#ffffff";
+  const precioTexto = `$${numero(propiedad.precio)}`;
+  const precioW = ctx.measureText(precioTexto).width;
+  ctx.fillText(precioTexto, PAD, SIZE - PAD);
+  ctx.font = "700 30px Montserrat, sans-serif";
+  ctx.fillStyle = GOLD;
+  ctx.fillText("MXN", PAD + precioW + 16, SIZE - PAD);
+
+  return canvas;
+}
+
+/* ── API ─────────────────────────────────────────────────────────────────── */
+
+export interface Lamina {
+  nombre: string;
+  blob: Blob;
+}
+
+/** Genera todas las láminas del carrusel, en el orden en que hay que subirlas. */
+export async function crearCarruselInstagram(propiedad: Propiedad): Promise<Lamina[]> {
+  await esperarFuentes();
+
+  const galeria = propiedad.galeria ?? [];
+  const portadaUrl = galeria.find((f) => f.categoria === "portada")?.url ?? null;
+  // Se reservan dos lugares: la portada y el cierre.
+  const extras = galeria.filter((f) => f.categoria !== "portada").slice(0, MAX_SLIDES - 2);
+
+  const [portada, fotosExtra] = await Promise.all([
+    portadaUrl ? cargarFoto(portadaUrl) : Promise.resolve(null),
+    Promise.all(extras.map((f) => cargarFoto(f.url))),
+  ]);
+
+  const laminas: { canvas: HTMLCanvasElement; etiqueta: string }[] = [
+    { canvas: laminaPortada(propiedad, portada), etiqueta: "portada" },
+  ];
+
+  fotosExtra.forEach((foto, i) => {
+    // Una foto que no cargó se omite en vez de dejar una lámina vacía.
+    if (!foto) return;
+    const categoria = extras[i].categoria;
+    laminas.push({
+      canvas: laminaEspacio(propiedad, foto, categoria),
+      etiqueta: slug(categoria).toLowerCase() || "espacio",
+    });
+  });
+
+  laminas.push({ canvas: laminaCierre(propiedad, portada), etiqueta: "contacto" });
+
+  return Promise.all(
+    laminas.map(async ({ canvas, etiqueta }, i) => ({
+      nombre: `${String(i + 1).padStart(2, "0")}-${etiqueta}.jpg`,
+      blob: await lienzoABlob(canvas),
+    })),
+  );
+}
+
+function descargarBlob(blob: Blob, nombre: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -320,5 +563,23 @@ export async function descargarImagenInstagram(propiedad: Propiedad): Promise<st
   a.remove();
   // Se libera después del click para no cancelar la descarga en curso.
   setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+/**
+ * Descarga el carrusel en un .zip con las láminas numeradas, para que el
+ * agente las suba a Instagram en orden. Siempre hay al menos dos (portada y
+ * cierre), así que no existe el caso de una sola imagen suelta.
+ */
+export async function descargarCarruselInstagram(propiedad: Propiedad): Promise<string> {
+  const laminas = await crearCarruselInstagram(propiedad);
+  const base = `LUCE-${slug(propiedad.nombre)}`;
+
+  const { default: JSZip } = await import("jszip");
+  const zip = new JSZip();
+  laminas.forEach(({ nombre, blob }) => zip.file(nombre, blob));
+  const archivo = await zip.generateAsync({ type: "blob" });
+
+  const nombre = `${base}-carrusel.zip`;
+  descargarBlob(archivo, nombre);
   return nombre;
 }
