@@ -17,6 +17,8 @@ import {
   Trash2,
   MapPin,
   FileDown,
+  ImageDown,
+  type LucideIcon,
 } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
 import { amenidadesLabels } from "@/data/amenidades";
@@ -26,6 +28,7 @@ import {
   borrarPublicacion,
 } from "@/lib/contenidoApi";
 import { descargarFichaPdf } from "@/lib/propiedadPdf";
+import { descargarImagenInstagram } from "@/lib/propiedadImagen";
 import type { Propiedad, ContenidoGenerado, PublicacionGenerada } from "@/types";
 
 interface ContenidoViewProps {
@@ -58,15 +61,19 @@ const fechaCorta = (iso: string): string =>
     minute: "2-digit",
   });
 
-/* ── Botón de descarga de la ficha PDF ───────────────────────────────────── */
-const PdfButton = ({
-  propiedad,
-  descripcion,
+/* ── Botón de descarga (PDF o imagen) ────────────────────────────────────── */
+const DescargaButton = ({
+  label,
+  labelBusy,
+  icon: Icon,
+  onDownload,
   variant = "solid",
 }: {
-  propiedad: Propiedad;
-  descripcion: string;
-  variant?: "solid" | "ghost";
+  label: string;
+  labelBusy: string;
+  icon: LucideIcon;
+  onDownload: () => Promise<unknown>;
+  variant?: "solid" | "outline" | "ghost";
 }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,29 +82,34 @@ const PdfButton = ({
     setBusy(true);
     setError(null);
     try {
-      await descargarFichaPdf(propiedad, { descripcion });
+      await onDownload();
     } catch (err) {
-      setError((err as Error).message || "No se pudo crear el PDF.");
+      setError((err as Error).message || "No se pudo crear el archivo.");
     }
     setBusy(false);
   };
 
+  const estilos = {
+    solid:
+      "bg-gold text-cobalt shadow-sm hover:brightness-105 px-5 py-2.5 border border-transparent",
+    outline:
+      "bg-white/10 text-white border border-white/35 hover:bg-white/20 px-5 py-2.5",
+    ghost:
+      "bg-white text-cobalt border border-border/70 hover:bg-muted/60 px-3.5 py-2",
+  }[variant];
+
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-start gap-1">
       <button
         type="button"
         onClick={descargar}
         disabled={busy}
-        className={
-          variant === "solid"
-            ? "flex items-center gap-2 rounded-xl bg-gold px-5 py-2.5 text-xs font-bold text-cobalt shadow-sm transition-all duration-200 hover:brightness-105 disabled:opacity-70"
-            : "flex items-center gap-2 rounded-xl border border-border/70 bg-white px-3.5 py-2 text-xs font-bold text-cobalt transition-colors hover:bg-muted/60 disabled:opacity-70"
-        }
+        className={`flex items-center gap-2 rounded-xl text-xs font-bold transition-all duration-200 disabled:opacity-70 ${estilos}`}
       >
-        {busy ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} strokeWidth={2.4} />}
-        {busy ? "Armando PDF..." : "Descargar PDF"}
+        {busy ? <Loader2 size={14} className="animate-spin" /> : <Icon size={14} strokeWidth={2.4} />}
+        {busy ? labelBusy : label}
       </button>
-      {error && <span className="text-[11px] font-medium text-red-500">{error}</span>}
+      {error && <span className="text-[11px] font-medium text-red-400">{error}</span>}
     </div>
   );
 };
@@ -442,19 +454,35 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
 
       {/* ── Paso 3: resultados ───────────────────────────────────────────── */}
       {contenido && selected && (
-        <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border border-gold/40 bg-gradient-to-r from-cobalt to-cobalt-light p-4 sm:p-5 shadow-[0_10px_28px_-18px_rgba(15,31,61,0.7)]">
+        <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-gold/40 bg-gradient-to-r from-cobalt to-cobalt-light p-4 sm:p-5 shadow-[0_10px_28px_-18px_rgba(15,31,61,0.7)]">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gold/20 text-gold flex-shrink-0">
             <FileDown size={19} strokeWidth={2.2} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-white">Tu ficha PDF está lista</p>
+            <p className="text-sm font-bold text-white">Tus archivos están listos</p>
             <p className="text-xs text-white/65 leading-relaxed mt-0.5">
-              Una hoja con las fotos, la descripción generada, los datos clave, las
-              amenidades y tus datos de contacto. Lista para mandar por WhatsApp o correo.
+              La <strong className="font-semibold text-white/85">ficha PDF</strong> para
+              mandar por WhatsApp o correo, y la{" "}
+              <strong className="font-semibold text-white/85">imagen cuadrada</strong> de
+              1080 × 1080 lista para subir a Instagram.
             </p>
           </div>
-          <div className="flex-shrink-0">
-            <PdfButton propiedad={selected} descripcion={contenido.descripcion} />
+          <div className="flex flex-wrap items-start gap-2.5 flex-shrink-0">
+            <DescargaButton
+              label="Descargar PDF"
+              labelBusy="Armando PDF..."
+              icon={FileDown}
+              onDownload={() =>
+                descargarFichaPdf(selected, { descripcion: contenido.descripcion })
+              }
+            />
+            <DescargaButton
+              label="Imagen para Instagram"
+              labelBusy="Creando imagen..."
+              icon={ImageDown}
+              variant="outline"
+              onDownload={() => descargarImagenInstagram(selected)}
+            />
           </div>
         </div>
       )}
@@ -588,10 +616,16 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                       <div className="space-y-4 p-4">
                         {h.descripcion_generada && (
                           <div className="flex justify-end">
-                            <PdfButton
-                              propiedad={selected}
-                              descripcion={h.descripcion_generada}
+                            <DescargaButton
+                              label="Descargar PDF"
+                              labelBusy="Armando PDF..."
+                              icon={FileDown}
                               variant="ghost"
+                              onDownload={() =>
+                                descargarFichaPdf(selected, {
+                                  descripcion: h.descripcion_generada as string,
+                                })
+                              }
                             />
                           </div>
                         )}
