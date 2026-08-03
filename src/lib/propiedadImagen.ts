@@ -570,16 +570,18 @@ function descargarBlob(blob: Blob, nombre: string) {
  * agente las suba a Instagram en orden. Siempre hay al menos dos (portada y
  * cierre), así que no existe el caso de una sola imagen suelta.
  */
-export async function descargarCarruselInstagram(propiedad: Propiedad): Promise<string> {
+export async function descargarCarruselInstagram(
+  propiedad: Propiedad,
+): Promise<{ nombre: string; laminas: Lamina[] }> {
   const laminas = await crearCarruselInstagram(propiedad);
-  const base = `LUCE-${slug(propiedad.nombre)}`;
 
   const { default: JSZip } = await import("jszip");
   const zip = new JSZip();
   laminas.forEach(({ nombre, blob }) => zip.file(nombre, blob));
   const archivo = await zip.generateAsync({ type: "blob" });
 
-  const nombre = `${base}-carrusel.zip`;
+  const nombre = `LUCE-${slug(propiedad.nombre)}-carrusel.zip`;
   descargarBlob(archivo, nombre);
-  return nombre;
+  // Se devuelven las láminas para poder archivarlas en el historial.
+  return { nombre, laminas };
 }

@@ -297,17 +297,25 @@ Genera el JSON con la descripción, el copy de Instagram y los hashtags.`;
 
   // ── 5. Historial. Si falla, se devuelve el contenido igualmente: perder el
   //       registro no debe costarle al agente el texto ya generado.
+  //       El id se devuelve para que el cliente pueda colgarle después las
+  //       láminas del carrusel de Instagram.
+  let publicacionId: number | null = null;
   if (guardar) {
-    const { error: insErr } = await supabase.from("publicaciones_generadas").insert({
-      propiedad_id: propiedadId,
-      descripcion_generada: descripcion,
-      copy_instagram: copyInstagram,
-      hashtags,
-      asesor: (propiedad as Propiedad).asesor_asignado ?? user.email ?? null,
-      creado_por: user.id,
-      modelo: OPENAI_MODEL,
-    });
+    const { data: fila, error: insErr } = await supabase
+      .from("publicaciones_generadas")
+      .insert({
+        propiedad_id: propiedadId,
+        descripcion_generada: descripcion,
+        copy_instagram: copyInstagram,
+        hashtags,
+        asesor: (propiedad as Propiedad).asesor_asignado ?? user.email ?? null,
+        creado_por: user.id,
+        modelo: OPENAI_MODEL,
+      })
+      .select("id")
+      .maybeSingle();
     if (insErr) console.error("No se pudo guardar el historial", insErr.message);
+    publicacionId = (fila as { id: number } | null)?.id ?? null;
   }
 
   return json(req, {
@@ -315,5 +323,6 @@ Genera el JSON con la descripción, el copy de Instagram y los hashtags.`;
     copy_instagram: copyInstagram,
     hashtags,
     modelo: OPENAI_MODEL,
+    publicacion_id: publicacionId,
   });
 });

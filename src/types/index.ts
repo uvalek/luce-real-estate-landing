@@ -39,6 +39,12 @@ export interface GaleriaFoto {
   categoria: string;
 }
 
+/** Una lámina del carrusel de Instagram ya guardada en Storage. */
+export interface LaminaGuardada {
+  nombre: string;
+  url: string;
+}
+
 /** Matches the "publicaciones_generadas" table in Supabase */
 export interface PublicacionGenerada {
   id: number;
@@ -46,6 +52,8 @@ export interface PublicacionGenerada {
   descripcion_generada: string | null;
   copy_instagram: string | null;
   hashtags: string[] | null;
+  /** Láminas del carrusel ya generadas, en orden. Columna jsonb. */
+  imagenes: LaminaGuardada[] | null;
   asesor: string | null;
   creado_por: string | null;
   modelo: string | null;
@@ -58,6 +66,8 @@ export interface ContenidoGenerado {
   copy_instagram: string;
   hashtags: string[];
   modelo: string;
+  /** Fila creada en `publicaciones_generadas`; null si el historial falló. */
+  publicacion_id: number | null;
 }
 
 /** Legacy interface kept for backward compatibility with mockData */

@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
-import type { ContenidoGenerado, PublicacionGenerada } from "@/types";
+import type { ContenidoGenerado, LaminaGuardada, PublicacionGenerada } from "@/types";
+import type { Lamina } from "@/lib/propiedadImagen";
 
 /**
  * Cliente del generador de contenido para redes.
@@ -76,4 +77,70 @@ export async function listarPublicaciones(
 export async function borrarPublicacion(id: number): Promise<void> {
   const { error } = await supabase.from("publicaciones_generadas").delete().eq("id", id);
   if (error) throw new Error(error.message);
+}
+
+const BUCKET_PUBLICACIONES = "publicaciones";
+
+/**
+ * Sube las láminas del carrusel a Storage y las cuelga de la publicación, para
+ * que el historial conserve exactamente lo que se publicó aunque la propiedad
+ * cambie después.
+ *
+ * Devuelve las láminas guardadas con su URL pública.
+ */
+export async function guardarLaminas(
+  publicacionId: number,
+  propiedadId: number,
+  laminas: Lamina[],
+): Promise<LaminaGuardada[]> {
+  const carpeta = `carruseles/${propiedadId}/${publicacionId}`;
+
+  const guardadas = await Promise.all(
+    laminas.map(async ({ nombre, blob }): Promise<LaminaGuardada> => {
+      const ruta = `${carpeta}/${nombre}`;
+      const { error } = await supabase.storage
+        .from(BUCKET_PUBLICACIONES)
+        .upload(ruta, blob, { cacheControl: "3600", upsert: true, contentType: blob.type });
+      if (error) throw new Error(error.message);
+
+      const { data } = supabase.storage.from(BUCKET_PUBLICACIONES).getPublicUrl(ruta);
+      return { nombre, url: data.publicUrl };
+    }),
+  );
+
+  const { error } = await supabase
+    .from("publicaciones_generadas")
+    .update({ imagenes: guardadas })
+    .eq("id", publicacionId);
+  if (error) throw new Error(error.message);
+
+  return guardadas;
+}
+
+/** Vuelve a descargar un carrusel ya guardado, sin regenerarlo. */
+export async function descargarLaminasGuardadas(
+  imagenes: LaminaGuardada[],
+  nombreArchivo: string,
+): Promise<void> {
+  const archivos = await Promise.all(
+    imagenes.map(async ({ nombre, url }) => {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error("Alguna imagen guardada ya no está disponible.");
+      return { nombre, blob: await r.blob() };
+    }),
+  );
+
+  const { default: JSZip } = await import("jszip");
+  const zip = new JSZip();
+  archivos.forEach(({ nombre, blob }) => zip.file(nombre, blob));
+  const archivo = await zip.generateAsync({ type: "blob" });
+
+  const url = URL.createObjectURL(archivo);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }

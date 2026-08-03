@@ -26,10 +26,17 @@ import {
   generarContenido,
   listarPublicaciones,
   borrarPublicacion,
+  guardarLaminas,
+  descargarLaminasGuardadas,
 } from "@/lib/contenidoApi";
 import { descargarFichaPdf } from "@/lib/propiedadPdf";
 import { descargarCarruselInstagram } from "@/lib/propiedadImagen";
-import type { Propiedad, ContenidoGenerado, PublicacionGenerada } from "@/types";
+import type {
+  Propiedad,
+  ContenidoGenerado,
+  LaminaGuardada,
+  PublicacionGenerada,
+} from "@/types";
 
 interface ContenidoViewProps {
   /** Propiedades ya cargadas por el dashboard — no se vuelve a consultar. */
@@ -491,7 +498,15 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
               labelBusy="Creando imágenes..."
               icon={ImageDown}
               variant="outline"
-              onDownload={() => descargarCarruselInstagram(selected)}
+              onDownload={async () => {
+                const { laminas } = await descargarCarruselInstagram(selected);
+                // Se archiva lo que se acaba de descargar para que el historial
+                // conserve las imágenes tal como se publicaron.
+                if (contenido.publicacion_id) {
+                  await guardarLaminas(contenido.publicacion_id, selected.id, laminas);
+                  cargarHistorial(selected.id);
+                }
+              }}
             />
           </div>
         </div>
@@ -624,8 +639,8 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                     </div>
                     {abierto && (
                       <div className="space-y-4 p-4">
-                        {h.descripcion_generada && (
-                          <div className="flex justify-end">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {h.descripcion_generada && (
                             <DescargaButton
                               label="Descargar PDF"
                               labelBusy="Armando PDF..."
@@ -637,6 +652,63 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                                 })
                               }
                             />
+                          )}
+                          {(h.imagenes || []).length > 0 ? (
+                            <DescargaButton
+                              label="Descargar carrusel"
+                              labelBusy="Preparando..."
+                              icon={ImageDown}
+                              variant="ghost"
+                              onDownload={() =>
+                                descargarLaminasGuardadas(
+                                  h.imagenes as LaminaGuardada[],
+                                  `LUCE-carrusel-${h.id}.zip`,
+                                )
+                              }
+                            />
+                          ) : (
+                            <DescargaButton
+                              label="Generar carrusel"
+                              labelBusy="Creando imágenes..."
+                              icon={ImageDown}
+                              variant="ghost"
+                              onDownload={async () => {
+                                const { laminas } = await descargarCarruselInstagram(selected);
+                                await guardarLaminas(h.id, selected.id, laminas);
+                                cargarHistorial(selected.id);
+                              }}
+                            />
+                          )}
+                        </div>
+
+                        {/* Láminas archivadas: lo que realmente se publicó */}
+                        {(h.imagenes || []).length > 0 && (
+                          <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                              Carrusel guardado · {(h.imagenes as LaminaGuardada[]).length} imágenes
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {(h.imagenes as LaminaGuardada[]).map((img, i) => (
+                                <a
+                                  key={img.url}
+                                  href={img.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  title={img.nombre}
+                                  className="group relative block h-20 w-20 overflow-hidden rounded-lg border border-border/60"
+                                >
+                                  <img
+                                    src={img.url}
+                                    alt={img.nombre}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                  />
+                                  <span className="absolute bottom-0 left-0 rounded-tr-md bg-cobalt/85 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                                    {i + 1}
+                                  </span>
+                                </a>
+                              ))}
+                            </div>
                           </div>
                         )}
                         {h.descripcion_generada && (

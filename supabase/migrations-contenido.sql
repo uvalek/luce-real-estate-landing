@@ -64,7 +64,46 @@ create policy publicaciones_delete_auth on public.publicaciones_generadas
   for delete to authenticated using (true);
 
 -- ----------------------------------------------------------------------------
--- 3. Secretos que hay que poner A MANO en el dashboard de Supabase
+-- 3. Carruseles de Instagram archivados
+--    (migración `carruseles_guardados_en_historial`, 2026-08-02)
+--
+--    Las láminas se guardan en Storage y se cuelgan de la publicación, para que
+--    el historial conserve lo que realmente se publicó aunque la propiedad
+--    cambie después.
+-- ----------------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('publicaciones', 'publicaciones', true)
+on conflict (id) do nothing;
+
+-- Público igual que fotospropiedades: son imágenes hechas para publicarse.
+drop policy if exists "Public read publicaciones" on storage.objects;
+create policy "Public read publicaciones" on storage.objects
+  for select to public using (bucket_id = 'publicaciones');
+
+drop policy if exists "Authenticated upload publicaciones" on storage.objects;
+create policy "Authenticated upload publicaciones" on storage.objects
+  for insert to authenticated with check (bucket_id = 'publicaciones');
+
+-- UPDATE hace falta porque al regenerar un carrusel se sube con upsert sobre
+-- la misma ruta, y eso es un UPDATE en storage.objects, no un INSERT.
+drop policy if exists "Authenticated update publicaciones" on storage.objects;
+create policy "Authenticated update publicaciones" on storage.objects
+  for update to authenticated using (bucket_id = 'publicaciones');
+
+drop policy if exists "Authenticated delete publicaciones" on storage.objects;
+create policy "Authenticated delete publicaciones" on storage.objects
+  for delete to authenticated using (bucket_id = 'publicaciones');
+
+alter table public.publicaciones_generadas
+  add column if not exists imagenes jsonb default '[]'::jsonb;
+
+comment on column public.publicaciones_generadas.imagenes is
+  'Laminas del carrusel de Instagram ya generadas, en orden: [{nombre, url}]';
+
+-- Ruta de las láminas: carruseles/{propiedad_id}/{publicacion_id}/01-portada.jpg
+
+-- ----------------------------------------------------------------------------
+-- 4. Secretos que hay que poner A MANO en el dashboard de Supabase
 --    (Project Settings → Edge Functions → Secrets). El MCP no puede escribirlos.
 --
 --    OPENAI_API_KEY   (obligatorio) — clave de platform.openai.com
