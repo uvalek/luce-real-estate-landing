@@ -6,7 +6,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://lrxwvyilfobwyndikqpq.supabase.co wss://lrxwvyilfobwyndikqpq.supabase.co https://megachatbot-chatbotmain.aslx54.easypanel.host; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: https://lrxwvyilfobwyndikqpq.supabase.co; connect-src 'self' https://lrxwvyilfobwyndikqpq.supabase.co wss://lrxwvyilfobwyndikqpq.supabase.co https://megachatbot-chatbotmain.aslx54.easypanel.host https://videoslucerealstate-videoslucerealstate.3bmm1w.easypanel.host; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
         },
         {
           "key": "Strict-Transport-Security",

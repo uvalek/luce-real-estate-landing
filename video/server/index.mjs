@@ -161,6 +161,16 @@ async function renderizar(jobId, { supabase, propiedad, publicacionId }) {
   }
 }
 
+// Abrir la raíz en el navegador es lo primero que hace cualquiera para ver si
+// el servicio quedó bien; que responda "Cannot GET /" confunde de más.
+app.get("/", (_req, res) =>
+  res.json({
+    servicio: "LUCE — render de reels",
+    ok: true,
+    rutas: ["GET /api/video/salud", "POST /api/video/render", "GET /api/video/render/:jobId"],
+  }),
+);
+
 app.get("/api/video/salud", (_req, res) => res.json({ ok: true }));
 
 app.post("/api/video/render", async (req, res) => {
