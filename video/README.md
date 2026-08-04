@@ -82,9 +82,12 @@ servicio aparte que construye solo esta carpeta.
 
 1. En EasyPanel: **Create Service → App**, fuente **GitHub**, apuntando a
    `uvalek/luce-real-estate-landing`, rama `main`.
-2. **Build: Dockerfile**, y como *build context* / *root directory* pon
-   `video`. Es el paso clave: si apunta a la raíz, intentará construir el
-   dashboard en lugar del servicio de video.
+2. **Build: Dockerfile**, y en el campo **File** pon la ruta del archivo:
+   `video/Dockerfile`. Es la ruta al archivo, no la carpeta.
+
+   EasyPanel construye usando la **raíz del repo** como contexto, por eso el
+   `Dockerfile` copia con rutas `video/…`. El `.dockerignore` de la raíz evita
+   que se envíen las dependencias y los videos ya renderizados.
 3. Variables de entorno:
 
    ```

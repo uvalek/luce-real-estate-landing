@@ -5,7 +5,12 @@
 # y falla en el primer render con un error de librería compartida. Por eso se
 # instalan explícitamente abajo.
 #
-# Contexto de build: la carpeta `video/` de este repo (no la raíz).
+# CONTEXTO DE BUILD: la RAÍZ del repositorio, no esta carpeta.
+# EasyPanel construye desde la raíz y solo pregunta por la ruta del Dockerfile
+# (`video/Dockerfile`), así que todas las rutas de COPY llevan el prefijo
+# `video/`. Para construirlo a mano, desde la raíz del repo:
+#
+#   docker build -f video/Dockerfile -t luce-video .
 
 FROM node:22-bookworm-slim
 
@@ -32,10 +37,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# Primero solo los manifiestos: si no cambian, Docker reutiliza la capa de
+# npm ci y el build es mucho más rápido.
+COPY video/package.json video/package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY . .
+COPY video/ ./
 
 # Se descarga Chrome durante el build (~100 MB) para que el primer video no
 # tenga que esperarlo.

@@ -1,0 +1,16 @@
+# El build del servicio de video (video/Dockerfile) usa la raíz del repo como
+# contexto. Sin esto, Docker enviaría cientos de megas de dependencias y
+# artefactos que la imagen no necesita.
+node_modules
+video/node_modules
+dist
+dist-ssr
+video/salida
+video/props.json
+video/.remotion
+.git
+.claude
+.env
+.env.*
+*.log
+.DS_Store
