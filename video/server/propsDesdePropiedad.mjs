@@ -62,6 +62,10 @@ export function propsDesdePropiedad(p) {
       telefono: p.asesor_telefono ?? "",
       email: p.asesor_email ?? "",
     },
+    // El audio lo rellena el servidor después de generar la voz.
+    narracionUrl: null,
+    narracionSegundos: 0,
+    conMusica: true,
   };
 }
 

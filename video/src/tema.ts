@@ -68,6 +68,12 @@ export const reelSchema = z.object({
     telefono: z.string(),
     email: z.string(),
   }),
+  /** Narración generada con voz sintética. null = reel sin voz. */
+  narracionUrl: z.string().nullable(),
+  /** Cuánto dura la narración; el cierre se alarga si hace falta para que quepa. */
+  narracionSegundos: z.number(),
+  /** Pista de fondo (vive en `public/musica/`). */
+  conMusica: z.boolean(),
 });
 
 export type FotoReel = z.infer<typeof fotoSchema>;

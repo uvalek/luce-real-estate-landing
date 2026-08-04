@@ -19,6 +19,8 @@ interface VideoReelPanelProps {
 const ETIQUETA_ESTADO: Record<string, string> = {
   "en cola": "En cola...",
   preparando: "Preparando la escena...",
+  "escribiendo el guion": "Escribiendo el guion de la voz...",
+  "grabando la voz": "Grabando la narración...",
   renderizando: "Renderizando el video...",
   subiendo: "Guardando el video...",
   listo: "¡Listo!",
@@ -117,8 +119,8 @@ const VideoReelPanel = ({ propiedad, publicacionId, videoPrevio }: VideoReelPane
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-bold text-foreground">Reel vertical para Instagram y TikTok</h3>
           <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-            Un video de 1080 × 1920 con las fotos en movimiento, los datos animados y una
-            pantalla final con tus datos de contacto. Dura entre 21 y 27 segundos.
+            Un video de 1080 × 1920 con las fotos en movimiento, los datos animados, música
+            de fondo y una narradora que cuenta la propiedad. Dura entre 21 y 27 segundos.
           </p>
         </div>
 

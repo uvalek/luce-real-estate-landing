@@ -66,12 +66,42 @@ Al terminar sube el `.mp4` al bucket `publicaciones`
 
 ### Variables de entorno
 
-| Variable            | Para qué                                          |
-| ------------------- | ------------------------------------------------- |
-| `PORT`              | puerto (8787 por defecto)                          |
-| `SUPABASE_URL`      | URL del proyecto                                   |
-| `SUPABASE_ANON_KEY` | anon key **pública** (no la service key)           |
-| `ALLOWED_ORIGINS`   | orígenes permitidos, separados por comas           |
+| Variable             | Para qué                                                     |
+| -------------------- | ------------------------------------------------------------ |
+| `PORT`               | puerto (8787 por defecto)                                     |
+| `SUPABASE_URL`       | URL del proyecto                                              |
+| `SUPABASE_ANON_KEY`  | anon key **pública** (no la service key)                      |
+| `ALLOWED_ORIGINS`    | orígenes permitidos, separados por comas                      |
+| `OPENAI_API_KEY`     | para la narración. Sin ella el reel sale solo con música       |
+| `OPENAI_TTS_VOICE`   | opcional: `nova` (por defecto), `shimmer`, `onyx`, `echo`      |
+| `OPENAI_TTS_MODEL`   | opcional: `gpt-4o-mini-tts` por defecto, cae a `tts-1`         |
+
+---
+
+## Audio
+
+**Música.** La pista es `public/musica/fondo-luce.mp3`: un pad ambiental de 32 s
+sintetizado por `scripts/generar-musica.mjs`. Se hace así a propósito — música
+generada aquí no tiene licencia que revisar ni atribución que poner en cada
+publicación.
+
+Para cambiarla, reemplaza el archivo por otro con el mismo nombre. Si usas una
+pista de terceros, revisa que permita uso comercial: Pixabay Audio es la opción
+más simple (licencia libre, sin atribución). Un detalle práctico: en Instagram
+las cuentas de empresa tienen la biblioteca de música recortada, y llevarla ya
+incrustada en el video evita ese problema.
+
+**Narración.** El servidor escribe un guion a la medida de lo que dura el video
+—la descripción larga del dashboard tarda como un minuto leída y no cabría— y
+lo convierte a voz con OpenAI. Cuesta alrededor de dos centavos de peso por
+video.
+
+La música baja automáticamente mientras habla la voz y vuelve a subir al
+terminar. Si la voz sale más larga de lo previsto, la escena final se alarga
+sola para que quepa.
+
+Si la narración falla por cualquier motivo, el video se genera igual con música
+y sin voz: quedarse sin voz no debe costar el reel entero.
 
 ---
 
@@ -92,6 +122,7 @@ servicio aparte que construye solo esta carpeta.
 
    ```
    SUPABASE_ANON_KEY = <la anon key pública>
+   OPENAI_API_KEY    = <la misma clave que usas en Supabase>
    ALLOWED_ORIGINS   = https://luce-real-estate-landing.vercel.app
    PORT              = 8787
    ```

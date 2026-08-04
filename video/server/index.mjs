@@ -25,8 +25,13 @@ import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
+// `getAudioDurationInSeconds` de @remotion/media-utils SOLO funciona en el
+// navegador; aquí estamos en Node, así que se mide con el analizador de medios.
+import { parseMedia } from "@remotion/media-parser";
+import { nodeReader } from "@remotion/media-parser/node";
 import { createClient } from "@supabase/supabase-js";
 import { propsDesdePropiedad, slug } from "./propsDesdePropiedad.mjs";
+import { escribirGuion, narracionDisponible, sintetizarVoz } from "./narracion.mjs";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -98,22 +103,85 @@ async function autenticar(req, res) {
   return { supabase, user: data.user, authHeader };
 }
 
+/**
+ * Genera la voz en off y la sube a Storage.
+ *
+ * El guion se pide a la medida de lo que dura el video, porque la descripción
+ * larga del dashboard tarda como un minuto leída y no cabría.
+ * Si algo falla, se devuelve null: el reel sale con música y sin voz, que es
+ * mejor que no salir.
+ */
+async function prepararNarracion(jobId, { supabase, propiedad, props, segundos }) {
+  if (!narracionDisponible()) return null;
+
+  const temporal = path.join(os.tmpdir(), `luce-voz-${jobId}.mp3`);
+  try {
+    actualizar(jobId, { estado: "escribiendo el guion", progreso: 4 });
+    const guion = await escribirGuion(props, segundos);
+
+    actualizar(jobId, { estado: "grabando la voz", progreso: 10 });
+    const mp3 = await sintetizarVoz(guion);
+    await fs.promises.writeFile(temporal, mp3);
+
+    const { durationInSeconds } = await parseMedia({
+      src: temporal,
+      fields: { durationInSeconds: true },
+      reader: nodeReader,
+      acknowledgeRemotionLicense: true,
+    });
+    const duracion = durationInSeconds ?? 0;
+    if (!duracion) throw new Error("No se pudo medir la duración de la voz");
+
+    const ruta = `narraciones/${propiedad.id}/${jobId}.mp3`;
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .upload(ruta, mp3, { contentType: "audio/mpeg", upsert: true, cacheControl: "3600" });
+    if (error) throw new Error(error.message);
+
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(ruta);
+    console.log(`[${jobId}] narración de ${duracion.toFixed(1)}s: "${guion.slice(0, 60)}..."`);
+    return { url: data.publicUrl, segundos: duracion, guion };
+  } catch (e) {
+    // Perder la voz no debe costar el video entero.
+    console.error(`[${jobId}] sin narración:`, e.message);
+    return null;
+  } finally {
+    fs.promises.unlink(temporal).catch(() => {});
+  }
+}
+
 async function renderizar(jobId, { supabase, propiedad, publicacionId }) {
   const salida = path.join(os.tmpdir(), `luce-reel-${jobId}.mp4`);
   try {
     actualizar(jobId, { estado: "preparando", progreso: 0 });
     const serveUrl = await obtenerBundle();
 
-    const inputProps = propsDesdePropiedad(propiedad);
-    const composition = await selectComposition({
-      serveUrl,
-      id: "PropiedadReel",
-      inputProps,
+    let inputProps = propsDesdePropiedad(propiedad);
+
+    // Primero se mide el video sin voz para saber cuánto puede durar el guion.
+    const base = await selectComposition({ serveUrl, id: "PropiedadReel", inputProps });
+    const segundosBase = base.durationInFrames / base.fps;
+
+    const narracion = await prepararNarracion(jobId, {
+      supabase,
+      propiedad,
+      props: inputProps,
+      segundos: segundosBase,
     });
+    if (narracion) {
+      inputProps = {
+        ...inputProps,
+        narracionUrl: narracion.url,
+        narracionSegundos: narracion.segundos,
+      };
+    }
+
+    // Se vuelve a medir: si la voz salió más larga, el cierre se alarga solo.
+    const composition = await selectComposition({ serveUrl, id: "PropiedadReel", inputProps });
 
     actualizar(jobId, {
       estado: "renderizando",
-      progreso: 0,
+      progreso: 16,
       duracion: Math.round(composition.durationInFrames / composition.fps),
     });
 
@@ -123,9 +191,9 @@ async function renderizar(jobId, { supabase, propiedad, publicacionId }) {
       codec: "h264",
       outputLocation: salida,
       inputProps,
-      // Se reserva 0.92 del avance al render; el resto es la subida.
+      // El render ocupa del 16 % al 92 %; antes va el audio, después la subida.
       onProgress: ({ progress }) =>
-        actualizar(jobId, { progreso: Math.round(progress * 92) }),
+        actualizar(jobId, { progreso: 16 + Math.round(progress * 76) }),
     });
 
     actualizar(jobId, { estado: "subiendo", progreso: 94 });

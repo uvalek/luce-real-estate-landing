@@ -26,6 +26,10 @@ const EJEMPLO: ReelProps = {
     telefono: "241 123 4567",
     email: "ernesto@luce.mx",
   },
+  // En el estudio no hay narración: se genera al renderizar desde el servidor.
+  narracionUrl: null,
+  narracionSegundos: 0,
+  conMusica: true,
 };
 
 export const RemotionRoot: React.FC = () => (
