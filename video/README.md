@@ -75,6 +75,36 @@ Al terminar sube el `.mp4` al bucket `publicaciones`
 
 ---
 
+## Desplegarlo en EasyPanel
+
+Es el **mismo repositorio de GitHub**, no hace falta uno nuevo. Se crea un
+servicio aparte que construye solo esta carpeta.
+
+1. En EasyPanel: **Create Service → App**, fuente **GitHub**, apuntando a
+   `uvalek/luce-real-estate-landing`, rama `main`.
+2. **Build: Dockerfile**, y como *build context* / *root directory* pon
+   `video`. Es el paso clave: si apunta a la raíz, intentará construir el
+   dashboard en lugar del servicio de video.
+3. Variables de entorno:
+
+   ```
+   SUPABASE_ANON_KEY = <la anon key pública>
+   ALLOWED_ORIGINS   = https://luce-real-estate-landing.vercel.app
+   PORT              = 8787
+   ```
+
+4. Puerto expuesto: `8787`. Asígnale un dominio (por ejemplo
+   `video.tudominio.com`).
+5. Recursos: dale al menos **2 GB de RAM y 2 vCPU**. Renderizar es lo más
+   pesado que hace este proyecto; con menos funciona pero cada video puede
+   tardar varios minutos.
+
+Por qué hace falta el `Dockerfile` en vez de un "app de Node" normal: la imagen
+base de Node no trae las librerías de sistema del Chromium que usa Remotion.
+Sin ellas el servicio arranca bien y **falla en el primer render**. El
+`Dockerfile` de esta carpeta las instala y además deja Chrome descargado
+durante el build.
+
 ## Conectarlo al dashboard
 
 1. Levanta el servicio donde vaya a vivir (EasyPanel, un VPS, o tu máquina).
@@ -103,7 +133,7 @@ núcleos disponibles. Para 3-5 videos por semana un contenedor pequeño alcanza.
 
 ## Licencia de Remotion
 
-**Remotion no es software libre para todos los usos.** Es gratis para personas
-y para empresas de hasta 3 empleados; a partir de ahí requiere una licencia de
-empresa de pago. Antes de usar esto en producción conviene revisar
-<https://remotion.dev/license> y ver en qué caso cae LUCE.
+Remotion es gratis para personas y para empresas de hasta 3 empleados; a partir
+de ahí requiere una licencia de empresa de pago. Este proyecto lo desarrolla una
+sola persona, así que cae en el uso gratuito. Si algún día se suma equipo, hay
+que revisar <https://remotion.dev/license>.
