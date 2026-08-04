@@ -54,6 +54,8 @@ export interface PublicacionGenerada {
   hashtags: string[] | null;
   /** Láminas del carrusel ya generadas, en orden. Columna jsonb. */
   imagenes: LaminaGuardada[] | null;
+  /** Reel vertical 1080x1920 ya renderizado, si lo hay. */
+  video_url: string | null;
   asesor: string | null;
   creado_por: string | null;
   modelo: string | null;

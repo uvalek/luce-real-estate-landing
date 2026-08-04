@@ -18,6 +18,7 @@ import {
   MapPin,
   FileDown,
   ImageDown,
+  Film,
   type LucideIcon,
 } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
@@ -29,6 +30,7 @@ import {
   guardarLaminas,
   descargarLaminasGuardadas,
 } from "@/lib/contenidoApi";
+import VideoReelPanel from "@/components/admin/VideoReelPanel";
 import { descargarFichaPdf } from "@/lib/propiedadPdf";
 import { descargarCarruselInstagram } from "@/lib/propiedadImagen";
 import type {
@@ -513,6 +515,18 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
       )}
 
       {contenido && selected && (
+        <div className="mb-5">
+          <VideoReelPanel
+            propiedad={selected}
+            publicacionId={contenido.publicacion_id}
+            videoPrevio={
+              historial.find((h) => h.id === contenido.publicacion_id)?.video_url ?? null
+            }
+          />
+        </div>
+      )}
+
+      {contenido && selected && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
           {/* Descripción */}
           <div className="rounded-2xl border border-border/70 bg-white p-4 sm:p-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]">
@@ -652,6 +666,18 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                                 })
                               }
                             />
+                          )}
+                          {h.video_url && (
+                            <a
+                              href={h.video_url}
+                              download
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-2 rounded-xl border border-border/70 bg-white px-3.5 py-2 text-xs font-bold text-cobalt transition-colors hover:bg-muted/60"
+                            >
+                              <Film size={14} strokeWidth={2.4} />
+                              Descargar video
+                            </a>
                           )}
                           {(h.imagenes || []).length > 0 ? (
                             <DescargaButton

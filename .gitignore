@@ -27,3 +27,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Remotion (carpeta video/): dependencias, videos renderizados y props de prueba
+video/node_modules
+video/salida
+video/props.json
+video/.remotion

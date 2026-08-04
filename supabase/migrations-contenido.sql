@@ -102,6 +102,14 @@ comment on column public.publicaciones_generadas.imagenes is
 
 -- Ruta de las láminas: carruseles/{propiedad_id}/{publicacion_id}/01-portada.jpg
 
+-- Reel vertical 1080x1920 renderizado con Remotion (carpeta video/ del repo).
+-- Se guarda en el mismo bucket: videos/{propiedad_id}/{job}/nombre-reel.mp4
+alter table public.publicaciones_generadas
+  add column if not exists video_url text;
+
+comment on column public.publicaciones_generadas.video_url is
+  'Reel vertical 1080x1920 en el bucket publicaciones: videos/{propiedad_id}/{job}.mp4';
+
 -- ----------------------------------------------------------------------------
 -- 4. Secretos que hay que poner A MANO en el dashboard de Supabase
 --    (Project Settings → Edge Functions → Secrets). El MCP no puede escribirlos.
