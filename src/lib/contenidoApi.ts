@@ -30,10 +30,13 @@ const readError = async (r: Response): Promise<string> => {
   return `No se pudo generar el contenido (error ${r.status}).`;
 };
 
+/** Tonos de redacción disponibles. El servidor rechaza cualquier otro valor. */
+export type TonoContenido = "profesional" | "cercano" | "lujo" | "directo";
+
 /** Genera descripción + copy de Instagram para una propiedad. */
 export async function generarContenido(
   propiedadId: number,
-  tono: "profesional" | "cercano" = "profesional",
+  tono: TonoContenido = "profesional",
 ): Promise<ContenidoGenerado> {
   const {
     data: { session },

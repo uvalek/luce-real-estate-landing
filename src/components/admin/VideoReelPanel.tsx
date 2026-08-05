@@ -126,35 +126,25 @@ const VideoReelPanel = ({
   const pct = progreso?.progreso ?? 0;
 
   return (
-    <div
-      className={
-        compacto
-          ? ""
-          : "rounded-2xl border border-border/70 bg-white p-4 sm:p-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]"
-      }
-    >
+    <div>
       <div
         className={
           compacto
             ? "flex flex-wrap items-center gap-2.5"
-            : "flex flex-col sm:flex-row sm:items-center gap-4"
+            : "flex flex-col sm:flex-row sm:items-end gap-6"
         }
       >
         {!compacto && (
-          <>
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-cobalt text-white flex-shrink-0">
-              <Film size={19} strokeWidth={2.2} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-bold text-foreground">
-                Reel vertical para Instagram y TikTok
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-                Un video de 1080 × 1920 con las fotos en movimiento, los datos animados, música
-                de fondo y una narradora que cuenta la propiedad. Dura entre 21 y 27 segundos.
-              </p>
-            </div>
-          </>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-heading text-[11px] font-extrabold uppercase tracking-[0.24em] text-cobalt/60">
+              Reel vertical
+            </h3>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-cobalt/55">
+              Video de 1080 × 1920 para Instagram y TikTok: las fotos en movimiento, los
+              datos animados, música de fondo y una narradora que cuenta la propiedad.
+              Entre 21 y 27 segundos.
+            </p>
+          </div>
         )}
 
         <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
@@ -164,11 +154,11 @@ const VideoReelPanel = ({
               download
               target="_blank"
               rel="noreferrer"
-              className={`flex items-center gap-2 rounded-xl bg-cobalt text-xs font-bold text-white shadow-sm transition-colors hover:bg-cobalt-light ${
-                compacto ? "px-3.5 py-2" : "px-5 py-2.5"
+              className={`inline-flex items-center gap-2 bg-cobalt font-heading text-[11px] font-extrabold uppercase tracking-[0.16em] text-white transition-colors hover:bg-cobalt-light ${
+                compacto ? "px-4 py-2.5" : "px-6 py-3.5"
               }`}
             >
-              <Download size={14} strokeWidth={2.4} />
+              <Download size={14} strokeWidth={2.4} className="text-gold" />
               Descargar video
             </a>
           )}
@@ -177,42 +167,44 @@ const VideoReelPanel = ({
             onClick={generar}
             disabled={trabajando || !disponible}
             title={disponible ? undefined : "El servicio de video no está configurado"}
-            className={`flex items-center gap-2 rounded-xl text-xs font-bold transition-all duration-200 disabled:opacity-60 ${
-              compacto ? "px-3.5 py-2" : "px-5 py-2.5"
+            className={`inline-flex items-center gap-2 font-heading text-[11px] font-extrabold uppercase tracking-[0.16em] transition-colors duration-200 disabled:opacity-50 ${
+              compacto ? "px-4 py-2.5" : "px-6 py-3.5"
             } ${
               url || compacto
-                ? "border border-border/70 bg-white text-cobalt hover:bg-muted/60"
-                : "bg-gold text-cobalt shadow-sm hover:brightness-105"
+                ? "border border-cobalt/20 bg-transparent text-cobalt hover:border-gold hover:text-cobalt"
+                : "bg-gold text-cobalt hover:brightness-105"
             }`}
           >
             {trabajando ? (
-              <Loader2 size={14} className="animate-spin" />
+              <Loader2 size={14} className="animate-spin text-gold" />
             ) : url ? (
-              <RefreshCw size={14} strokeWidth={2.4} />
+              <RefreshCw size={14} strokeWidth={2.4} className="text-gold" />
             ) : (
-              <Film size={14} strokeWidth={2.4} />
+              <Film size={14} strokeWidth={2.4} className={url ? "text-gold" : undefined} />
             )}
-            {trabajando ? "Generando..." : url ? "Generar de nuevo" : "Generar Video"}
+            {trabajando ? "Generando" : url ? "Generar de nuevo" : "Generar Video"}
           </button>
         </div>
       </div>
 
       {/* Barra de progreso */}
       {trabajando && (
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-cobalt">
-              {ETIQUETA_ESTADO[progreso?.estado ?? "en cola"] ?? "Trabajando..."}
+        <div className="mt-5">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="font-heading text-[11px] font-extrabold uppercase tracking-[0.16em] text-cobalt/70">
+              {ETIQUETA_ESTADO[progreso?.estado ?? "en cola"] ?? "Trabajando"}
             </span>
-            <span className="text-xs font-bold text-muted-foreground tabular-nums">{pct}%</span>
+            <span className="font-heading text-[11px] font-extrabold tabular-nums text-gold">
+              {pct}%
+            </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-[3px] w-full overflow-hidden bg-cobalt/10">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cobalt to-gold transition-all duration-500"
-              style={{ width: `${Math.max(pct, 4)}%` }}
+              className="h-full bg-gold transition-all duration-500"
+              style={{ width: `${Math.max(pct, 3)}%` }}
             />
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">
+          <p className="mt-2 text-[11px] text-cobalt/45">
             Puede tardar un par de minutos. Puedes seguir usando el dashboard, pero no
             cierres esta pantalla.
           </p>
@@ -222,7 +214,7 @@ const VideoReelPanel = ({
       {/* El aviso de "no configurado" solo en el panel grande: en el historial
           se repetiría en cada entrada. */}
       {!disponible && !compacto && (
-        <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-300/70 bg-amber-50 px-4 py-3">
+        <div className="mt-5 flex items-start gap-3 border-l-2 border-amber-400 bg-amber-50/70 px-5 py-4">
           <AlertTriangle size={16} className="text-amber-600 flex-shrink-0 mt-px" />
           <p className="text-xs text-amber-900/85 leading-relaxed">
             El servicio de video todavía no está encendido. Renderizar necesita un servidor
@@ -234,7 +226,7 @@ const VideoReelPanel = ({
       )}
 
       {error && (
-        <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-red-300/70 bg-red-50 px-4 py-3">
+        <div className="mt-5 flex items-start gap-3 border-l-2 border-red-400 bg-red-50/70 px-5 py-4">
           <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-px" />
           <p className="text-xs text-red-700/90 leading-relaxed">{error}</p>
         </div>

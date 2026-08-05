@@ -77,6 +77,21 @@ const AMENIDAD_LABELS: Record<string, string> = {
   paneles_solares: "paneles solares",
 };
 
+/**
+ * Tonos de redacción. La clave es lo que manda el dashboard; el valor es la
+ * instrucción que recibe el modelo.
+ */
+const TONOS: Record<string, string> = {
+  profesional:
+    "profesional y elegante, como un bróker con oficio: claro, sobrio, sin adornos de más",
+  cercano:
+    "cercano y conversacional, de tú a tú, como quien le platica a un amigo lo que encontró",
+  lujo:
+    "aspiracional y exclusivo, de propiedad premium: evoca la experiencia de vivir ahí, cuida el ritmo de las frases y usa un vocabulario refinado sin caer en la cursilería",
+  directo:
+    "directo y con sentido de urgencia, orientado a la acción: frases cortas, el dato duro por delante y una invitación clara a moverse rápido",
+};
+
 const TIPO_LABELS: Record<string, string> = {
   casa: "Casa",
   departamento: "Departamento",
@@ -221,7 +236,7 @@ Deno.serve(async (req: Request) => {
   if (!propiedadId || Number.isNaN(propiedadId)) {
     return json(req, { error: "Falta el id de la propiedad" }, 400);
   }
-  const tono = body.tono === "cercano" ? "cercano" : "profesional";
+  const tono = TONOS[body.tono ?? ""] ? (body.tono as string) : "profesional";
   const guardar = body.guardar !== false;
 
   // ── 3. La propiedad se lee de la BD, NUNCA del cliente ────────────────────
@@ -243,7 +258,7 @@ Deno.serve(async (req: Request) => {
   const userPrompt = `Ficha real de la propiedad:
 ${ficha}
 
-Tono solicitado: ${tono === "cercano" ? "cercano y conversacional, de tú a tú" : "profesional y elegante"}.
+Tono solicitado: ${TONOS[tono]}.
 
 Genera el JSON con la descripción, el copy de Instagram y los hashtags.`;
 

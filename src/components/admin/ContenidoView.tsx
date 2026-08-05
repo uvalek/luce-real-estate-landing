@@ -1,24 +1,19 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  Sparkles,
   Search,
   Loader2,
   Copy,
   Check,
   AlertTriangle,
   RefreshCw,
-  Instagram,
-  FileText,
   ImageOff,
-  History,
   ChevronDown,
-  ChevronUp,
   Pencil,
   Trash2,
-  MapPin,
   FileDown,
   ImageDown,
   ArrowLeft,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
@@ -29,6 +24,7 @@ import {
   borrarPublicacion,
   guardarLaminas,
   descargarLaminasGuardadas,
+  type TonoContenido,
 } from "@/lib/contenidoApi";
 import VideoReelPanel from "@/components/admin/VideoReelPanel";
 import { descargarFichaPdf } from "@/lib/propiedadPdf";
@@ -47,6 +43,13 @@ interface ContenidoViewProps {
   /** Abre el formulario de la propiedad para completar datos faltantes. */
   onEditProperty: (p: Propiedad) => void;
 }
+
+const TONOS: { value: TonoContenido; nombre: string; pie: string }[] = [
+  { value: "profesional", nombre: "Profesional", pie: "Sobrio y con oficio" },
+  { value: "cercano", nombre: "Cercano", pie: "De tú a tú" },
+  { value: "lujo", nombre: "Lujo", pie: "Aspiracional y exclusivo" },
+  { value: "directo", nombre: "Directo", pie: "Al grano, con urgencia" },
+];
 
 /** Datos que hacen la diferencia en el contenido generado. */
 const datosFaltantes = (p: Propiedad): string[] => {
@@ -70,61 +73,86 @@ const fechaCorta = (iso: string): string =>
     minute: "2-digit",
   });
 
-/* ── Botón de descarga (PDF o imagen) ────────────────────────────────────── */
-const DescargaButton = ({
+/* ── Piezas del sistema visual ───────────────────────────────────────────── */
+
+/**
+ * Encabezado de sección al estilo editorial: número, rótulo en versalitas y un
+ * filete que se lleva el resto del ancho. Sustituye a las tarjetas: la
+ * jerarquía la hacen la tipografía y el aire, no las cajas.
+ */
+const Rubrica = ({
+  numero,
+  titulo,
+  accion,
+}: {
+  numero: string;
+  titulo: string;
+  accion?: React.ReactNode;
+}) => (
+  <div className="flex items-center gap-4 mb-6">
+    <span className="font-heading text-[11px] font-extrabold tracking-[0.28em] text-gold tabular-nums">
+      {numero}
+    </span>
+    <h3 className="font-heading text-[11px] font-extrabold uppercase tracking-[0.26em] text-cobalt/60 whitespace-nowrap">
+      {titulo}
+    </h3>
+    <span aria-hidden className="h-px flex-1 bg-cobalt/10" />
+    {accion}
+  </div>
+);
+
+const botonBase =
+  "inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors duration-200 disabled:opacity-50";
+
+/** Acción secundaria: sin caja, subrayado al pasar el cursor. */
+const AccionTexto = ({
   label,
   labelBusy,
   icon: Icon,
   onDownload,
-  variant = "solid",
 }: {
   label: string;
   labelBusy: string;
   icon: LucideIcon;
   onDownload: () => Promise<unknown>;
-  variant?: "solid" | "outline" | "ghost";
 }) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const descargar = async () => {
+  const ejecutar = async () => {
     setBusy(true);
     setError(null);
     try {
       await onDownload();
-    } catch (err) {
-      setError((err as Error).message || "No se pudo crear el archivo.");
+    } catch (e) {
+      setError((e as Error).message || "No se pudo crear el archivo.");
     }
     setBusy(false);
   };
 
-  const estilos = {
-    solid:
-      "bg-gold text-cobalt shadow-sm hover:brightness-105 px-5 py-2.5 border border-transparent",
-    outline:
-      "bg-white/10 text-white border border-white/35 hover:bg-white/20 px-5 py-2.5",
-    ghost:
-      "bg-white text-cobalt border border-border/70 hover:bg-muted/60 px-3.5 py-2",
-  }[variant];
-
   return (
-    <div className="flex flex-col items-start gap-1">
+    <span className="inline-flex flex-col items-start gap-0.5">
       <button
         type="button"
-        onClick={descargar}
+        onClick={ejecutar}
         disabled={busy}
-        className={`flex items-center gap-2 rounded-xl text-xs font-bold transition-all duration-200 disabled:opacity-70 ${estilos}`}
+        className={`${botonBase} text-cobalt/75 hover:text-cobalt`}
       >
-        {busy ? <Loader2 size={14} className="animate-spin" /> : <Icon size={14} strokeWidth={2.4} />}
-        {busy ? labelBusy : label}
+        {busy ? (
+          <Loader2 size={13} className="animate-spin text-gold" />
+        ) : (
+          <Icon size={13} strokeWidth={2.4} className="text-gold" />
+        )}
+        <span className="border-b border-transparent pb-px hover:border-gold">
+          {busy ? labelBusy : label}
+        </span>
       </button>
-      {error && <span className="text-[11px] font-medium text-red-400">{error}</span>}
-    </div>
+      {error && <span className="text-[10px] font-medium text-red-500">{error}</span>}
+    </span>
   );
 };
 
-/* ── Botón de copiar al portapapeles ─────────────────────────────────────── */
-const CopyButton = ({ text, label = "Copiar" }: { text: string; label?: string }) => {
+const CopiarTexto = ({ text, label = "Copiar" }: { text: string; label?: string }) => {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -141,29 +169,26 @@ const CopyButton = ({ text, label = "Copiar" }: { text: string; label?: string }
     <button
       type="button"
       onClick={copy}
-      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all duration-200 ${
-        copied
-          ? "bg-emerald-500 text-white"
-          : "bg-cobalt text-white hover:bg-cobalt-light shadow-sm"
-      }`}
+      className={`${botonBase} ${copied ? "text-emerald-600" : "text-cobalt/60 hover:text-cobalt"}`}
     >
-      {copied ? <Check size={14} strokeWidth={2.6} /> : <Copy size={14} strokeWidth={2.4} />}
-      {copied ? "¡Copiado!" : label}
+      {copied ? <Check size={13} strokeWidth={2.8} /> : <Copy size={13} strokeWidth={2.4} />}
+      {copied ? "Copiado" : label}
     </button>
   );
 };
 
+/* ── Vista ───────────────────────────────────────────────────────────────── */
+
 const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoViewProps) => {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [tono, setTono] = useState<"profesional" | "cercano">("profesional");
+  const [tono, setTono] = useState<TonoContenido>("profesional");
 
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [contenido, setContenido] = useState<ContenidoGenerado | null>(null);
 
   const [historial, setHistorial] = useState<PublicacionGenerada[]>([]);
-  const [historialOpen, setHistorialOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const selected = useMemo(
@@ -190,7 +215,6 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
     }
   }, []);
 
-  // Al cambiar de propiedad se limpia el resultado anterior y se trae su historial.
   useEffect(() => {
     setContenido(null);
     setError(null);
@@ -223,517 +247,469 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
   };
 
   const faltantes = selected ? datosFaltantes(selected) : [];
-
-  // Portada + una lámina por foto extra + la de cierre (tope de 10, como en
-  // `crearCarruselInstagram`). Solo sirve para el texto del botón.
   const laminasEstimadas = selected
-    ? Math.min(
-        2 + (selected.galeria ?? []).filter((f) => f.categoria !== "portada").length,
-        10,
-      )
+    ? Math.min(2 + (selected.galeria ?? []).filter((f) => f.categoria !== "portada").length, 10)
     : 0;
 
   return (
-    <div className="pb-10">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cobalt to-cobalt-light text-white shadow-[0_10px_24px_-10px_rgba(28,55,140,0.6)]">
-          <Sparkles size={20} strokeWidth={2.1} />
-        </span>
-        <div>
-          <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-gold">Marketing</p>
-          <h2 className="font-heading text-xl md:text-2xl font-bold text-cobalt leading-tight">
-            Contenido para Redes
-          </h2>
-        </div>
-      </div>
-
-      <p className="text-sm text-muted-foreground mb-6 max-w-2xl leading-relaxed">
-        Elige una propiedad y la IA redacta una descripción profesional y un copy listo
-        para Instagram con hashtags. Usa solo los datos que están guardados en la
-        propiedad: mientras más completa esté, mejor sale el texto.
-      </p>
-
-      {/* ── Paso 1: elegir propiedad ─────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border/70 bg-white p-4 sm:p-5 mb-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-cobalt/10 font-heading text-xs font-extrabold text-cobalt">
-            1
+    // Lienzo propio, cálido: separa esta herramienta del gris del resto del
+    // panel sin necesidad de encerrar cada bloque en una tarjeta.
+    <div className="relative -mx-4 lg:-mx-8 -mt-6 lg:-mt-8 -mb-6 lg:-mb-8 min-h-screen bg-[#FBFAF7] px-4 lg:px-10 pt-6 lg:pt-8 pb-16">
+      {/* Volver: arriba a la izquierda, sin caja */}
+      {selected && (
+        <button
+          type="button"
+          onClick={() => setSelectedId(null)}
+          className="group mb-7 inline-flex items-center gap-3 text-cobalt/70 transition-colors hover:text-cobalt"
+        >
+          <ArrowLeft
+            size={22}
+            strokeWidth={2.2}
+            className="transition-transform duration-300 group-hover:-translate-x-1"
+          />
+          <span className="font-heading text-sm font-bold uppercase tracking-[0.18em]">
+            Todas las propiedades
           </span>
-          <h3 className="text-sm font-bold text-foreground">
-            {selected ? "Propiedad elegida" : "Elige la propiedad"}
-          </h3>
-          {selected && (
-            <button
-              type="button"
-              onClick={() => setSelectedId(null)}
-              className="ml-auto flex items-center gap-1.5 rounded-xl border border-border/70 bg-white px-3.5 py-2 text-xs font-bold text-cobalt transition-colors hover:bg-muted/60"
-            >
-              <ArrowLeft size={14} strokeWidth={2.4} />
-              Ver todas las propiedades
-            </button>
-          )}
-        </div>
+        </button>
+      )}
 
-        {selected ? (
-          <div className="flex items-center gap-4 rounded-2xl border border-cobalt/25 bg-cobalt/[0.04] p-3">
-            {portadaDe(selected) ? (
-              <img
-                src={portadaDe(selected) as string}
-                alt={selected.nombre}
-                className="h-20 w-20 rounded-xl object-cover flex-shrink-0"
-              />
-            ) : (
-              <div className="flex h-20 w-20 flex-col items-center justify-center rounded-xl bg-muted text-muted-foreground/50 flex-shrink-0">
-                <ImageOff size={20} />
-                <span className="mt-1 text-[9px] font-semibold uppercase">Sin foto</span>
-              </div>
+      {/* Encabezado */}
+      <header className="mb-10 max-w-3xl">
+        <p className="font-heading text-[11px] font-extrabold uppercase tracking-[0.34em] text-gold">
+          Marketing
+        </p>
+        <h2 className="mt-3 font-heading text-4xl md:text-[2.9rem] font-extrabold leading-[1.02] tracking-[-0.02em] text-cobalt">
+          Contenido para Redes
+        </h2>
+        <p className="mt-4 text-sm leading-relaxed text-cobalt/55">
+          Elige una propiedad y la IA redacta la descripción y el copy de Instagram.
+          De ahí salen también la ficha PDF, el carrusel y el reel, todos con los datos
+          que estén guardados en la propiedad.
+        </p>
+      </header>
+
+      {/* ── 01 · Propiedad ──────────────────────────────────────────────── */}
+      {!selected && (
+        <section className="mb-14">
+          <Rubrica numero="01" titulo="Elige la propiedad" />
+
+          <div className="mb-8 flex items-center gap-3 border-b border-cobalt/15 pb-3 focus-within:border-gold transition-colors">
+            <Search size={18} className="text-cobalt/35" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre, municipio o dirección"
+              className="w-full bg-transparent text-base text-cobalt outline-none placeholder:text-cobalt/30"
+            />
+            {search && (
+              <span className="font-heading text-xs font-bold tabular-nums text-cobalt/40">
+                {filtered.length}
+              </span>
             )}
-            <div className="min-w-0 flex-1">
-              <p className="font-heading text-base font-bold text-cobalt truncate">
-                {selected.nombre}
-              </p>
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 truncate">
-                <MapPin size={12} className="flex-shrink-0" />
-                {[selected.municipio, selected.estado].filter(Boolean).join(", ") || "Sin ubicación"}
-              </p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <span className="font-heading text-sm font-extrabold text-gold tabular-nums">
-                  {formatPrice(selected.precio)}
-                </span>
-                <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cobalt border border-cobalt/15">
-                  {selected.tipo_oferta || "—"}
-                </span>
-                <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground border border-border/60">
-                  {selected.tipo}
-                </span>
-              </div>
-              {(selected.amenidades || []).length > 0 && (
-                <p className="mt-1.5 text-[11px] text-muted-foreground/80 truncate">
-                  {amenidadesLabels(selected.amenidades).join(" · ")}
-                </p>
-              )}
-            </div>
           </div>
-        ) : (
-          <>
-            <div className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-white px-3.5 mb-3 focus-within:border-cobalt/50">
-              <Search size={15} className="text-muted-foreground/60 flex-shrink-0" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nombre, municipio o dirección..."
-                className="flex-1 min-w-0 bg-transparent py-2.5 text-sm outline-none placeholder:text-muted-foreground/50"
-              />
-            </div>
 
-            {filtered.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                No hay propiedades que coincidan con la búsqueda.
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[26rem] overflow-y-auto pr-1">
-                {filtered.map((p) => {
-                  const portada = portadaDe(p);
-                  const faltan = datosFaltantes(p).length;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setSelectedId(p.id)}
-                      className="group flex items-center gap-3 rounded-xl border border-border/70 bg-white p-2.5 text-left transition-all duration-200 hover:border-cobalt/40 hover:shadow-md"
-                    >
+          {filtered.length === 0 ? (
+            <p className="py-16 text-center text-sm text-cobalt/45">
+              Ninguna propiedad coincide con la búsqueda.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-8">
+              {filtered.map((p, i) => {
+                const portada = portadaDe(p);
+                const faltan = datosFaltantes(p).length;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelectedId(p.id)}
+                    style={{ animationDelay: `${Math.min(i, 11) * 45}ms` }}
+                    className="group animate-in fade-in slide-in-from-bottom-3 fill-mode-backwards duration-500 text-left"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-[3px] bg-cobalt/[0.06]">
                       {portada ? (
                         <img
                           src={portada}
                           alt={p.nombre}
-                          className="h-14 w-14 rounded-lg object-cover flex-shrink-0"
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.06]"
                         />
                       ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-muted text-muted-foreground/40 flex-shrink-0">
-                          <ImageOff size={16} />
+                        <div className="flex h-full w-full items-center justify-center text-cobalt/20">
+                          <ImageOff size={26} />
                         </div>
                       )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-foreground truncate group-hover:text-cobalt">
-                          {p.nombre}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground truncate">
-                          {[p.municipio, p.estado].filter(Boolean).join(", ") || "—"}
-                        </p>
-                        <p className="text-[11px] font-bold text-gold tabular-nums mt-0.5">
-                          {formatPrice(p.precio)}
-                        </p>
-                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-cobalt/90 via-cobalt/15 to-transparent opacity-90" />
+
                       {faltan > 0 && (
                         <span
                           title={`Faltan ${faltan} datos para un mejor contenido`}
-                          className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700 flex-shrink-0"
+                          className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-amber-400 font-heading text-[11px] font-extrabold text-cobalt shadow-sm"
                         >
                           {faltan}
                         </span>
                       )}
-                    </button>
-                  );
-                })}
+
+                      <div className="absolute inset-x-0 bottom-0 p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gold/95 truncate">
+                          {[p.municipio, p.estado].filter(Boolean).join(", ") || "—"}
+                        </p>
+                        <p className="mt-1 font-heading text-[13px] font-bold leading-tight text-white line-clamp-2">
+                          {p.nombre}
+                        </p>
+                        <p className="mt-1.5 font-heading text-lg font-extrabold tabular-nums text-white">
+                          {formatPrice(p.precio)}
+                        </p>
+                      </div>
+
+                      {/* Filete dorado que se dibuja al pasar el cursor */}
+                      <span className="absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 bg-gold transition-transform duration-500 group-hover:scale-x-100" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {selected && (
+        <>
+          {/* Ficha de la propiedad elegida, a sangre */}
+          <section className="mb-12">
+            <div className="relative -mx-4 lg:-mx-10 h-[300px] md:h-[360px] overflow-hidden bg-cobalt">
+              {portadaDe(selected) ? (
+                <img
+                  src={portadaDe(selected) as string}
+                  alt={selected.nombre}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-cobalt-light to-cobalt" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-cobalt via-cobalt/60 to-cobalt/10" />
+
+              <div className="absolute inset-x-0 bottom-0 px-4 lg:px-10 pb-8">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded-full bg-gold px-4 py-1.5 font-heading text-[10px] font-extrabold uppercase tracking-[0.2em] text-cobalt">
+                    {selected.tipo_oferta || "Disponible"}
+                  </span>
+                  <span className="font-heading text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">
+                    {selected.tipo}
+                  </span>
+                </div>
+                <h3 className="mt-3 font-heading text-2xl md:text-4xl font-extrabold leading-[1.05] tracking-[-0.02em] text-white">
+                  {selected.nombre}
+                </h3>
+                <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+                  <p className="font-heading text-xl md:text-2xl font-extrabold tabular-nums text-gold">
+                    {formatPrice(selected.precio)}
+                  </p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                    {[selected.municipio, selected.estado].filter(Boolean).join(", ") ||
+                      "Sin ubicación"}
+                  </p>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                  {selected.recamaras > 0 && <span>{selected.recamaras} recámaras</span>}
+                  {selected.banos > 0 && <span>{selected.banos} baños</span>}
+                  {selected.metros_cuadrados > 0 && <span>{selected.metros_cuadrados} m² const.</span>}
+                  {selected.metros_terreno > 0 && <span>{selected.metros_terreno} m² terreno</span>}
+                  {selected.estacionamientos > 0 && <span>{selected.estacionamientos} autos</span>}
+                </div>
+              </div>
+            </div>
+
+            {(selected.amenidades || []).length > 0 && (
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-cobalt/40">
+                {amenidadesLabels(selected.amenidades).join("  ·  ")}
+              </p>
+            )}
+
+            {faltantes.length > 0 && (
+              <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3 border-l-2 border-amber-400 bg-amber-50/70 px-5 py-4">
+                <AlertTriangle size={17} className="text-amber-600 flex-shrink-0" />
+                <p className="flex-1 text-xs leading-relaxed text-amber-900/85">
+                  Esta propiedad no tiene <strong className="font-bold">{faltantes.join(", ")}</strong>.
+                  Puedes generar igual, pero sale más completo si lo llenas.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onEditProperty(selected)}
+                  className={`${botonBase} text-amber-800 hover:text-amber-950 flex-shrink-0`}
+                >
+                  <Pencil size={13} strokeWidth={2.4} />
+                  <span className="border-b border-amber-400/60 pb-px">Completar</span>
+                </button>
               </div>
             )}
-          </>
-        )}
-      </div>
+          </section>
 
-      {/* ── Paso 2: generar ──────────────────────────────────────────────── */}
-      {selected && (
-        <div className="rounded-2xl border border-border/70 bg-white p-4 sm:p-5 mb-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-cobalt/10 font-heading text-xs font-extrabold text-cobalt">
-              2
-            </span>
-            <h3 className="text-sm font-bold text-foreground">Genera el contenido</h3>
-          </div>
+          {/* ── 02 · Tono y generación ────────────────────────────────── */}
+          <section className="mb-14">
+            <Rubrica numero="02" titulo="Tono del texto" />
 
-          {/* Aviso de datos faltantes */}
-          {faltantes.length > 0 && (
-            <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-amber-300/70 bg-amber-50 px-4 py-3">
-              <AlertTriangle size={17} className="text-amber-600 flex-shrink-0" />
-              <p className="flex-1 text-xs text-amber-900/85 leading-relaxed">
-                Esta propiedad no tiene <strong className="font-bold">{faltantes.join(", ")}</strong>.
-                Puedes generar el contenido igual, pero saldrá más completo si lo llenas primero.
-              </p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-cobalt/10">
+              {TONOS.map(({ value, nombre, pie }) => {
+                const activo = tono === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setTono(value)}
+                    aria-pressed={activo}
+                    className={`group relative px-5 py-6 text-left transition-colors duration-300 ${
+                      activo ? "bg-cobalt" : "bg-[#FBFAF7] hover:bg-white"
+                    }`}
+                  >
+                    <span
+                      aria-hidden
+                      className={`absolute inset-x-0 top-0 h-[3px] bg-gold transition-transform duration-300 origin-left ${
+                        activo ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                      }`}
+                    />
+                    <p
+                      className={`font-heading text-base font-extrabold tracking-tight ${
+                        activo ? "text-white" : "text-cobalt"
+                      }`}
+                    >
+                      {nombre}
+                    </p>
+                    <p
+                      className={`mt-1 text-[11px] leading-snug ${
+                        activo ? "text-white/60" : "text-cobalt/45"
+                      }`}
+                    >
+                      {pie}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center gap-6">
               <button
                 type="button"
-                onClick={() => onEditProperty(selected)}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-400/70 bg-white px-3.5 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 transition-colors flex-shrink-0"
+                onClick={handleGenerar}
+                disabled={generating}
+                className="group inline-flex items-center gap-3 bg-cobalt px-9 py-4 font-heading text-xs font-extrabold uppercase tracking-[0.2em] text-white transition-colors duration-300 hover:bg-cobalt-light disabled:opacity-60"
               >
-                <Pencil size={13} />
-                Completar propiedad
+                {generating ? (
+                  <Loader2 size={16} className="animate-spin text-gold" />
+                ) : contenido ? (
+                  <RefreshCw size={16} className="text-gold transition-transform duration-500 group-hover:rotate-180" />
+                ) : (
+                  <Sparkles size={16} className="text-gold" />
+                )}
+                {generating ? "Generando" : contenido ? "Generar otra versión" : "Generar contenido"}
               </button>
-            </div>
-          )}
-
-          {/* Tono */}
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-foreground/70 mb-2">Tono del texto</p>
-            <div className="flex flex-wrap gap-2">
-              {(
-                [
-                  { value: "profesional", label: "Profesional y elegante" },
-                  { value: "cercano", label: "Cercano y conversacional" },
-                ] as const
-              ).map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setTono(value)}
-                  className={`rounded-lg border px-4 py-2 text-xs font-semibold transition-all duration-200 ${
-                    tono === value
-                      ? "bg-cobalt/10 text-cobalt border-cobalt/30"
-                      : "bg-white text-muted-foreground border-border/60 hover:bg-muted/50"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleGenerar}
-              disabled={generating}
-              className="flex items-center gap-2 rounded-xl bg-cobalt px-6 py-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-cobalt-light disabled:opacity-70"
-            >
-              {generating ? (
-                <Loader2 size={15} className="animate-spin" />
-              ) : contenido ? (
-                <RefreshCw size={15} />
-              ) : (
-                <Sparkles size={15} />
+              {generating && (
+                <span className="text-xs text-cobalt/45">
+                  Tarda unos segundos. No cierres esta pantalla.
+                </span>
               )}
-              {generating
-                ? "Generando..."
-                : contenido
-                  ? "Generar otra versión"
-                  : "Generar contenido"}
-            </button>
-            {generating && (
-              <span className="text-xs text-muted-foreground">
-                Tarda unos segundos. No cierres esta pantalla.
-              </span>
+            </div>
+
+            {error && (
+              <div className="mt-5 flex items-start gap-3 border-l-2 border-red-400 bg-red-50/70 px-5 py-4">
+                <AlertTriangle size={16} className="mt-px flex-shrink-0 text-red-500" />
+                <p className="text-xs leading-relaxed text-red-700/90">{error}</p>
+              </div>
             )}
-          </div>
+          </section>
 
-          {error && (
-            <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-red-300/70 bg-red-50 px-4 py-3">
-              <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-px" />
-              <p className="text-xs text-red-700/90 leading-relaxed">{error}</p>
-            </div>
-          )}
-        </div>
-      )}
+          {/* ── 03 · Resultados ───────────────────────────────────────── */}
+          {contenido && (
+            <section className="mb-14 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <Rubrica numero="03" titulo="Listo para publicar" />
 
-      {/* ── Paso 3: resultados ───────────────────────────────────────────── */}
-      {contenido && selected && (
-        <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-gold/40 bg-gradient-to-r from-cobalt to-cobalt-light p-4 sm:p-5 shadow-[0_10px_28px_-18px_rgba(15,31,61,0.7)]">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gold/20 text-gold flex-shrink-0">
-            <FileDown size={19} strokeWidth={2.2} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-white">Tus archivos están listos</p>
-            <p className="text-xs text-white/65 leading-relaxed mt-0.5">
-              La <strong className="font-semibold text-white/85">ficha PDF</strong> para
-              mandar por WhatsApp o correo, y el{" "}
-              <strong className="font-semibold text-white/85">carrusel de Instagram</strong>{" "}
-              de {laminasEstimadas} imágenes de 1080 × 1080, numeradas en el orden en
-              que se suben.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-start gap-2.5 flex-shrink-0">
-            <DescargaButton
-              label="Descargar PDF"
-              labelBusy="Armando PDF..."
-              icon={FileDown}
-              onDownload={() =>
-                descargarFichaPdf(selected, { descripcion: contenido.descripcion })
-              }
-            />
-            <DescargaButton
-              label="Carrusel para Instagram"
-              labelBusy="Creando imágenes..."
-              icon={ImageDown}
-              variant="outline"
-              onDownload={async () => {
-                const { laminas } = await descargarCarruselInstagram(selected);
-                // Se archiva lo que se acaba de descargar para que el historial
-                // conserve las imágenes tal como se publicaron.
-                if (contenido.publicacion_id) {
-                  await guardarLaminas(contenido.publicacion_id, selected.id, laminas);
-                  cargarHistorial(selected.id);
-                }
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {contenido && selected && (
-        <div className="mb-5">
-          <VideoReelPanel
-            propiedad={selected}
-            publicacionId={contenido.publicacion_id}
-            videoPrevio={
-              historial.find((h) => h.id === contenido.publicacion_id)?.video_url ?? null
-            }
-          />
-        </div>
-      )}
-
-      {contenido && selected && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
-          {/* Descripción */}
-          <div className="rounded-2xl border border-border/70 bg-white p-4 sm:p-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]">
-            <div className="flex items-center gap-2.5 mb-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cobalt/10 text-cobalt">
-                <FileText size={16} strokeWidth={2.2} />
-              </span>
-              <div className="min-w-0">
-                <h3 className="text-sm font-bold text-foreground">Descripción profesional</h3>
-                <p className="text-[11px] text-muted-foreground">
-                  Para portales, WhatsApp y presentaciones
-                </p>
+              {/* Descargas: barra de acciones, sin cajas */}
+              <div className="mb-10 flex flex-wrap items-start gap-x-8 gap-y-3 border-y border-cobalt/10 py-4">
+                <AccionTexto
+                  label="Ficha PDF"
+                  labelBusy="Armando PDF"
+                  icon={FileDown}
+                  onDownload={() =>
+                    descargarFichaPdf(selected, { descripcion: contenido.descripcion })
+                  }
+                />
+                <AccionTexto
+                  label={`Carrusel · ${laminasEstimadas} imágenes`}
+                  labelBusy="Creando imágenes"
+                  icon={ImageDown}
+                  onDownload={async () => {
+                    const { laminas } = await descargarCarruselInstagram(selected);
+                    if (contenido.publicacion_id) {
+                      await guardarLaminas(contenido.publicacion_id, selected.id, laminas);
+                      cargarHistorial(selected.id);
+                    }
+                  }}
+                />
               </div>
-              <div className="ml-auto flex-shrink-0">
-                <CopyButton text={contenido.descripcion} />
-              </div>
-            </div>
-            <div className="rounded-xl border border-border/60 bg-muted/25 p-4">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-                {contenido.descripcion}
-              </p>
-            </div>
-          </div>
 
-          {/* Copy de Instagram */}
-          <div className="rounded-2xl border border-border/70 bg-white p-4 sm:p-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]">
-            <div className="flex items-center gap-2.5 mb-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-amber-400 text-white">
-                <Instagram size={16} strokeWidth={2.2} />
-              </span>
-              <div className="min-w-0">
-                <h3 className="text-sm font-bold text-foreground">Copy para Instagram</h3>
-                <p className="text-[11px] text-muted-foreground">
-                  {contenido.hashtags.length} hashtags incluidos
-                </p>
-              </div>
-              <div className="ml-auto flex-shrink-0">
-                <CopyButton text={contenido.copy_instagram} label="Copiar post" />
-              </div>
-            </div>
-            <div className="rounded-xl border border-border/60 bg-muted/25 p-4">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-                {contenido.copy_instagram}
-              </p>
-            </div>
-            {contenido.hashtags.length > 0 && (
-              <div className="mt-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Hashtags
-                  </p>
-                  <div className="ml-auto">
-                    <CopyButton text={contenido.hashtags.join(" ")} label="Solo hashtags" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
+                <article>
+                  <div className="mb-4 flex items-center justify-between gap-4 border-b border-cobalt/10 pb-2">
+                    <h4 className="font-heading text-[11px] font-extrabold uppercase tracking-[0.24em] text-cobalt/60">
+                      Descripción profesional
+                    </h4>
+                    <CopiarTexto text={contenido.descripcion} />
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {contenido.hashtags.map((h) => (
-                    <span
-                      key={h}
-                      className="rounded-full bg-cobalt/[0.07] px-2.5 py-1 text-[11px] font-semibold text-cobalt"
-                    >
-                      {h}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                  <p className="whitespace-pre-wrap text-[15px] leading-[1.85] text-cobalt/85">
+                    {contenido.descripcion}
+                  </p>
+                </article>
 
-      {/* ── Historial ────────────────────────────────────────────────────── */}
-      {selected && historial.length > 0 && (
-        <div className="rounded-2xl border border-border/70 bg-white p-4 sm:p-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]">
-          <button
-            type="button"
-            onClick={() => setHistorialOpen((v) => !v)}
-            className="flex w-full items-center gap-2.5"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-              <History size={15} strokeWidth={2.2} />
-            </span>
-            <h3 className="text-sm font-bold text-foreground">
-              Contenido generado antes
-              <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground tabular-nums">
-                {historial.length}
-              </span>
-            </h3>
-            <span className="ml-auto text-muted-foreground">
-              {historialOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </span>
-          </button>
+                <article>
+                  <div className="mb-4 flex items-center justify-between gap-4 border-b border-cobalt/10 pb-2">
+                    <h4 className="font-heading text-[11px] font-extrabold uppercase tracking-[0.24em] text-cobalt/60">
+                      Copy de Instagram
+                    </h4>
+                    <CopiarTexto text={contenido.copy_instagram} label="Copiar post" />
+                  </div>
+                  <p className="whitespace-pre-wrap text-[15px] leading-[1.85] text-cobalt/85">
+                    {contenido.copy_instagram}
+                  </p>
 
-          {historialOpen && (
-            <div className="mt-4 space-y-2.5">
-              {historial.map((h) => {
-                const abierto = expandedId === h.id;
-                return (
-                  <div key={h.id} className="rounded-xl border border-border/60 overflow-hidden">
-                    <div className="flex items-center gap-3 bg-muted/30 px-3.5 py-2.5">
-                      <span className="text-xs font-semibold text-foreground/80">
-                        {fechaCorta(h.created_at)}
-                      </span>
-                      {h.asesor && (
-                        <span className="text-[11px] text-muted-foreground truncate">
-                          · {h.asesor}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setExpandedId(abierto ? null : h.id)}
-                        className="ml-auto text-xs font-semibold text-cobalt hover:underline flex-shrink-0"
-                      >
-                        {abierto ? "Ocultar" : "Ver"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleBorrar(h.id)}
-                        aria-label="Borrar del historial"
-                        className="text-muted-foreground/50 hover:text-red-500 transition-colors flex-shrink-0"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                  {contenido.hashtags.length > 0 && (
+                    <div className="mt-6">
+                      <div className="mb-3 flex items-center justify-between gap-4">
+                        <p className="font-heading text-[10px] font-extrabold uppercase tracking-[0.22em] text-cobalt/40">
+                          {contenido.hashtags.length} hashtags
+                        </p>
+                        <CopiarTexto text={contenido.hashtags.join(" ")} label="Solo hashtags" />
+                      </div>
+                      <p className="text-[13px] leading-[1.9] text-gold">
+                        {contenido.hashtags.join("  ")}
+                      </p>
                     </div>
-                    {abierto && (
-                      <div className="space-y-4 p-4">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {h.descripcion_generada && (
-                            <DescargaButton
-                              label="Descargar PDF"
-                              labelBusy="Armando PDF..."
-                              icon={FileDown}
-                              variant="ghost"
-                              onDownload={() =>
-                                descargarFichaPdf(selected, {
-                                  descripcion: h.descripcion_generada as string,
-                                })
-                              }
-                            />
+                  )}
+                </article>
+              </div>
+
+              <div className="mt-12 border-t border-cobalt/10 pt-8">
+                <VideoReelPanel
+                  propiedad={selected}
+                  publicacionId={contenido.publicacion_id}
+                  videoPrevio={
+                    historial.find((h) => h.id === contenido.publicacion_id)?.video_url ?? null
+                  }
+                  onGenerado={() => cargarHistorial(selected.id)}
+                />
+              </div>
+            </section>
+          )}
+
+          {/* ── 04 · Historial ────────────────────────────────────────── */}
+          {historial.length > 0 && (
+            <section>
+              <Rubrica
+                numero="04"
+                titulo="Generado antes"
+                accion={
+                  <span className="font-heading text-[11px] font-extrabold tabular-nums text-cobalt/40">
+                    {historial.length}
+                  </span>
+                }
+              />
+
+              <div className="divide-y divide-cobalt/10 border-y border-cobalt/10">
+                {historial.map((h) => {
+                  const abierto = expandedId === h.id;
+                  return (
+                    <div key={h.id}>
+                      <div className="flex items-center gap-4 py-4">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedId(abierto ? null : h.id)}
+                          className="flex flex-1 items-center gap-4 text-left"
+                        >
+                          <ChevronDown
+                            size={15}
+                            className={`text-cobalt/35 transition-transform duration-300 ${
+                              abierto ? "rotate-180" : ""
+                            }`}
+                          />
+                          <span className="font-heading text-xs font-bold tabular-nums text-cobalt/80">
+                            {fechaCorta(h.created_at)}
+                          </span>
+                          {h.asesor && (
+                            <span className="truncate text-[11px] text-cobalt/40">{h.asesor}</span>
                           )}
-                          {(h.imagenes || []).length > 0 ? (
-                            <>
-                              <DescargaButton
-                                label="Descargar carrusel"
-                                labelBusy="Preparando..."
-                                icon={ImageDown}
-                                variant="ghost"
+                          <span className="ml-auto flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt/35">
+                            {(h.imagenes || []).length > 0 && (
+                              <span>{(h.imagenes as LaminaGuardada[]).length} imágenes</span>
+                            )}
+                            {h.video_url && <span className="text-gold">reel</span>}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBorrar(h.id)}
+                          aria-label="Borrar del historial"
+                          className="flex-shrink-0 text-cobalt/25 transition-colors hover:text-red-500"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+
+                      {abierto && (
+                        <div className="animate-in fade-in duration-300 pb-10 pl-9 pr-2">
+                          <div className="mb-8 flex flex-wrap items-start gap-x-8 gap-y-3">
+                            {h.descripcion_generada && (
+                              <AccionTexto
+                                label="Ficha PDF"
+                                labelBusy="Armando PDF"
+                                icon={FileDown}
                                 onDownload={() =>
-                                  descargarLaminasGuardadas(
-                                    h.imagenes as LaminaGuardada[],
-                                    `LUCE-carrusel-${h.id}.zip`,
-                                  )
+                                  descargarFichaPdf(selected, {
+                                    descripcion: h.descripcion_generada as string,
+                                  })
                                 }
                               />
-                              <DescargaButton
-                                label="Rehacer carrusel"
-                                labelBusy="Creando imágenes..."
-                                icon={RefreshCw}
-                                variant="ghost"
+                            )}
+                            {(h.imagenes || []).length > 0 ? (
+                              <>
+                                <AccionTexto
+                                  label="Descargar carrusel"
+                                  labelBusy="Preparando"
+                                  icon={ImageDown}
+                                  onDownload={() =>
+                                    descargarLaminasGuardadas(
+                                      h.imagenes as LaminaGuardada[],
+                                      `LUCE-carrusel-${h.id}.zip`,
+                                    )
+                                  }
+                                />
+                                <AccionTexto
+                                  label="Rehacer carrusel"
+                                  labelBusy="Creando imágenes"
+                                  icon={RefreshCw}
+                                  onDownload={async () => {
+                                    // Rehace las láminas con los datos actuales de
+                                    // la propiedad, sin volver a generar el texto.
+                                    const { laminas } = await descargarCarruselInstagram(selected);
+                                    await guardarLaminas(h.id, selected.id, laminas);
+                                    cargarHistorial(selected.id);
+                                  }}
+                                />
+                              </>
+                            ) : (
+                              <AccionTexto
+                                label="Generar carrusel"
+                                labelBusy="Creando imágenes"
+                                icon={ImageDown}
                                 onDownload={async () => {
-                                  // Rehace las láminas con los datos actuales de
-                                  // la propiedad, sin volver a generar el texto.
                                   const { laminas } = await descargarCarruselInstagram(selected);
                                   await guardarLaminas(h.id, selected.id, laminas);
                                   cargarHistorial(selected.id);
                                 }}
                               />
-                            </>
-                          ) : (
-                            <DescargaButton
-                              label="Generar carrusel"
-                              labelBusy="Creando imágenes..."
-                              icon={ImageDown}
-                              variant="ghost"
-                              onDownload={async () => {
-                                const { laminas } = await descargarCarruselInstagram(selected);
-                                await guardarLaminas(h.id, selected.id, laminas);
-                                cargarHistorial(selected.id);
-                              }}
-                            />
-                          )}
-                        </div>
+                            )}
+                          </div>
 
-                        {/* El reel se rehace desde aquí, sin generar texto nuevo. */}
-                        <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                            Reel vertical
-                          </p>
-                          <VideoReelPanel
-                            compacto
-                            propiedad={selected}
-                            publicacionId={h.id}
-                            videoPrevio={h.video_url}
-                            onGenerado={() => cargarHistorial(selected.id)}
-                          />
-                        </div>
-
-                        {/* Láminas archivadas: lo que realmente se publicó */}
-                        {(h.imagenes || []).length > 0 && (
-                          <div>
-                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
-                              Carrusel guardado · {(h.imagenes as LaminaGuardada[]).length} imágenes
-                            </p>
-                            <div className="flex flex-wrap gap-2">
+                          {(h.imagenes || []).length > 0 && (
+                            <div className="mb-8 flex flex-wrap gap-2">
                               {(h.imagenes as LaminaGuardada[]).map((img, i) => (
                                 <a
                                   key={img.url}
@@ -741,71 +717,82 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                                   target="_blank"
                                   rel="noreferrer"
                                   title={img.nombre}
-                                  className="group relative block h-20 w-20 overflow-hidden rounded-lg border border-border/60"
+                                  className="group relative block h-20 w-20 overflow-hidden rounded-[2px]"
                                 >
                                   <img
                                     src={img.url}
                                     alt={img.nombre}
                                     loading="lazy"
-                                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                                   />
-                                  <span className="absolute bottom-0 left-0 rounded-tr-md bg-cobalt/85 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                                  <span className="absolute bottom-0 left-0 bg-cobalt/85 px-1.5 py-0.5 font-heading text-[10px] font-bold text-white">
                                     {i + 1}
                                   </span>
                                 </a>
                               ))}
                             </div>
-                          </div>
-                        )}
-                        {h.descripcion_generada && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Descripción
-                              </p>
-                              <div className="ml-auto">
-                                <CopyButton text={h.descripcion_generada} />
-                              </div>
-                            </div>
-                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
-                              {h.descripcion_generada}
+                          )}
+
+                          <div className="mb-8">
+                            <p className="mb-3 font-heading text-[10px] font-extrabold uppercase tracking-[0.22em] text-cobalt/40">
+                              Reel vertical
                             </p>
+                            <VideoReelPanel
+                              compacto
+                              propiedad={selected}
+                              publicacionId={h.id}
+                              videoPrevio={h.video_url}
+                              onGenerado={() => cargarHistorial(selected.id)}
+                            />
                           </div>
-                        )}
-                        {h.copy_instagram && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Copy de Instagram
-                              </p>
-                              <div className="ml-auto">
-                                <CopyButton text={h.copy_instagram} label="Copiar post" />
+
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
+                            {h.descripcion_generada && (
+                              <div>
+                                <div className="mb-3 flex items-center justify-between gap-4 border-b border-cobalt/10 pb-2">
+                                  <p className="font-heading text-[10px] font-extrabold uppercase tracking-[0.22em] text-cobalt/40">
+                                    Descripción
+                                  </p>
+                                  <CopiarTexto text={h.descripcion_generada} />
+                                </div>
+                                <p className="whitespace-pre-wrap text-[14px] leading-[1.8] text-cobalt/75">
+                                  {h.descripcion_generada}
+                                </p>
                               </div>
-                            </div>
-                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/85">
-                              {h.copy_instagram}
-                            </p>
+                            )}
+                            {h.copy_instagram && (
+                              <div>
+                                <div className="mb-3 flex items-center justify-between gap-4 border-b border-cobalt/10 pb-2">
+                                  <p className="font-heading text-[10px] font-extrabold uppercase tracking-[0.22em] text-cobalt/40">
+                                    Copy de Instagram
+                                  </p>
+                                  <CopiarTexto text={h.copy_instagram} label="Copiar post" />
+                                </div>
+                                <p className="whitespace-pre-wrap text-[14px] leading-[1.8] text-cobalt/75">
+                                  {h.copy_instagram}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
           )}
-        </div>
+        </>
       )}
 
-      {/* Estado vacío cuando no hay propiedades */}
       {properties.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-border/80 bg-white/60 py-12 text-center">
-          <Sparkles size={28} className="mx-auto text-muted-foreground/40" />
-          <p className="mt-3 text-sm font-semibold text-foreground/70">
+        <div className="py-24 text-center">
+          <Sparkles size={30} className="mx-auto text-cobalt/20" />
+          <p className="mt-4 font-heading text-base font-bold text-cobalt/60">
             Aún no hay propiedades
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Crea una propiedad en "Gestión de Propiedades" y vuelve aquí, {advisorName}.
+          <p className="mt-1 text-sm text-cobalt/40">
+            Crea una en "Gestión de Propiedades" y vuelve aquí, {advisorName}.
           </p>
         </div>
       )}
