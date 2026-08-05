@@ -18,7 +18,7 @@ import {
   MapPin,
   FileDown,
   ImageDown,
-  Film,
+  ArrowLeft,
   type LucideIcon,
 } from "lucide-react";
 import { formatPrice } from "@/lib/formatPrice";
@@ -260,14 +260,17 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
           <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-cobalt/10 font-heading text-xs font-extrabold text-cobalt">
             1
           </span>
-          <h3 className="text-sm font-bold text-foreground">Elige la propiedad</h3>
+          <h3 className="text-sm font-bold text-foreground">
+            {selected ? "Propiedad elegida" : "Elige la propiedad"}
+          </h3>
           {selected && (
             <button
               type="button"
               onClick={() => setSelectedId(null)}
-              className="ml-auto text-xs font-semibold text-cobalt hover:underline"
+              className="ml-auto flex items-center gap-1.5 rounded-xl border border-border/70 bg-white px-3.5 py-2 text-xs font-bold text-cobalt transition-colors hover:bg-muted/60"
             >
-              Cambiar
+              <ArrowLeft size={14} strokeWidth={2.4} />
+              Ver todas las propiedades
             </button>
           )}
         </div>
@@ -667,31 +670,34 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                               }
                             />
                           )}
-                          {h.video_url && (
-                            <a
-                              href={h.video_url}
-                              download
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-2 rounded-xl border border-border/70 bg-white px-3.5 py-2 text-xs font-bold text-cobalt transition-colors hover:bg-muted/60"
-                            >
-                              <Film size={14} strokeWidth={2.4} />
-                              Descargar video
-                            </a>
-                          )}
                           {(h.imagenes || []).length > 0 ? (
-                            <DescargaButton
-                              label="Descargar carrusel"
-                              labelBusy="Preparando..."
-                              icon={ImageDown}
-                              variant="ghost"
-                              onDownload={() =>
-                                descargarLaminasGuardadas(
-                                  h.imagenes as LaminaGuardada[],
-                                  `LUCE-carrusel-${h.id}.zip`,
-                                )
-                              }
-                            />
+                            <>
+                              <DescargaButton
+                                label="Descargar carrusel"
+                                labelBusy="Preparando..."
+                                icon={ImageDown}
+                                variant="ghost"
+                                onDownload={() =>
+                                  descargarLaminasGuardadas(
+                                    h.imagenes as LaminaGuardada[],
+                                    `LUCE-carrusel-${h.id}.zip`,
+                                  )
+                                }
+                              />
+                              <DescargaButton
+                                label="Rehacer carrusel"
+                                labelBusy="Creando imágenes..."
+                                icon={RefreshCw}
+                                variant="ghost"
+                                onDownload={async () => {
+                                  // Rehace las láminas con los datos actuales de
+                                  // la propiedad, sin volver a generar el texto.
+                                  const { laminas } = await descargarCarruselInstagram(selected);
+                                  await guardarLaminas(h.id, selected.id, laminas);
+                                  cargarHistorial(selected.id);
+                                }}
+                              />
+                            </>
                           ) : (
                             <DescargaButton
                               label="Generar carrusel"
@@ -705,6 +711,20 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                               }}
                             />
                           )}
+                        </div>
+
+                        {/* El reel se rehace desde aquí, sin generar texto nuevo. */}
+                        <div className="rounded-xl border border-border/60 bg-muted/20 p-3">
+                          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                            Reel vertical
+                          </p>
+                          <VideoReelPanel
+                            compacto
+                            propiedad={selected}
+                            publicacionId={h.id}
+                            videoPrevio={h.video_url}
+                            onGenerado={() => cargarHistorial(selected.id)}
+                          />
                         </div>
 
                         {/* Láminas archivadas: lo que realmente se publicó */}

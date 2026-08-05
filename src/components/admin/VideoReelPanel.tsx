@@ -14,6 +14,10 @@ interface VideoReelPanelProps {
   publicacionId?: number | null;
   /** Video ya renderizado antes para esta publicación. */
   videoPrevio?: string | null;
+  /** Sin el encabezado explicativo — para usarlo dentro del historial. */
+  compacto?: boolean;
+  /** Se llama al terminar, para refrescar el historial. */
+  onGenerado?: () => void;
 }
 
 const ETIQUETA_ESTADO: Record<string, string> = {
@@ -34,13 +38,23 @@ const ETIQUETA_ESTADO: Record<string, string> = {
  * servicio responde de inmediato con un id y aquí se consulta el avance cada
  * segundo y medio.
  */
-const VideoReelPanel = ({ propiedad, publicacionId, videoPrevio }: VideoReelPanelProps) => {
+const VideoReelPanel = ({
+  propiedad,
+  publicacionId,
+  videoPrevio,
+  compacto = false,
+  onGenerado,
+}: VideoReelPanelProps) => {
   const [jobId, setJobId] = useState<string | null>(null);
   const [progreso, setProgreso] = useState<ProgresoRender | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [iniciando, setIniciando] = useState(false);
   const [url, setUrl] = useState<string | null>(videoPrevio ?? null);
   const timer = useRef<number | null>(null);
+  // En una referencia y no en las dependencias del efecto: si no, cada render
+  // del padre reiniciaría el sondeo y volvería a consultar de inmediato.
+  const alTerminar = useRef(onGenerado);
+  alTerminar.current = onGenerado;
 
   const disponible = videoDisponible();
 
@@ -74,6 +88,7 @@ const VideoReelPanel = ({ propiedad, publicacionId, videoPrevio }: VideoReelPane
           setUrl(p.url);
           setJobId(null);
           detener();
+          alTerminar.current?.();
         } else if (p.estado === "error") {
           setError(p.error ?? "No se pudo generar el video.");
           setJobId(null);
@@ -111,18 +126,36 @@ const VideoReelPanel = ({ propiedad, publicacionId, videoPrevio }: VideoReelPane
   const pct = progreso?.progreso ?? 0;
 
   return (
-    <div className="rounded-2xl border border-border/70 bg-white p-4 sm:p-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-cobalt text-white flex-shrink-0">
-          <Film size={19} strokeWidth={2.2} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-bold text-foreground">Reel vertical para Instagram y TikTok</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-            Un video de 1080 × 1920 con las fotos en movimiento, los datos animados, música
-            de fondo y una narradora que cuenta la propiedad. Dura entre 21 y 27 segundos.
-          </p>
-        </div>
+    <div
+      className={
+        compacto
+          ? ""
+          : "rounded-2xl border border-border/70 bg-white p-4 sm:p-5 shadow-[0_6px_20px_-14px_rgba(15,23,42,0.25)]"
+      }
+    >
+      <div
+        className={
+          compacto
+            ? "flex flex-wrap items-center gap-2.5"
+            : "flex flex-col sm:flex-row sm:items-center gap-4"
+        }
+      >
+        {!compacto && (
+          <>
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-cobalt text-white flex-shrink-0">
+              <Film size={19} strokeWidth={2.2} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-bold text-foreground">
+                Reel vertical para Instagram y TikTok
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                Un video de 1080 × 1920 con las fotos en movimiento, los datos animados, música
+                de fondo y una narradora que cuenta la propiedad. Dura entre 21 y 27 segundos.
+              </p>
+            </div>
+          </>
+        )}
 
         <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
           {url && !trabajando && (
@@ -131,7 +164,9 @@ const VideoReelPanel = ({ propiedad, publicacionId, videoPrevio }: VideoReelPane
               download
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-cobalt px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-cobalt-light"
+              className={`flex items-center gap-2 rounded-xl bg-cobalt text-xs font-bold text-white shadow-sm transition-colors hover:bg-cobalt-light ${
+                compacto ? "px-3.5 py-2" : "px-5 py-2.5"
+              }`}
             >
               <Download size={14} strokeWidth={2.4} />
               Descargar video
@@ -142,8 +177,10 @@ const VideoReelPanel = ({ propiedad, publicacionId, videoPrevio }: VideoReelPane
             onClick={generar}
             disabled={trabajando || !disponible}
             title={disponible ? undefined : "El servicio de video no está configurado"}
-            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all duration-200 disabled:opacity-60 ${
-              url
+            className={`flex items-center gap-2 rounded-xl text-xs font-bold transition-all duration-200 disabled:opacity-60 ${
+              compacto ? "px-3.5 py-2" : "px-5 py-2.5"
+            } ${
+              url || compacto
                 ? "border border-border/70 bg-white text-cobalt hover:bg-muted/60"
                 : "bg-gold text-cobalt shadow-sm hover:brightness-105"
             }`}
@@ -182,7 +219,9 @@ const VideoReelPanel = ({ propiedad, publicacionId, videoPrevio }: VideoReelPane
         </div>
       )}
 
-      {!disponible && (
+      {/* El aviso de "no configurado" solo en el panel grande: en el historial
+          se repetiría en cada entrada. */}
+      {!disponible && !compacto && (
         <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-300/70 bg-amber-50 px-4 py-3">
           <AlertTriangle size={16} className="text-amber-600 flex-shrink-0 mt-px" />
           <p className="text-xs text-amber-900/85 leading-relaxed">
@@ -202,12 +241,14 @@ const VideoReelPanel = ({ propiedad, publicacionId, videoPrevio }: VideoReelPane
       )}
 
       {url && !trabajando && (
-        <div className="mt-4 flex justify-center">
+        <div className={`mt-4 flex ${compacto ? "justify-start" : "justify-center"}`}>
           <video
             src={url}
             controls
             playsInline
-            className="max-h-[26rem] rounded-xl border border-border/60 bg-black"
+            className={`rounded-xl border border-border/60 bg-black ${
+              compacto ? "max-h-64" : "max-h-[26rem]"
+            }`}
           />
         </div>
       )}
