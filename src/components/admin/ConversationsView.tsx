@@ -235,7 +235,7 @@ function ConversationList({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por nombre o teléfono…"
-            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-2xl bg-zinc-100/80 dark:bg-zinc-800/60 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-900 focus:shadow-sm outline-none transition text-zinc-900 dark:text-white placeholder:text-zinc-400"
+            className="w-full pl-9 pr-3 py-2.5 text-base md:text-sm rounded-2xl bg-zinc-100/80 dark:bg-zinc-800/60 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-900 focus:shadow-sm outline-none transition text-zinc-900 dark:text-white placeholder:text-zinc-400"
           />
         </div>
       </div>
@@ -465,7 +465,7 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
           // y quedaba cortado. El aviso de arriba ya explica el porqué.
           placeholder={botOn ? 'Bot activo' : 'Escribe un mensaje…'}
           rows={1}
-          className="flex-1 resize-none bg-transparent outline-none text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 py-3 pl-3 max-h-32 self-center"
+          className="flex-1 resize-none bg-transparent outline-none text-base md:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 py-3 pl-3 max-h-32 self-center"
         />
         {/* Emoji picker — works identically on every OS */}
         <Popover open={emojiOpen} onOpenChange={(o) => !botOn && setEmojiOpen(o)}>
@@ -511,7 +511,7 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
           Enviar
         </button>
       </div>
-      <div className="text-[10px] text-zinc-400 mt-1.5 px-1">
+      <div className="hidden md:block text-[10px] text-zinc-400 mt-1.5 px-1">
         Enter para enviar · Shift+Enter para salto de línea
       </div>
     </div>
@@ -735,7 +735,7 @@ function EditableRow({
               value={draft}
               onChange={e => { setDraft(e.target.value); }}
               onBlur={commit}
-              className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none"
+              className="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-1 text-base md:text-sm text-zinc-900 dark:text-zinc-100 outline-none"
             >
               <option value="">—</option>
               {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -752,7 +752,7 @@ function EditableRow({
                 if (e.key === 'Enter') { e.preventDefault(); commit(); }
                 if (e.key === 'Escape') { setDraft(value == null ? '' : String(value)); setEditing(false); }
               }}
-              className={`w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm text-zinc-900 dark:text-zinc-100 outline-none ${mono ? 'tabular-nums' : ''}`}
+              className={`w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg px-2 py-1 text-base md:text-sm text-zinc-900 dark:text-zinc-100 outline-none ${mono ? 'tabular-nums' : ''}`}
             />
           )
         ) : (
@@ -857,7 +857,7 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
           onBlur={saveNotes}
           placeholder="Notas visibles solo para el equipo…"
           rows={4}
-          className="w-full resize-none rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-900 outline-none p-2.5 text-[12px] text-zinc-900 dark:text-zinc-100"
+          className="w-full resize-none rounded-lg bg-zinc-100 dark:bg-zinc-800/60 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-900 outline-none p-2.5 text-base md:text-[12px] text-zinc-900 dark:text-zinc-100"
         />
       </Section>
     </aside>
@@ -1062,7 +1062,10 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] flex bg-zinc-50 dark:bg-zinc-900">
+    // En móvil se cancelan los márgenes del <main> para que el panel ocupe la
+    // pantalla exacta: si sobra alto, la página entera scrollea y aparecen esos
+    // huecos arriba y abajo. En escritorio queda como estaba.
+    <div className="alto-conversaciones lg:h-[calc(100vh-64px)] -mx-4 -my-6 lg:mx-0 lg:my-0 flex overflow-hidden bg-zinc-50 dark:bg-zinc-900">
       {/* Izquierda — en móvil es la pantalla de inicio y ocupa todo el ancho */}
       <div
         className={`w-full md:w-[320px] shrink-0 ${

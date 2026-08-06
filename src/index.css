@@ -127,3 +127,17 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Alto del panel de Conversaciones en móvil.
+
+   `dvh` es la altura del viewport que SÍ se encoge cuando sale el teclado, así
+   que la barra de escribir sube en lugar de quedar tapada. Se declara primero
+   en `vh` como respaldo para navegadores que no lo soportan.
+
+   56px = alto de la cabecera móvil del dashboard (py-3 + icono de 20px).
+--------------------------------------------------------------------------- */
+.alto-conversaciones {
+  height: calc(100vh - 56px);
+  height: calc(100dvh - 56px);
+}
