@@ -136,7 +136,7 @@ const VideoReelPanel = ({
       >
         {!compacto && (
           <div className="min-w-0 flex-1">
-            <h3 className="font-heading text-[11px] font-extrabold uppercase tracking-[0.24em] text-cobalt/60">
+            <h3 className="font-heading text-[11px] font-extrabold uppercase text-cobalt/60">
               Reel vertical
             </h3>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-cobalt/55">
@@ -154,7 +154,7 @@ const VideoReelPanel = ({
               download
               target="_blank"
               rel="noreferrer"
-              className={`inline-flex items-center gap-2 bg-cobalt font-heading text-[11px] font-extrabold uppercase tracking-[0.16em] text-white transition-colors hover:bg-cobalt-light ${
+              className={`inline-flex items-center gap-2 bg-cobalt font-heading text-[11px] font-extrabold uppercase text-white transition-colors hover:bg-cobalt-light ${
                 compacto ? "px-4 py-2.5" : "px-6 py-3.5"
               }`}
             >
@@ -167,7 +167,7 @@ const VideoReelPanel = ({
             onClick={generar}
             disabled={trabajando || !disponible}
             title={disponible ? undefined : "El servicio de video no está configurado"}
-            className={`inline-flex items-center gap-2 font-heading text-[11px] font-extrabold uppercase tracking-[0.16em] transition-colors duration-200 disabled:opacity-50 ${
+            className={`inline-flex items-center gap-2 font-heading text-[11px] font-extrabold uppercase transition-colors duration-200 disabled:opacity-50 ${
               compacto ? "px-4 py-2.5" : "px-6 py-3.5"
             } ${
               url || compacto
@@ -191,7 +191,7 @@ const VideoReelPanel = ({
       {trabajando && (
         <div className="mt-5">
           <div className="mb-2 flex items-center justify-between">
-            <span className="font-heading text-[11px] font-extrabold uppercase tracking-[0.16em] text-cobalt/70">
+            <span className="font-heading text-[11px] font-extrabold uppercase text-cobalt/70">
               {ETIQUETA_ESTADO[progreso?.estado ?? "en cola"] ?? "Trabajando"}
             </span>
             <span className="font-heading text-[11px] font-extrabold tabular-nums text-gold">

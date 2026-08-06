@@ -90,10 +90,10 @@ const Rubrica = ({
   accion?: React.ReactNode;
 }) => (
   <div className="flex items-center gap-4 mb-6">
-    <span className="font-heading text-[11px] font-extrabold tracking-[0.28em] text-gold tabular-nums">
+    <span className="font-heading text-[11px] font-extrabold text-gold tabular-nums">
       {numero}
     </span>
-    <h3 className="font-heading text-[11px] font-extrabold uppercase tracking-[0.26em] text-cobalt/60 whitespace-nowrap">
+    <h3 className="font-heading text-[11px] font-extrabold uppercase text-cobalt/60 whitespace-nowrap">
       {titulo}
     </h3>
     <span aria-hidden className="h-px flex-1 bg-cobalt/10" />
@@ -102,7 +102,7 @@ const Rubrica = ({
 );
 
 const botonBase =
-  "inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors duration-200 disabled:opacity-50";
+  "inline-flex items-center gap-2 text-[11px] font-bold uppercase transition-colors duration-200 disabled:opacity-50";
 
 /** Acción secundaria: sin caja, subrayado al pasar el cursor. */
 const AccionTexto = ({
@@ -267,7 +267,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
             strokeWidth={2.2}
             className="transition-transform duration-300 group-hover:-translate-x-1"
           />
-          <span className="font-heading text-sm font-bold uppercase tracking-[0.18em]">
+          <span className="font-heading text-sm font-bold uppercase">
             Todas las propiedades
           </span>
         </button>
@@ -275,10 +275,10 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
 
       {/* Encabezado */}
       <header className="mb-10 max-w-3xl">
-        <p className="font-heading text-[11px] font-extrabold uppercase tracking-[0.34em] text-gold">
+        <p className="font-heading text-[11px] font-extrabold uppercase text-gold">
           Marketing
         </p>
-        <h2 className="mt-3 font-heading text-4xl md:text-[2.9rem] font-extrabold leading-[1.02] tracking-[-0.02em] text-cobalt">
+        <h2 className="mt-3 font-heading text-4xl md:text-[2.9rem] font-extrabold leading-[1.02] text-cobalt">
           Contenido para Redes
         </h2>
         <p className="mt-4 text-sm leading-relaxed text-cobalt/55">
@@ -350,7 +350,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                       )}
 
                       <div className="absolute inset-x-0 bottom-0 p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gold/95 truncate">
+                        <p className="text-[10px] font-bold uppercase text-gold/95 truncate">
                           {[p.municipio, p.estado].filter(Boolean).join(", ") || "—"}
                         </p>
                         <p className="mt-1 font-heading text-[13px] font-bold leading-tight text-white line-clamp-2">
@@ -390,27 +390,27 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
 
               <div className="absolute inset-x-0 bottom-0 px-4 lg:px-10 pb-8">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full bg-gold px-4 py-1.5 font-heading text-[10px] font-extrabold uppercase tracking-[0.2em] text-cobalt">
+                  <span className="rounded-full bg-gold px-4 py-1.5 font-heading text-[10px] font-extrabold uppercase text-cobalt">
                     {selected.tipo_oferta || "Disponible"}
                   </span>
-                  <span className="font-heading text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">
+                  <span className="font-heading text-[10px] font-bold uppercase text-white/60">
                     {selected.tipo}
                   </span>
                 </div>
-                <h3 className="mt-3 font-heading text-2xl md:text-4xl font-extrabold leading-[1.05] tracking-[-0.02em] text-white">
+                <h3 className="mt-3 font-heading text-2xl md:text-4xl font-extrabold leading-[1.05] text-white">
                   {selected.nombre}
                 </h3>
                 <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
                   <p className="font-heading text-xl md:text-2xl font-extrabold tabular-nums text-gold">
                     {formatPrice(selected.precio)}
                   </p>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                  <p className="text-xs font-semibold uppercase text-white/70">
                     {[selected.municipio, selected.estado].filter(Boolean).join(", ") ||
                       "Sin ubicación"}
                   </p>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-[11px] font-semibold uppercase text-white/55">
                   {selected.recamaras > 0 && <span>{selected.recamaras} recámaras</span>}
                   {selected.banos > 0 && <span>{selected.banos} baños</span>}
                   {selected.metros_cuadrados > 0 && <span>{selected.metros_cuadrados} m² const.</span>}
@@ -421,7 +421,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
             </div>
 
             {(selected.amenidades || []).length > 0 && (
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-cobalt/40">
+              <p className="mt-4 text-[11px] font-semibold uppercase text-cobalt/40">
                 {amenidadesLabels(selected.amenidades).join("  ·  ")}
               </p>
             )}
@@ -469,7 +469,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                       }`}
                     />
                     <p
-                      className={`font-heading text-base font-extrabold tracking-tight ${
+                      className={`font-heading text-base font-extrabold ${
                         activo ? "text-white" : "text-cobalt"
                       }`}
                     >
@@ -492,7 +492,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                 type="button"
                 onClick={handleGenerar}
                 disabled={generating}
-                className="group inline-flex items-center gap-3 bg-cobalt px-9 py-4 font-heading text-xs font-extrabold uppercase tracking-[0.2em] text-white transition-colors duration-300 hover:bg-cobalt-light disabled:opacity-60"
+                className="group inline-flex items-center gap-3 bg-cobalt px-9 py-4 font-heading text-xs font-extrabold uppercase text-white transition-colors duration-300 hover:bg-cobalt-light disabled:opacity-60"
               >
                 {generating ? (
                   <Loader2 size={16} className="animate-spin text-gold" />
@@ -550,7 +550,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
                 <article>
                   <div className="mb-4 flex items-center justify-between gap-4 border-b border-cobalt/10 pb-2">
-                    <h4 className="font-heading text-[11px] font-extrabold uppercase tracking-[0.24em] text-cobalt/60">
+                    <h4 className="font-heading text-[11px] font-extrabold uppercase text-cobalt/60">
                       Descripción profesional
                     </h4>
                     <CopiarTexto text={contenido.descripcion} />
@@ -562,7 +562,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
 
                 <article>
                   <div className="mb-4 flex items-center justify-between gap-4 border-b border-cobalt/10 pb-2">
-                    <h4 className="font-heading text-[11px] font-extrabold uppercase tracking-[0.24em] text-cobalt/60">
+                    <h4 className="font-heading text-[11px] font-extrabold uppercase text-cobalt/60">
                       Copy de Instagram
                     </h4>
                     <CopiarTexto text={contenido.copy_instagram} label="Copiar post" />
@@ -574,7 +574,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                   {contenido.hashtags.length > 0 && (
                     <div className="mt-6">
                       <div className="mb-3 flex items-center justify-between gap-4">
-                        <p className="font-heading text-[10px] font-extrabold uppercase tracking-[0.22em] text-cobalt/40">
+                        <p className="font-heading text-[10px] font-extrabold uppercase text-cobalt/40">
                           {contenido.hashtags.length} hashtags
                         </p>
                         <CopiarTexto text={contenido.hashtags.join(" ")} label="Solo hashtags" />
@@ -636,7 +636,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                           {h.asesor && (
                             <span className="truncate text-[11px] text-cobalt/40">{h.asesor}</span>
                           )}
-                          <span className="ml-auto flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt/35">
+                          <span className="ml-auto flex items-center gap-4 text-[10px] font-bold uppercase text-cobalt/35">
                             {(h.imagenes || []).length > 0 && (
                               <span>{(h.imagenes as LaminaGuardada[]).length} imágenes</span>
                             )}
@@ -734,7 +734,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                           )}
 
                           <div className="mb-8">
-                            <p className="mb-3 font-heading text-[10px] font-extrabold uppercase tracking-[0.22em] text-cobalt/40">
+                            <p className="mb-3 font-heading text-[10px] font-extrabold uppercase text-cobalt/40">
                               Reel vertical
                             </p>
                             <VideoReelPanel
@@ -750,7 +750,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                             {h.descripcion_generada && (
                               <div>
                                 <div className="mb-3 flex items-center justify-between gap-4 border-b border-cobalt/10 pb-2">
-                                  <p className="font-heading text-[10px] font-extrabold uppercase tracking-[0.22em] text-cobalt/40">
+                                  <p className="font-heading text-[10px] font-extrabold uppercase text-cobalt/40">
                                     Descripción
                                   </p>
                                   <CopiarTexto text={h.descripcion_generada} />
@@ -763,7 +763,7 @@ const ContenidoView = ({ properties, advisorName, onEditProperty }: ContenidoVie
                             {h.copy_instagram && (
                               <div>
                                 <div className="mb-3 flex items-center justify-between gap-4 border-b border-cobalt/10 pb-2">
-                                  <p className="font-heading text-[10px] font-extrabold uppercase tracking-[0.22em] text-cobalt/40">
+                                  <p className="font-heading text-[10px] font-extrabold uppercase text-cobalt/40">
                                     Copy de Instagram
                                   </p>
                                   <CopiarTexto text={h.copy_instagram} label="Copiar post" />
