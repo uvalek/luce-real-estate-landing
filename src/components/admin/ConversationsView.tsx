@@ -7,7 +7,7 @@ import {
   Instagram, Send, Search, Phone, Mail, MapPin, Calendar,
   Smile, Pause, Bot, User, CheckCheck,
   Home, Sparkles, PanelRightClose, PanelRightOpen, AlertTriangle,
-  MessageCircle, Loader2, Trash2, X,
+  MessageCircle, Loader2, Trash2, X, ArrowLeft, ChevronRight, Info,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -446,7 +446,8 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
         <div className="mb-2 flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300">
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />
           <div className="text-[12px] leading-snug">
-            <span className="font-semibold">El bot responderá automáticamente.</span> Apaga el bot arriba para tomar control.
+            {/* Sin "arriba": en móvil el interruptor vive en la barra de abajo. */}
+            <span className="font-semibold">El bot responderá automáticamente.</span> Apaga el bot para tomar el control.
           </div>
         </div>
       )}
@@ -460,7 +461,9 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           disabled={botOn || sending}
-          placeholder={botOn ? 'Bot activo — apaga para escribir manualmente' : 'Escribe un mensaje…'}
+          // Corto a propósito: en móvil el texto largo se partía en dos líneas
+          // y quedaba cortado. El aviso de arriba ya explica el porqué.
+          placeholder={botOn ? 'Bot activo' : 'Escribe un mensaje…'}
           rows={1}
           className="flex-1 resize-none bg-transparent outline-none text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 py-3 pl-3 max-h-32 self-center"
         />
@@ -517,6 +520,7 @@ function Composer({ botOn, onSend, sending }: { botOn: boolean; onSend: (text: s
 
 function ConversationPane({
   conversation, messages, loadingMessages, onToggleBot, onSend, sending, onOpenPanel, panelOpen, togglingBot, advisorName, onDelete,
+  esMovil = false, onVolver, onAbrirPerfil,
 }: {
   conversation: Conversation;
   messages: Message[];
@@ -529,49 +533,122 @@ function ConversationPane({
   togglingBot: boolean;
   advisorName?: string;
   onDelete: () => void;
+  /** En móvil el chat ocupa toda la pantalla y las acciones bajan a una barra. */
+  esMovil?: boolean;
+  onVolver?: () => void;
+  onAbrirPerfil?: () => void;
 }) {
   const botOn = conversation.bot_enabled;
+  const canal = CHANNEL_INFO(conversation.channel);
+
   return (
     <section className="h-full flex flex-col bg-white dark:bg-zinc-950">
-      <header className={`px-4 md:px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300 ${botOn ? '' : 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06]'}`}>
-        <div className="flex items-center gap-3 md:gap-4">
-          <Avatar name={conversation.name} chatId={conversation.chat_id} channel={conversation.channel} size={46} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <h2 className="font-heading text-base font-bold text-zinc-900 dark:text-white truncate">{conversation.name}</h2>
-              <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: CHANNEL_INFO(conversation.channel).color }} />
-                {CHANNEL_INFO(conversation.channel).label}
-              </span>
-            </div>
-            <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 truncate">
-              <span className="tabular-nums">{conversation.telefono || conversation.chat_id}</span>
-              {conversation.etapa_seguimiento && (
-                <>
-                  <span className="text-zinc-300 dark:text-zinc-600"> · </span>
-                  {STAGE_LABEL[conversation.etapa_seguimiento] || conversation.etapa_seguimiento}
-                </>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <BotToggle on={botOn} busy={togglingBot} onChange={onToggleBot} />
-            <button onClick={onOpenPanel} title={panelOpen ? 'Ocultar perfil' : 'Mostrar perfil'} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:shadow-sm text-zinc-500 transition-all shrink-0">
-              {panelOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
-            </button>
+      <header className={`px-3 md:px-6 py-3 md:py-4 border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300 ${botOn ? '' : 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06]'}`}>
+        <div className="flex items-center gap-2 md:gap-4">
+          {esMovil && (
             <button
-              onClick={onDelete}
-              title="Eliminar conversación"
-              aria-label="Eliminar conversación"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 hover:bg-red-500/10 hover:text-red-500 transition-all shrink-0"
+              onClick={onVolver}
+              aria-label="Volver a las conversaciones"
+              className="flex h-10 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 -ml-1"
             >
-              <Trash2 size={17} />
+              <ArrowLeft size={20} strokeWidth={2.2} />
             </button>
-          </div>
+          )}
+
+          {/* En móvil, todo el bloque es el acceso a la ficha del contacto. */}
+          {esMovil ? (
+            <button
+              onClick={onAbrirPerfil}
+              className="flex flex-1 items-center gap-3 min-w-0 text-left"
+            >
+              <Avatar name={conversation.name} chatId={conversation.chat_id} channel={conversation.channel} size={40} />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-heading text-[15px] font-bold text-zinc-900 dark:text-white truncate">
+                    {conversation.name}
+                  </span>
+                  <ChevronRight size={14} className="text-zinc-400 shrink-0" />
+                </span>
+                <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: canal.color }} />
+                  {canal.label}
+                  {conversation.etapa_seguimiento && (
+                    <>
+                      <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                      <span className="truncate">
+                        {STAGE_LABEL[conversation.etapa_seguimiento] || conversation.etapa_seguimiento}
+                      </span>
+                    </>
+                  )}
+                </span>
+              </span>
+            </button>
+          ) : (
+            <>
+              <Avatar name={conversation.name} chatId={conversation.chat_id} channel={conversation.channel} size={46} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="font-heading text-base font-bold text-zinc-900 dark:text-white truncate">{conversation.name}</h2>
+                  <span className="hidden sm:inline-flex items-center gap-1.5 shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: canal.color }} />
+                    {canal.label}
+                  </span>
+                </div>
+                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                  <span className="tabular-nums">{conversation.telefono || conversation.chat_id}</span>
+                  {conversation.etapa_seguimiento && (
+                    <>
+                      <span className="text-zinc-300 dark:text-zinc-600"> · </span>
+                      {STAGE_LABEL[conversation.etapa_seguimiento] || conversation.etapa_seguimiento}
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <BotToggle on={botOn} busy={togglingBot} onChange={onToggleBot} />
+                <button onClick={onOpenPanel} title={panelOpen ? 'Ocultar perfil' : 'Mostrar perfil'} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:shadow-sm text-zinc-500 transition-all shrink-0">
+                  {panelOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+                </button>
+                <button
+                  onClick={onDelete}
+                  title="Eliminar conversación"
+                  aria-label="Eliminar conversación"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 hover:bg-red-500/10 hover:text-red-500 transition-all shrink-0"
+                >
+                  <Trash2 size={17} />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </header>
+
       <MessagesPane messages={messages} loading={loadingMessages} advisorName={advisorName} />
       <Composer botOn={botOn} onSend={onSend} sending={sending} />
+
+      {/* Barra de acciones al pie, solo en móvil: el encabezado se queda limpio
+          con el nombre, como en WhatsApp. */}
+      {esMovil && (
+        <div className="flex items-stretch border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+          <div className="flex flex-1 items-center justify-center py-2.5">
+            <BotToggle on={botOn} busy={togglingBot} onChange={onToggleBot} />
+          </div>
+          <button
+            onClick={onAbrirPerfil}
+            className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border-l border-zinc-200 dark:border-zinc-800"
+          >
+            <Info size={17} />
+            <span className="text-[10px] font-semibold">Datos</span>
+          </button>
+          <button
+            onClick={onDelete}
+            className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2.5 text-zinc-400 hover:bg-red-500/10 hover:text-red-500 transition-colors border-l border-zinc-200 dark:border-zinc-800"
+          >
+            <Trash2 size={17} />
+            <span className="text-[10px] font-semibold">Eliminar</span>
+          </button>
+        </div>
+      )}
     </section>
   );
 }
@@ -789,6 +866,30 @@ function ContactPanel({ conversation, detail, onUpdateField }: {
 
 // ---------- Vista principal ----------
 
+/** Ancho a partir del cual caben las tres columnas (el `md` de Tailwind). */
+const CONSULTA_MOVIL = '(max-width: 767px)';
+
+/**
+ * En móvil no basta con esconder columnas por CSS: el comportamiento cambia.
+ * La lista y el chat son dos pantallas, y no se debe autoseleccionar ninguna
+ * conversación, porque dejaría al agente dentro de un chat sin manera de salir.
+ */
+function useEsMovil(): boolean {
+  const [esMovil, setEsMovil] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(CONSULTA_MOVIL).matches,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(CONSULTA_MOVIL);
+    const alCambiar = (e: MediaQueryListEvent) => setEsMovil(e.matches);
+    setEsMovil(mq.matches);
+    mq.addEventListener('change', alCambiar);
+    return () => mq.removeEventListener('change', alCambiar);
+  }, []);
+
+  return esMovil;
+}
+
 export default function ConversationsView({ advisorName }: { advisorName?: string } = {}) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -801,12 +902,33 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
   const [sending, setSending] = useState(false);
   const [togglingBot, setTogglingBot] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
+  /** Hoja de datos del contacto en móvil: se abre tocando el nombre. */
+  const [perfilMovil, setPerfilMovil] = useState(false);
+  const esMovil = useEsMovil();
+
+  // La ficha se cierra al cambiar de conversación o al pasar a escritorio,
+  // donde el perfil ya vive en su propia columna.
+  useEffect(() => {
+    setPerfilMovil(false);
+  }, [selectedId, esMovil]);
+
+  /**
+   * En escritorio se abre la conversación más reciente para no dejar el panel
+   * central vacío. En móvil no: la lista es la pantalla de inicio, y abrir una
+   * sola dejaría al agente dentro de ese chat sin manera de ver las demás.
+   *
+   * Va en un efecto y no al cargar la lista para que también cubra el caso de
+   * agrandar la ventana: si no, quedaría el panel vacío.
+   */
+  useEffect(() => {
+    if (esMovil) return;
+    setSelectedId(prev => prev ?? conversations[0]?.chat_id ?? null);
+  }, [esMovil, conversations]);
 
   const fetchList = useCallback(async () => {
     try {
       const r = await chatbotApi.listConversations();
       setConversations(r.items);
-      setSelectedId(prev => prev ?? r.items[0]?.chat_id ?? null);
     } catch (e) {
       console.error(e);
     } finally {
@@ -941,8 +1063,12 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
 
   return (
     <div className="h-[calc(100vh-64px)] flex bg-zinc-50 dark:bg-zinc-900">
-      {/* Izquierda */}
-      <div className="w-[320px] shrink-0 hidden md:block">
+      {/* Izquierda — en móvil es la pantalla de inicio y ocupa todo el ancho */}
+      <div
+        className={`w-full md:w-[320px] shrink-0 ${
+          esMovil && selectedId ? 'hidden' : 'block'
+        } md:block`}
+      >
         <ConversationList
           conversations={conversations}
           selectedId={selectedId}
@@ -955,7 +1081,7 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
         />
       </div>
       {/* Centro */}
-      <div className="flex-1 min-w-0">
+      <div className={`flex-1 min-w-0 ${esMovil && !selectedId ? 'hidden' : 'block'} md:block`}>
         {selected ? (
           <ConversationPane
             conversation={selected}
@@ -969,6 +1095,9 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
             togglingBot={togglingBot}
             advisorName={advisorName}
             onDelete={() => setConfirmDelete(selected)}
+            esMovil={esMovil}
+            onVolver={() => setSelectedId(null)}
+            onAbrirPerfil={() => setPerfilMovil(true)}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-zinc-500">
@@ -980,6 +1109,28 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
       {panelOpen && selected && (
         <div className="w-[340px] shrink-0 hidden lg:block">
           <ContactPanel conversation={selected} detail={detail} onUpdateField={handleUpdateField} />
+        </div>
+      )}
+
+      {/* Ficha del contacto en móvil: pantalla completa, se abre al tocar el
+          nombre en el encabezado o "Datos" en la barra inferior. */}
+      {esMovil && perfilMovil && selected && (
+        <div className="fixed inset-0 z-[95] flex flex-col bg-white dark:bg-zinc-950 animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 px-3 py-3">
+            <button
+              onClick={() => setPerfilMovil(false)}
+              aria-label="Cerrar datos del contacto"
+              className="flex h-10 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <ArrowLeft size={20} strokeWidth={2.2} />
+            </button>
+            <h2 className="font-heading text-sm font-bold text-zinc-900 dark:text-white">
+              Datos del contacto
+            </h2>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <ContactPanel conversation={selected} detail={detail} onUpdateField={handleUpdateField} />
+          </div>
         </div>
       )}
 
