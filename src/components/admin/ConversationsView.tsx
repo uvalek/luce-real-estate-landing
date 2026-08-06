@@ -543,7 +543,7 @@ function ConversationPane({
 
   return (
     <section className="h-full flex flex-col bg-white dark:bg-zinc-950">
-      <header className={`px-3 md:px-6 py-3 md:py-4 border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300 ${botOn ? '' : 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06]'}`}>
+      <header className={`sticky top-0 z-10 shrink-0 bg-white dark:bg-zinc-950 px-3 md:px-6 py-3 md:py-4 border-b border-zinc-200 dark:border-zinc-800 transition-colors duration-300 ${botOn ? '' : 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06]'}`}>
         <div className="flex items-center gap-2 md:gap-4">
           {esMovil && (
             <button
@@ -874,6 +874,38 @@ const CONSULTA_MOVIL = '(max-width: 767px)';
  * La lista y el chat son dos pantallas, y no se debe autoseleccionar ninguna
  * conversación, porque dejaría al agente dentro de un chat sin manera de salir.
  */
+/**
+ * Publica el alto realmente visible en `--alto-visible`.
+ *
+ * En iOS el viewport de maquetación NO se encoge al abrir el teclado: el
+ * sistema desplaza la página para enseñar el campo, y al cerrarlo la deja
+ * desplazada, con la barra del nombre fuera de vista. `visualViewport` es lo
+ * único que refleja ese alto, así que el panel se ajusta a él y el teclado deja
+ * de tapar nada.
+ */
+function useAltoVisible(activo: boolean): void {
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!activo || !vv) return;
+
+    let altoPrevio = vv.height;
+    const ajustar = () => {
+      document.documentElement.style.setProperty('--alto-visible', `${Math.round(vv.height)}px`);
+      // Al cerrarse el teclado, iOS puede dejar la página desplazada: se
+      // regresa al tope para que la barra del nombre vuelva a verse sola.
+      if (vv.height > altoPrevio + 40) window.scrollTo(0, 0);
+      altoPrevio = vv.height;
+    };
+
+    ajustar();
+    vv.addEventListener('resize', ajustar);
+    return () => {
+      vv.removeEventListener('resize', ajustar);
+      document.documentElement.style.removeProperty('--alto-visible');
+    };
+  }, [activo]);
+}
+
 function useEsMovil(): boolean {
   const [esMovil, setEsMovil] = useState(
     () => typeof window !== 'undefined' && window.matchMedia(CONSULTA_MOVIL).matches,
@@ -905,6 +937,7 @@ export default function ConversationsView({ advisorName }: { advisorName?: strin
   /** Hoja de datos del contacto en móvil: se abre tocando el nombre. */
   const [perfilMovil, setPerfilMovil] = useState(false);
   const esMovil = useEsMovil();
+  useAltoVisible(esMovil);
 
   // La ficha se cierra al cambiar de conversación o al pasar a escritorio,
   // donde el perfil ya vive en su propia columna.

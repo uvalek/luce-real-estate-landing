@@ -138,6 +138,11 @@
    56px = alto de la cabecera móvil del dashboard (py-3 + icono de 20px).
 --------------------------------------------------------------------------- */
 .alto-conversaciones {
+  /* Respaldo para navegadores sin `dvh`. */
   height: calc(100vh - 56px);
+  /* `dvh` sí se encoge con las barras del navegador. */
   height: calc(100dvh - 56px);
+  /* Y `--alto-visible` (visualViewport) es lo único que refleja el teclado en
+     iOS, donde el viewport de maquetación no cambia al abrirlo. */
+  height: calc(var(--alto-visible, 100dvh) - 56px);
 }
