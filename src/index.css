@@ -146,3 +146,17 @@
      iOS, donde el viewport de maquetación no cambia al abrirlo. */
   height: calc(var(--alto-visible, 100dvh) - 56px);
 }
+
+/* ---------------------------------------------------------------------------
+   Alto del armazón del dashboard.
+
+   Tiene que encogerse igual que el panel cuando sale el teclado. Si la raíz se
+   queda midiendo la pantalla completa, queda una zona muerta debajo del chat
+   por la que iOS puede desplazar la página, y el usuario tiene que subir para
+   volver a ver la conversación.
+--------------------------------------------------------------------------- */
+.alto-app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: var(--alto-visible, 100dvh);
+}

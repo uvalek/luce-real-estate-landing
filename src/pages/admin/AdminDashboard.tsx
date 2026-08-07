@@ -258,7 +258,7 @@ const AdminDashboard = () => {
   const PhaseIcon = PHASE.icon;
 
   return (
-    <div className="min-h-[100dvh] bg-[hsl(220,20%,95%)] flex">
+    <div className="alto-app bg-[hsl(220,20%,95%)] flex">
       {/* ─── Sidebar ─── */}
       {/* Mobile overlay */}
       {sidebarOpen && (

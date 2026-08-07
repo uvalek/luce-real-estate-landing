@@ -888,19 +888,22 @@ function useAltoVisible(activo: boolean): void {
     const vv = window.visualViewport;
     if (!activo || !vv) return;
 
-    let altoPrevio = vv.height;
     const ajustar = () => {
+      // La variable la consumen el panel y el armazón del dashboard, así que
+      // ambos se encogen a la vez y no queda zona muerta debajo del chat.
       document.documentElement.style.setProperty('--alto-visible', `${Math.round(vv.height)}px`);
-      // Al cerrarse el teclado, iOS puede dejar la página desplazada: se
-      // regresa al tope para que la barra del nombre vuelva a verse sola.
-      if (vv.height > altoPrevio + 40) window.scrollTo(0, 0);
-      altoPrevio = vv.height;
+      // En esta vista el contenido cabe siempre en la pantalla: no hay nada
+      // legítimo que desplazar, así que se vuelve al tope. Sin esto iOS deja
+      // la página corrida al abrir y cerrar el teclado.
+      window.scrollTo(0, 0);
     };
 
     ajustar();
     vv.addEventListener('resize', ajustar);
+    vv.addEventListener('scroll', ajustar);
     return () => {
       vv.removeEventListener('resize', ajustar);
+      vv.removeEventListener('scroll', ajustar);
       document.documentElement.style.removeProperty('--alto-visible');
     };
   }, [activo]);
